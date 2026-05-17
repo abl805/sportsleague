@@ -1,2 +1,1 @@
-# No external packages required — Python standard library only.
-# sqlite3 is built into Python.
+streamlit
