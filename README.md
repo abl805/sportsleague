@@ -1,56 +1,97 @@
-# Virtual Basketball League
+# AI Basketball League
 
-An AI-powered virtual basketball league simulation. You are the commissioner.
+An autonomous fictional basketball league. You are the commissioner, but the
+goal is for the league to mostly run itself while you check in a couple times a
+week.
 
-## First-time setup
+## League Status
 
-**1. Install Python** (if you haven't already)
-   - Go to python.org/downloads and download the latest version for Windows
-   - Run the installer — **check "Add Python to PATH"** before clicking Install
+- Official Year 1 is 2026.
+- Existing simulated progress is test data.
+- `python seed.py` creates a fresh test league.
+- `python seed.py --official` creates the clean 2026 preseason state.
+- Official games do not start accidentally. After seeding official mode, run:
 
-**2. Open a terminal in this folder**
-   - In File Explorer, navigate to this folder
-   - Click the address bar, type `cmd`, and press Enter
-
-**3. Create a virtual environment** (a private Python sandbox for this project)
-   ```
-   python -m venv venv
-   ```
-
-**4. Activate it**
-   ```
-   venv\Scripts\activate
-   ```
-   You'll see `(venv)` appear at the start of your prompt.
-
-**5. Seed the league** (creates teams, players, and schedule)
-   ```
-   python seed.py
-   ```
-
----
-
-## Playing the league
-
-| Command                    | What it does                                    |
-|----------------------------|-------------------------------------------------|
-| `python run_week.py`       | Simulate this week's games, update standings    |
-| `python view_league.py`    | Print standings, last week's scores, top stats  |
-| `python seed.py`           | Reset everything and start a fresh season       |
-
----
-
-## Project layout
-
+```bat
+python run_week.py --start-official
 ```
-sportsleague/
-├── seed.py            ← Run once to set up the league
-├── run_week.py        ← Run each week to simulate games
-├── view_league.py     ← View standings and stats
-├── design.md          ← Vision, rules, and design decisions
-├── league/
-│   ├── database.py    ← SQLite setup and connection
-│   └── simulation.py  ← Game engine
-└── db/
-    └── league.db      ← Created automatically (not in git)
+
+After that first official start, normal weekly advances use:
+
+```bat
+python run_week.py
+```
+
+## First-Time Setup
+
+1. Install Python from python.org.
+2. Open a terminal in this folder.
+3. Create and activate a virtual environment:
+
+```bat
+python -m venv venv
+venv\Scripts\activate
+```
+
+4. Install dependencies:
+
+```bat
+pip install -r requirements.txt
+```
+
+5. Seed a league:
+
+```bat
+python seed.py
+```
+
+## Operating The League
+
+| Command | What it does |
+| --- | --- |
+| `python seed.py` | Reset and create a test league |
+| `python seed.py --official` | Reset and create the 2026 official preseason |
+| `python run_week.py` | Advance one test week, or one official week after official start |
+| `python run_week.py --start-official` | Start official Year 1 and play Week 1 |
+| `python review_trades.py` | Review only trades autopilot escalated |
+| `python view_league.py` | View standings, results, and stat leaders |
+| `python view_drama.py` | View morale, chemistry, and player events |
+| `streamlit run app.py` | Open the optional web dashboard |
+
+## Autonomy Model
+
+The game engine owns scores and stats. Agents can create pressure, propose
+trades, affect morale, and shape chemistry, but they do not directly write
+outcomes by narration.
+
+GM trade behavior is intentionally conservative:
+
+- GMs do not roll for trades every week at high rates.
+- Teams have a trade cooldown.
+- Teams have a season trade cap.
+- Stars are protected from early-season churn unless they demand out.
+- Autopilot approves only valid, low-drama consensus trades.
+- Star trades, ambiguous deals, and edge cases stay pending for commissioner review.
+
+This keeps the league surprising without making it feel random or silly.
+
+## Project Layout
+
+```text
+aibasketballleague/
+  seed.py              Create test or official league state
+  run_week.py          Advance the league and run autopilot review
+  review_trades.py     Manual review for escalated trades
+  view_league.py       CLI standings/results/stats
+  view_drama.py        CLI morale and drama dashboard
+  app.py               Streamlit dashboard
+  archetypes.json      Tunable GM/player/trade policy
+  league/
+    database.py        SQLite schema and migrations
+    simulation.py      Game engine
+    gm_agents.py       GM decision logic
+    player_agents.py   Player morale/actions/chemistry
+    trade_engine.py    Trade validation, execution, autopilot review
+  db/
+    league.db          Local league database
 ```

@@ -7,14 +7,15 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(__file__))
-from league.database import get_connection, create_tables
+from league.database import LEAGUE_YEAR, get_connection, create_tables
 
 # ── Team definitions ──────────────────────────────────────────────────────────
+
 TEAMS = [
-    {"city": "Springfield",  "name": "Stallions", "abbreviation": "SPS"},
-    {"city": "Riverside",    "name": "Rockets",   "abbreviation": "RVR"},
-    {"city": "Lakewood",     "name": "Lions",     "abbreviation": "LKL"},
-    {"city": "Hillcrest",    "name": "Hawks",     "abbreviation": "HCH"},
+    {"city": "Santa Maria",    "name": "Strawberries", "abbreviation": "SMA"},
+    {"city": "Appleton",       "name": "Bratwursts",   "abbreviation": "APL"},
+    {"city": "Provo",          "name": "Pines",        "abbreviation": "PRV"},
+    {"city": "Pleasant Grove", "name": "Rattlesnakes", "abbreviation": "PGR"},
 ]
 
 # ── Name pools ────────────────────────────────────────────────────────────────
@@ -36,6 +37,95 @@ LAST_NAMES = [
 ]
 
 POSITIONS_PER_TEAM = ["PG", "PG", "SG", "SG", "SF", "SF", "PF", "PF", "C", "C"]
+
+# ── Player personality seeding ────────────────────────────────────────────────
+
+INITIAL_MORALE = {
+    "team_player":       72,
+    "quiet_professional": 70,
+    "locker_room_leader": 73,
+    "rising_star":        68,
+    "aging_veteran":      62,
+    "superstar_ego":      65,
+    "hothead":            57,
+    "malcontent":         43,
+}
+
+def _pick_archetype(age, archetype_counts):
+    """Age-weighted archetype selection; enforces max 1 malcontent per league."""
+    if archetype_counts.get("malcontent", 0) >= 1:
+        exclude = {"malcontent"}
+    else:
+        exclude = set()
+
+    if age < 24:
+        pool = [("rising_star", 0.35), ("team_player", 0.28), ("quiet_professional", 0.20),
+                ("hothead", 0.12), ("superstar_ego", 0.05)]
+    elif age < 30:
+        pool = [("quiet_professional", 0.22), ("team_player", 0.18), ("superstar_ego", 0.14),
+                ("locker_room_leader", 0.14), ("hothead", 0.14), ("malcontent", 0.08),
+                ("rising_star", 0.10)]
+    else:
+        pool = [("aging_veteran", 0.30), ("quiet_professional", 0.25), ("team_player", 0.22),
+                ("locker_room_leader", 0.15), ("superstar_ego", 0.08)]
+
+    filtered  = [(a, w) for a, w in pool if a not in exclude]
+    total_w   = sum(w for _, w in filtered)
+    r         = random.random() * total_w
+    cumulative = 0
+    for arch, w in filtered:
+        cumulative += w
+        if r < cumulative:
+            return arch
+    return filtered[-1][0]
+
+
+def _generate_traits(base_traits):
+    return {
+        k: max(0.05, min(0.95, v + random.gauss(0, 0.10)))
+        for k, v in base_traits.items()
+    }
+
+
+# ── GM definitions (one per team, matched by abbreviation) ────────────────────
+GM_DATA = [
+    {
+        "team_abbr":      "SMA",
+        "name":           "Marcus 'The Builder' Reed",
+        "archetype":      "aggressive_rebuilder",
+        "risk_tolerance":  0.85,
+        "veteran_loyalty": 0.15,
+        "youth_preference": 0.90,
+        "trade_frequency": 0.22,
+    },
+    {
+        "team_abbr":      "APL",
+        "name":           "Victor 'V-Max' Castellano",
+        "archetype":      "win_now",
+        "risk_tolerance":  0.70,
+        "veteran_loyalty": 0.55,
+        "youth_preference": 0.20,
+        "trade_frequency": 0.18,
+    },
+    {
+        "team_abbr":      "PRV",
+        "name":           "Frank 'Old School' Navarro",
+        "archetype":      "loyal_to_veterans",
+        "risk_tolerance":  0.25,
+        "veteran_loyalty": 0.90,
+        "youth_preference": 0.10,
+        "trade_frequency": 0.08,
+    },
+    {
+        "team_abbr":      "PGR",
+        "name":           "Samira 'The Algorithm' Chen",
+        "archetype":      "analytics_driven",
+        "risk_tolerance":  0.55,
+        "veteran_loyalty": 0.40,
+        "youth_preference": 0.45,
+        "trade_frequency": 0.14,
+    },
+]
 
 
 def salary_for(skill):
@@ -90,12 +180,23 @@ def build_schedule(team_ids, num_rounds=4):
 
 
 def seed():
+    mode = "official" if "--official" in sys.argv else "test"
+    official_started = 0
+
     create_tables()
     conn = get_connection()
     c = conn.cursor()
 
-    # Wipe existing data
+    # Wipe existing data (order respects foreign-key constraints)
     c.executescript("""
+        DELETE FROM player_memory;
+        DELETE FROM player_events;
+        DELETE FROM player_morale;
+        DELETE FROM player_personalities;
+        DELETE FROM team_chemistry;
+        DELETE FROM agent_memory;
+        DELETE FROM pending_trades;
+        DELETE FROM general_managers;
         DELETE FROM player_game_stats;
         DELETE FROM games;
         DELETE FROM contracts;
@@ -141,39 +242,104 @@ def seed():
             c.execute(
                 "INSERT INTO contracts (player_id, team_id, salary, years_remaining, season_start)"
                 " VALUES (?, ?, ?, ?, ?)",
-                (player_id, team_id, salary, random.randint(1, 4), 2025),
+                (player_id, team_id, salary, random.randint(1, 4), LEAGUE_YEAR),
             )
+
+    # Insert player personalities and initial morale (week 0 = pre-season baseline)
+    import json as _json
+    _archetypes_path = os.path.join(os.path.dirname(__file__), "archetypes.json")
+    with open(_archetypes_path) as _f:
+        _arch_data = _json.load(_f)
+    _player_arch_cfgs = _arch_data.get("player_archetypes", {})
+
+    archetype_counts = {}
+    all_player_ids = c.execute("SELECT id, age FROM players").fetchall()
+    for row in all_player_ids:
+        pid  = row["id"]
+        age  = row["age"]
+        arch = _pick_archetype(age, archetype_counts)
+        archetype_counts[arch] = archetype_counts.get(arch, 0) + 1
+
+        base_traits = _player_arch_cfgs.get(arch, {}).get("base_traits", {
+            "ambition": 0.5, "loyalty": 0.5, "ego": 0.5, "work_ethic": 0.5, "volatility": 0.3
+        })
+        traits = _generate_traits(base_traits)
+
+        c.execute(
+            "INSERT INTO player_personalities"
+            " (player_id, archetype, ambition, loyalty, ego, work_ethic, volatility)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (pid, arch, traits["ambition"], traits["loyalty"], traits["ego"],
+             traits["work_ethic"], traits["volatility"]),
+        )
+
+        base_morale = INITIAL_MORALE.get(arch, 70)
+        morale      = max(20.0, min(95.0, base_morale + random.gauss(0, 5)))
+        c.execute(
+            "INSERT INTO player_morale (player_id, week, season_year, morale)"
+            " VALUES (?, 0, ?, ?)",
+            (pid, LEAGUE_YEAR, morale),
+        )
+
+    # Insert GMs
+    abbr_to_id = {t["abbreviation"]: tid for t, tid in zip(TEAMS, team_ids)}
+    for gm in GM_DATA:
+        tid = abbr_to_id[gm["team_abbr"]]
+        c.execute(
+            "INSERT INTO general_managers"
+            " (team_id, name, archetype, risk_tolerance, veteran_loyalty,"
+            "  youth_preference, trade_frequency)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (tid, gm["name"], gm["archetype"], gm["risk_tolerance"],
+             gm["veteran_loyalty"], gm["youth_preference"], gm["trade_frequency"]),
+        )
 
     # Insert standings rows
     for team_id in team_ids:
         c.execute(
-            "INSERT INTO standings (team_id, season_year) VALUES (?, 2025)",
-            (team_id,),
+            "INSERT INTO standings (team_id, season_year) VALUES (?, ?)",
+            (team_id, LEAGUE_YEAR),
         )
 
     # Build and insert schedule
     schedule, total_weeks = build_schedule(team_ids, num_rounds=4)
     for home, away, week in schedule:
         c.execute(
-            "INSERT INTO games (home_team_id, away_team_id, week, season_year) VALUES (?, ?, ?, 2025)",
-            (home, away, week),
+            "INSERT INTO games (home_team_id, away_team_id, week, season_year) VALUES (?, ?, ?, ?)",
+            (home, away, week, LEAGUE_YEAR),
         )
 
     # Initialize league state
     c.execute(
-        "INSERT INTO league_state (current_week, season_year, last_updated)"
-        " VALUES (1, 2025, datetime('now'))"
+        "INSERT INTO league_state (current_week, season_year, mode, official_started, last_updated)"
+        " VALUES (1, ?, ?, ?, datetime('now'))",
+        (LEAGUE_YEAR, mode, official_started),
     )
 
     conn.commit()
     conn.close()
 
     print("League seeded!")
+    print(f"  Mode    : {mode.upper()}")
+    if mode == "official":
+        print("  Status  : preseason; official games have not started")
     print(f"  Teams   : {len(TEAMS)}")
     print(f"  Players : {len(TEAMS) * 10}")
+    print(f"  GMs     : {len(GM_DATA)}")
     print(f"  Weeks   : {total_weeks}")
     print(f"  Games   : {len(schedule)}")
-    print("\nNext step: run  python run_week.py")
+    print()
+    print("  GMs:")
+    for gm in GM_DATA:
+        print(f"    {gm['name']:<32} {gm['archetype']}")
+    print()
+    print("  Player archetype distribution:")
+    for arch, cnt in sorted(archetype_counts.items(), key=lambda x: -x[1]):
+        print(f"    {arch:<22} {cnt}")
+    if mode == "official":
+        print("\nNext step: run  python run_week.py --start-official  when you are ready")
+    else:
+        print("\nNext step: run  python run_week.py  for test simulation")
 
 
 if __name__ == "__main__":

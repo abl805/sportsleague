@@ -1,0 +1,130 @@
+{
+  "salary_cap": 100000000,
+  "trade_threshold": 0.68,
+  "trade_policy": {
+    "team_trade_cooldown_weeks": 4,
+    "max_team_trades_per_season": 2,
+    "star_skill_threshold": 86,
+    "franchise_skill_threshold": 91,
+    "star_trade_min_week": 7,
+    "autopilot_min_proposer_score": 0.74,
+    "autopilot_min_receiver_score": 0.64,
+    "autopilot_veto_receiver_below": 0.38,
+    "autopilot_escalate_star_skill": 84,
+    "pending_trade_expire_weeks": 3,
+    "expire_pending_at_season_end": true
+  },
+
+  "archetypes": {
+    "aggressive_rebuilder": {
+      "description": "Trades veterans for youth and future assets. Thinks long-term.",
+      "preferred_age_min": 18,
+      "preferred_age_max": 26,
+      "noise_scale": 0.12,
+      "change_resistance": 0.45,
+      "need_weights": {
+        "skill": 0.20,
+        "youth": 0.40,
+        "position_need": 0.20,
+        "cap_relief": 0.20
+      }
+    },
+    "win_now": {
+      "description": "Trades youth for proven talent. This season is the only season.",
+      "preferred_age_min": 25,
+      "preferred_age_max": 33,
+      "noise_scale": 0.08,
+      "change_resistance": 0.15,
+      "need_weights": {
+        "skill": 0.50,
+        "youth": 0.05,
+        "position_need": 0.35,
+        "cap_relief": 0.10
+      }
+    },
+    "loyal_to_veterans": {
+      "description": "Hesitant to trade experienced players. Values continuity and loyalty.",
+      "preferred_age_min": 28,
+      "preferred_age_max": 40,
+      "noise_scale": 0.10,
+      "change_resistance": 0.50,
+      "need_weights": {
+        "skill": 0.30,
+        "youth": 0.05,
+        "position_need": 0.45,
+        "cap_relief": 0.20
+      }
+    },
+    "analytics_driven": {
+      "description": "Values skill-per-dollar efficiency. Ignores age bias. Favors cap discipline.",
+      "preferred_age_min": 20,
+      "preferred_age_max": 35,
+      "noise_scale": 0.06,
+      "change_resistance": 0.30,
+      "need_weights": {
+        "skill": 0.40,
+        "youth": 0.15,
+        "position_need": 0.15,
+        "cap_relief": 0.30
+      }
+    },
+    "wild_card": {
+      "description": "Unpredictable. High variance. Anything can happen on any given week.",
+      "preferred_age_min": 18,
+      "preferred_age_max": 40,
+      "noise_scale": 0.35,
+      "change_resistance": 0.05,
+      "need_weights": {
+        "skill": 0.25,
+        "youth": 0.25,
+        "position_need": 0.25,
+        "cap_relief": 0.25
+      }
+    }
+  },
+
+  "player_archetypes": {
+    "superstar_ego": {
+      "description": "High-caliber player who expects to be the focal point. Morale craters when underused.",
+      "base_traits": { "ambition": 0.85, "loyalty": 0.30, "ego": 0.90, "work_ethic": 0.65, "volatility": 0.60 },
+      "morale_weights": { "playing_time": 0.45, "personal_stats": 0.30, "team_wins": 0.10, "contract": 0.15 }
+    },
+    "quiet_professional": {
+      "description": "Shows up, does the job, causes no drama.",
+      "base_traits": { "ambition": 0.45, "loyalty": 0.70, "ego": 0.15, "work_ethic": 0.85, "volatility": 0.10 },
+      "morale_weights": { "playing_time": 0.20, "personal_stats": 0.20, "team_wins": 0.35, "contract": 0.25 }
+    },
+    "locker_room_leader": {
+      "description": "Team-first. Morale rises and falls with team success. Boosts team chemistry.",
+      "base_traits": { "ambition": 0.50, "loyalty": 0.85, "ego": 0.20, "work_ethic": 0.80, "volatility": 0.15 },
+      "morale_weights": { "playing_time": 0.15, "personal_stats": 0.10, "team_wins": 0.55, "contract": 0.20 }
+    },
+    "malcontent": {
+      "description": "Perpetually unhappy. Morale decays naturally even on winning teams.",
+      "base_traits": { "ambition": 0.70, "loyalty": 0.15, "ego": 0.75, "work_ethic": 0.30, "volatility": 0.80 },
+      "morale_weights": { "playing_time": 0.35, "personal_stats": 0.30, "team_wins": 0.15, "contract": 0.20 },
+      "morale_decay": 3.0
+    },
+    "rising_star": {
+      "description": "Young and hungry. Morale tied to opportunity and personal development.",
+      "base_traits": { "ambition": 0.90, "loyalty": 0.40, "ego": 0.50, "work_ethic": 0.85, "volatility": 0.35 },
+      "morale_weights": { "playing_time": 0.50, "personal_stats": 0.25, "team_wins": 0.15, "contract": 0.10 }
+    },
+    "aging_veteran": {
+      "description": "Respected but slowing down. Loyal, but morale erodes with reduced role.",
+      "base_traits": { "ambition": 0.30, "loyalty": 0.80, "ego": 0.40, "work_ethic": 0.55, "volatility": 0.20 },
+      "morale_weights": { "playing_time": 0.30, "personal_stats": 0.20, "team_wins": 0.30, "contract": 0.20 },
+      "morale_decay": 1.0
+    },
+    "team_player": {
+      "description": "Selfless contributor. Morale closely mirrors team success.",
+      "base_traits": { "ambition": 0.35, "loyalty": 0.80, "ego": 0.10, "work_ethic": 0.75, "volatility": 0.15 },
+      "morale_weights": { "playing_time": 0.15, "personal_stats": 0.10, "team_wins": 0.60, "contract": 0.15 }
+    },
+    "hothead": {
+      "description": "Talented but combustible. Quick to feud and prone to public outbursts.",
+      "base_traits": { "ambition": 0.65, "loyalty": 0.35, "ego": 0.70, "work_ethic": 0.50, "volatility": 0.85 },
+      "morale_weights": { "playing_time": 0.35, "personal_stats": 0.30, "team_wins": 0.20, "contract": 0.15 }
+    }
+  }
+}
