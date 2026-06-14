@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Players{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">Roster Index</p>
+  <h1>Players</h1>
+  <p>Browse every active player by team, position, age, rating, and contract.</p>
+</section>
+<section class="filters">
+  <a class="{{ 'active' if not selected_team_id else '' }}" href="{{ url_for('players') }}">All Teams</a>
+  {% for team in teams %}
+    <a class="{{ 'active' if selected_team_id == team.id else '' }}" href="{{ url_for('players', team_id=team.id) }}">{{ team.abbreviation }}</a>
+  {% endfor %}
+</section>
+<section class="panel full">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Player</th><th>Team</th><th>Pos</th><th>Age</th><th>OVR</th><th>Salary</th><th>Yrs</th></tr></thead>
+      <tbody>
+        {% for p in player_rows %}
+          <tr>
+            <td><a href="{{ url_for('player_page', player_id=p.id) }}">{{ p.player }}</a></td>
+            <td><a href="{{ url_for('team_page', abbr=p.abbreviation) }}">{{ p.abbreviation }}</a></td>
+            <td>{{ p.position }}</td>
+            <td>{{ p.age }}</td>
+            <td>{{ p.skill_rating }}</td>
+            <td>{{ p.salary|money }}</td>
+            <td>{{ p.years_remaining or "-" }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">No players found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

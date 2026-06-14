@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "partials.html" import storyline_list %}
+{% block title %}Storylines{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">League Pulse</p>
+  <h1>Storylines</h1>
+  <p>Public-facing player events, trade moments, tension, and turning points.</p>
+</section>
+<section class="panel full">
+  {{ storyline_list(storylines) }}
+</section>
+{% endblock %}

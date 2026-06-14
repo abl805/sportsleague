@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}League Not Seeded{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">Setup required</p>
+  <h1>No league database found.</h1>
+  <p>Run <code>python seed.py</code> for a test league or <code>python seed.py --official</code> for the official preseason, then refresh this page.</p>
+</section>
+{% endblock %}

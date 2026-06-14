@@ -54,9 +54,26 @@ python seed.py
 | `python run_week.py` | Advance one test week, or one official week after official start |
 | `python run_week.py --start-official` | Start official Year 1 and play Week 1 |
 | `python review_trades.py` | Review only trades autopilot escalated |
+| `python run_offseason.py` | Advance a finished season into the next year |
 | `python view_league.py` | View standings, results, and stat leaders |
 | `python view_drama.py` | View morale, chemistry, and player events |
-| `streamlit run app.py` | Open the optional web dashboard |
+| `python web_app.py` | Open the primary public league site and commissioner console |
+| `streamlit run app.py` | Open the legacy optional dashboard |
+
+The Flask web app runs locally at:
+
+```bat
+python web_app.py
+```
+
+Then visit:
+
+```text
+http://127.0.0.1:5000
+```
+
+Viewer pages are public-style read-only league pages. Commissioner tools live at
+`/commissioner` and are intentionally unprotected in this first local version.
 
 ## Autonomy Model
 
@@ -75,6 +92,19 @@ GM trade behavior is intentionally conservative:
 
 This keeps the league surprising without making it feel random or silly.
 
+## Offseason
+
+After the final week, run:
+
+```bat
+python run_offseason.py
+```
+
+The offseason resolves retirement notices, ages players, applies development
+and veteran regression, decrements contracts, handles extension requests,
+moves unsigned players into free agency, fills rosters with free agents and
+rookies, creates new standings/schedule rows, and advances the league year.
+
 ## Project Layout
 
 ```text
@@ -84,7 +114,8 @@ aibasketballleague/
   review_trades.py     Manual review for escalated trades
   view_league.py       CLI standings/results/stats
   view_drama.py        CLI morale and drama dashboard
-  app.py               Streamlit dashboard
+  web_app.py           Flask public site + commissioner console
+  app.py               Legacy Streamlit dashboard
   archetypes.json      Tunable GM/player/trade policy
   league/
     database.py        SQLite schema and migrations

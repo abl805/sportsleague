@@ -63,11 +63,11 @@ The foundation layer. Pure simulation, no AI yet.
 
 | Setting       | Value                          |
 |---------------|-------------------------------|
-| Teams         | 4 franchises                   |
+| Teams         | 8 franchises                   |
 | Roster size   | 10 players per team            |
 | Positions     | PG, SG, SF, PF, C (2 per team)|
-| Season length | 12 weeks (4-round robin)       |
-| Games/team    | 12 games per season            |
+| Season length | 28 weeks (4-round robin)       |
+| Games/team    | 28 games per season            |
 
 ---
 
@@ -90,7 +90,7 @@ Games are simulated using each team's player skill ratings (1–100):
 
 | Table                  | Purpose                                                          |
 |------------------------|------------------------------------------------------------------|
-| `teams`                | Franchise name, city, abbreviation                               |
+| `teams`                | Franchise name, city, abbreviation, identity and arena details    |
 | `players`              | Roster, attributes, skill rating                                 |
 | `contracts`            | Salary, years remaining                                          |
 | `games`                | Schedule; home/away scores once played                           |
@@ -139,10 +139,14 @@ The most natural integration points, in order of impact:
 
 | GM                          | Team        | Archetype             | Behaviour                                        |
 |-----------------------------|-------------|-----------------------|--------------------------------------------------|
-| Marcus 'The Builder' Reed   | Springfield | aggressive_rebuilder  | Sheds veterans, targets youth, trades frequently |
-| Victor 'V-Max' Castellano   | Riverside   | win_now               | Chases skill, ignores age, willing to overpay    |
-| Frank 'Old School' Navarro  | Lakewood    | loyal_to_veterans     | Resists change, hoards experienced players       |
-| Samira 'The Algorithm' Chen | Hillcrest   | analytics_driven      | Values skill/dollar efficiency, low noise        |
+| Rafael 'The Closer' Mendoza | Santa Maria | loyal_to_veterans     | Values continuity, defense, and late-game control |
+| Elliot 'Press On' Greer     | Appleton    | analytics_driven      | Hunts value and effort fits                       |
+| Tessa 'Fireline' Cruz       | Pocatello   | wild_card             | Embraces variance and bold swings                 |
+| Victor 'V-Max' Castellano   | Laredo      | win_now               | Chases skill, ignores age, willing to overpay     |
+| Frank 'Old School' Navarro  | Chattanooga | loyal_to_veterans     | Resists change, hoards experienced players        |
+| Samira 'The Algorithm' Chen | Flagstaff   | analytics_driven      | Values skill/dollar efficiency, low noise         |
+| Nora 'Blue Line' Halvorsen  | Mankato     | analytics_driven      | Conservative, systematic roster management        |
+| Marcus 'The Builder' Reed   | Payson      | aggressive_rebuilder  | Sheds veterans, targets youth, trades frequently  |
 
 ### Player archetypes
 
@@ -213,7 +217,8 @@ Each week after games, morale updates based on:
 | 2026-05-16 | Basketball as sport                 | User preference                                  |
 | 2026-05-16 | SQLite for storage                  | Simple, portable, no server required             |
 | 2026-05-16 | Gaussian scoring model              | Realistic variance, easy to tune per phase       |
-| 2026-05-16 | 4-round robin (12 weeks)            | Enough games for meaningful standings; short enough to iterate fast |
+| 2026-05-16 | 4-team, 4-round robin (12 weeks)    | Enough games for meaningful standings; short enough to iterate fast |
+| 2026-06-12 | Expanded to 8 teams                 | Establishes the larger fictional league identity before official Year 1 |
 | 2026-05-16 | Hamilton remainder for box scores   | Points always sum exactly to team total          |
 | 2026-05-16 | No external Python dependencies     | Easy setup for non-programmers                   |
 | 2026-05-17 | Rule-based GMs before LLM GMs       | Prove architecture works deterministically first; LLM can be swapped in at marked hook points |

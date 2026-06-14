@@ -95,7 +95,11 @@ def _pts_share_this_week(conn, player_id, team_id, week, season_year):
 
     sorted_ids = [
         p["id"] for p in sorted(
-            conn.execute("SELECT id, skill_rating FROM players WHERE team_id = ?", (team_id,)).fetchall(),
+            conn.execute(
+                "SELECT id, skill_rating FROM players "
+                "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+                (team_id,),
+            ).fetchall(),
             key=lambda p: p["skill_rating"], reverse=True,
         )
     ]
@@ -209,7 +213,8 @@ def compute_morale_update(conn, player_id, week, season_year):
 def update_all_morale(conn, week, season_year, verbose=False):
     """Compute and persist morale for every player with a personality."""
     players = conn.execute(
-        "SELECT p.* FROM players p JOIN player_personalities pp ON p.id = pp.player_id"
+        "SELECT p.* FROM players p JOIN player_personalities pp ON p.id = pp.player_id "
+        "WHERE COALESCE(p.status, 'active') = 'active'"
     ).fetchall()
 
     if not players:
@@ -374,7 +379,8 @@ def evaluate_player_week(conn, player, week, season_year, verbose=False):
 
         if random.random() < p_feud:
             teammates = conn.execute(
-                "SELECT id, first_name, last_name FROM players WHERE team_id=? AND id!=?",
+                "SELECT id, first_name, last_name FROM players "
+                "WHERE team_id=? AND id!=? AND COALESCE(status, 'active') = 'active'",
                 (player["team_id"], pid),
             ).fetchall()
             scored = []
@@ -517,7 +523,9 @@ def compute_team_chemistry(conn, team_id, week, season_year):
     # score and active events to surface to the commissioner.
     """
     players = conn.execute(
-        "SELECT id FROM players WHERE team_id=?", (team_id,)
+        "SELECT id FROM players "
+        "WHERE team_id=? AND COALESCE(status, 'active') = 'active'",
+        (team_id,),
     ).fetchall()
     if not players:
         return 70.0
@@ -529,25 +537,29 @@ def compute_team_chemistry(conn, team_id, week, season_year):
     feuds = conn.execute("""
         SELECT COUNT(*) AS n FROM player_events pe
         JOIN   players p ON (pe.player_id = p.id OR pe.target_id = p.id)
-        WHERE  p.team_id=? AND pe.event_type='feud' AND pe.status='active'
+        WHERE  p.team_id=? AND COALESCE(p.status, 'active') = 'active'
+          AND  pe.event_type='feud' AND pe.status='active'
     """, (team_id,)).fetchone()["n"]
 
     demands = conn.execute("""
         SELECT COUNT(*) AS n FROM player_events pe
         JOIN   players p ON pe.player_id = p.id
-        WHERE  p.team_id=? AND pe.event_type='trade_demand' AND pe.status='active'
+        WHERE  p.team_id=? AND COALESCE(p.status, 'active') = 'active'
+          AND  pe.event_type='trade_demand' AND pe.status='active'
     """, (team_id,)).fetchone()["n"]
 
     complaints = conn.execute("""
         SELECT COUNT(*) AS n FROM player_events pe
         JOIN   players p ON pe.player_id = p.id
-        WHERE  p.team_id=? AND pe.event_type='public_complaint' AND pe.status='active'
+        WHERE  p.team_id=? AND COALESCE(p.status, 'active') = 'active'
+          AND  pe.event_type='public_complaint' AND pe.status='active'
     """, (team_id,)).fetchone()["n"]
 
     leaders = conn.execute("""
         SELECT COUNT(*) AS n FROM player_personalities pp
         JOIN   players p ON pp.player_id = p.id
-        WHERE  p.team_id=? AND pp.archetype='locker_room_leader'
+        WHERE  p.team_id=? AND COALESCE(p.status, 'active') = 'active'
+          AND  pp.archetype='locker_room_leader'
     """, (team_id,)).fetchone()["n"]
 
     chemistry -= feuds * 3 + demands * 4 + complaints * 1.5
@@ -602,7 +614,8 @@ def run_all_player_agents(conn, week, season_year, verbose=False):
     update_all_morale(conn, week, season_year, verbose=verbose)
 
     players = conn.execute(
-        "SELECT p.* FROM players p JOIN player_personalities pp ON p.id = pp.player_id"
+        "SELECT p.* FROM players p JOIN player_personalities pp ON p.id = pp.player_id "
+        "WHERE COALESCE(p.status, 'active') = 'active'"
     ).fetchall()
 
     if verbose:

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "partials.html" import standings_table %}
+{% block title %}Standings{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">Season {{ state.season_year }}</p>
+  <h1>Standings</h1>
+  <p>Sorted by wins, point differential, and scoring output.</p>
+</section>
+<section class="panel full">
+  {{ standings_table(standings) }}
+</section>
+{% endblock %}

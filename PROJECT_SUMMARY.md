@@ -122,8 +122,8 @@ Key design: `agent_memory` and `player_memory` log human-readable detail strings
 
 ## League Configuration
 
-- **4 teams, 10 players each** (40 total players)
-- **12-week season** (4-round round-robin, home/away balanced)
+- **8 teams, 10 players each** (80 total players)
+- **28-week season** (4-round round-robin, home/away balanced)
 - **Salary cap:** $100M hard cap per team
 - **Trade threshold:** 0.48 (configurable in `archetypes.json`)
 - **Skill range:** 42–94 (generated at seed time)

@@ -73,7 +73,9 @@ def assess_team_needs(conn, team_id, season_year):
     c = conn.cursor()
 
     players = [dict(p) for p in c.execute(
-        "SELECT * FROM players WHERE team_id = ?", (team_id,)
+        "SELECT * FROM players "
+        "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+        (team_id,),
     ).fetchall()]
 
     if not players:
@@ -661,7 +663,9 @@ def compute_performance_signals(conn, team_id, season_year):
     c = conn.cursor()
 
     players = c.execute(
-        "SELECT age, skill_rating, salary FROM players WHERE team_id = ?", (team_id,)
+        "SELECT age, skill_rating, salary FROM players "
+        "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+        (team_id,),
     ).fetchall()
     if not players:
         return None

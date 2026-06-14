@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "partials.html" import leader_table %}
+{% block title %}League Leaders{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">Season {{ state.season_year }}</p>
+  <h1>League Leaders</h1>
+  <p>Sortable by attention, not by spreadsheet fatigue.</p>
+</section>
+<section class="section-grid">
+  <div class="panel">{{ leader_table(ppg, stat='ppg') }}</div>
+  <div class="panel">{{ leader_table(rpg, stat='rpg') }}</div>
+  <div class="panel">{{ leader_table(apg, stat='apg') }}</div>
+  <div class="panel">{{ leader_table(spg, stat='spg') }}</div>
+  <div class="panel">{{ leader_table(bpg, stat='bpg') }}</div>
+</section>
+{% endblock %}

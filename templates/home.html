@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "partials.html" import standings_table, leader_table, game_card, storyline_list %}
+{% block title %}AIBL Home{% endblock %}
+{% block content %}
+<section class="league-hero">
+  <div>
+    <p class="eyebrow">Season {{ state.season_year }} / Week {{ state.current_week }}</p>
+    <h1>The league office is open.</h1>
+    <p>Scores, clubs, players, and the running pulse of a fictional basketball world.</p>
+  </div>
+  <div class="hero-board">
+    <div><span>Games Played</span><strong>{{ games_played }}</strong></div>
+    <div><span>Season Weeks</span><strong>{{ max_week }}</strong></div>
+    <div><span>Mode</span><strong>{{ state.mode|upper }}</strong></div>
+  </div>
+</section>
+
+<section class="section-grid">
+  <div class="panel wide">
+    <div class="section-head">
+      <h2>Latest Results</h2>
+      <a href="{{ url_for('scores') }}">All scores</a>
+    </div>
+    <div class="score-grid">
+      {% for game in latest_results %}
+        {{ game_card(game) }}
+      {% else %}
+        <p class="empty">No games have been played yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="panel">
+    <div class="section-head">
+      <h2>Top Six</h2>
+      <a href="{{ url_for('standings') }}">Full table</a>
+    </div>
+    {{ standings_table(standings, compact=True) }}
+  </div>
+</section>
+
+<section class="section-grid">
+  <div class="panel">
+    <div class="section-head">
+      <h2>Scoring Leaders</h2>
+      <a href="{{ url_for('leaders') }}">All leaders</a>
+    </div>
+    {{ leader_table(leaders) }}
+  </div>
+  <div class="panel">
+    <div class="section-head">
+      <h2>Storylines</h2>
+      <a href="{{ url_for('storylines') }}">All storylines</a>
+    </div>
+    {{ storyline_list(storylines) }}
+  </div>
+</section>
+{% endblock %}

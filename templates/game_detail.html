@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Game {{ detail.game.id }}{% endblock %}
+{% block content %}
+<section class="game-hero">
+  <p class="eyebrow">Week {{ detail.game.week }}</p>
+  <h1>{{ detail.game.home_name }} {{ detail.game.home_score or "-" }} - {{ detail.game.away_score or "-" }} {{ detail.game.away_name }}</h1>
+  <p>{{ detail.game.season_year }} season box score.</p>
+</section>
+<section class="section-grid">
+  {% for team_name in [detail.game.home_name, detail.game.away_name] %}
+    <div class="panel">
+      <div class="section-head"><h2>{{ team_name }}</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Player</th><th>Pos</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead>
+          <tbody>
+            {% for row in detail.box if row.team_name == team_name %}
+              <tr>
+                <td><a href="{{ url_for('player_page', player_id=row.player_id) }}">{{ row.player }}</a></td>
+                <td>{{ row.position }}</td>
+                <td>{{ row.points }}</td>
+                <td>{{ row.rebounds }}</td>
+                <td>{{ row.assists }}</td>
+                <td>{{ row.steals }}</td>
+                <td>{{ row.blocks }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="7">No box score recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

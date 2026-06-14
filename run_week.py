@@ -19,8 +19,11 @@ from league.player_agents import (
 from league.trade_engine import autopilot_review_pending_trades
 
 
-def run_week():
-    verbose = "--verbose" in sys.argv or "-v" in sys.argv
+def run_week(verbose=None, start_official=None):
+    if verbose is None:
+        verbose = "--verbose" in sys.argv or "-v" in sys.argv
+    if start_official is None:
+        start_official = "--start-official" in sys.argv
 
     create_tables()   # ensures new tables exist even without re-seeding
     conn = get_connection()
@@ -38,7 +41,7 @@ def run_week():
     official_started = state["official_started"] if "official_started" in state.keys() else 0
 
     if mode == "official" and not official_started:
-        if "--start-official" not in sys.argv:
+        if not start_official:
             print("\nOfficial Year 1 has not started yet.")
             print("Run  python run_week.py --start-official  when you want Week 1 to count.\n")
             conn.close()
@@ -89,10 +92,14 @@ def run_week():
 
     for game in games:
         home_players = [dict(p) for p in c.execute(
-            "SELECT * FROM players WHERE team_id = ?", (game["home_team_id"],)
+            "SELECT * FROM players "
+            "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+            (game["home_team_id"],),
         ).fetchall()]
         away_players = [dict(p) for p in c.execute(
-            "SELECT * FROM players WHERE team_id = ?", (game["away_team_id"],)
+            "SELECT * FROM players "
+            "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+            (game["away_team_id"],),
         ).fetchall()]
 
         home_chem = get_team_chemistry(conn, game["home_team_id"], week, season_year)
@@ -161,10 +168,27 @@ def run_week():
     if has_personalities:
         run_all_player_agents(conn, week, season_year, verbose=verbose)
 
+    games_remaining = c.execute(
+        "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
+        (season_year,),
+    ).fetchone()[0]
+
     # ── GM weekly decisions ───────────────────────────────────────────────────
     gm_count = c.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
-    if gm_count > 0:
+    if gm_count > 0 and games_remaining > 0:
         run_all_gm_agents(conn, week, season_year, verbose=True)
+
+        print(f"\n{'-'*54}")
+        print("  AUTOPILOT TRADE REVIEW")
+        print(f"{'-'*54}")
+        trade_summary = autopilot_review_pending_trades(conn, season_year, verbose=True)
+        if not any(trade_summary.values()):
+            print("  No pending trades to review.")
+    elif gm_count > 0:
+        print(f"\n{'-'*54}")
+        print("  GM AGENTS")
+        print(f"{'-'*54}")
+        print("  Regular-season trade proposals are closed; offseason comes next.\n")
 
         print(f"\n{'-'*54}")
         print("  AUTOPILOT TRADE REVIEW")
@@ -174,10 +198,6 @@ def run_week():
             print("  No pending trades to review.")
 
     # ── Season-end personality drift (fires only on the final week) ───────────
-    games_remaining = c.execute(
-        "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
-        (season_year,),
-    ).fetchone()[0]
     if games_remaining == 0 and gm_count > 0:
         evaluate_all_gms_season_end(conn, season_year, verbose=True)
     # ─────────────────────────────────────────────────────────────────────────
@@ -190,6 +210,7 @@ def run_week():
     if games_remaining == 0:
         print(f"Week {week} complete.  Season {season_year} is finished.")
         print("Run  python view_league.py  for final standings.\n")
+        print("Run  python run_offseason.py  when you are ready for next season.\n")
     else:
         print(f"Week {week} complete.  Now entering week {week + 1}.")
         print("Run  python view_league.py  to see updated standings.")

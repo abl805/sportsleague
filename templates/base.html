@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Basketball League{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="brand-mark">AIBL</span>
+      <span class="brand-copy">Basketball League</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="{{ 'active' if active == 'home' else '' }}" href="{{ url_for('home') }}">Home</a>
+      <a class="{{ 'active' if active == 'standings' else '' }}" href="{{ url_for('standings') }}">Standings</a>
+      <a class="{{ 'active' if active == 'teams' else '' }}" href="{{ url_for('teams') }}">Teams</a>
+      <a class="{{ 'active' if active == 'players' else '' }}" href="{{ url_for('players') }}">Players</a>
+      <a class="{{ 'active' if active == 'scores' else '' }}" href="{{ url_for('scores') }}">Scores</a>
+      <a class="{{ 'active' if active == 'leaders' else '' }}" href="{{ url_for('leaders') }}">Leaders</a>
+      <a class="{{ 'active' if active == 'storylines' else '' }}" href="{{ url_for('storylines') }}">Storylines</a>
+      <a class="commissioner-link {{ 'active' if active == 'commissioner' else '' }}" href="{{ url_for('commissioner') }}">Commissioner</a>
+    </nav>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <section class="flash-band">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">
+            {% if category == "operation" %}
+              <pre>{{ message }}</pre>
+            {% else %}
+              {{ message }}
+            {% endif %}
+          </div>
+        {% endfor %}
+      </section>
+    {% endif %}
+  {% endwith %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span>Season {{ state.season_year if state else "-" }}</span>
+    <span>Week {{ state.current_week if state else "-" }}</span>
+    <span>{{ state.mode|upper if state else "NO LEAGUE" }}</span>
+  </footer>
+</body>
+</html>

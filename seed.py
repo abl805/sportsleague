@@ -1,5 +1,5 @@
 """
-Run once to create 4 teams, 40 players, and a full 12-week season schedule.
+Run once to create 8 teams, 80 players, and a full season schedule.
 WARNING: re-running this wipes all existing data and starts fresh.
 """
 import random
@@ -12,10 +12,151 @@ from league.database import LEAGUE_YEAR, get_connection, create_tables
 # ── Team definitions ──────────────────────────────────────────────────────────
 
 TEAMS = [
-    {"city": "Santa Maria",    "name": "Strawberries", "abbreviation": "SMA"},
-    {"city": "Appleton",       "name": "Bratwursts",   "abbreviation": "APL"},
-    {"city": "Provo",          "name": "Pines",        "abbreviation": "PRV"},
-    {"city": "Pleasant Grove", "name": "Rattlesnakes", "abbreviation": "PGR"},
+    {
+        "city": "Santa Maria",
+        "name": "Vaqueros",
+        "abbreviation": "SMA",
+        "mascot": "A stern vaquero, wide-brimmed hat casting a shadow over the eyes",
+        "colors": "Deep red + black + gold",
+        "logo_description": "A stern vaquero face, wide-brimmed hat casting a shadow over the eyes",
+        "motto": "La Tierra Es Nuestra",
+        "arena": "Rancho Arena",
+        "team_archetype": None,
+        "play_style": (
+            "Methodical half-court, strong in the paint, deliberate. Built to "
+            "win close games in the fourth quarter."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
+    {
+        "city": "Appleton",
+        "name": "Papermakers",
+        "abbreviation": "APL",
+        "mascot": "A fox",
+        "colors": "Forest green + cream + brown",
+        "logo_description": "A fox mid-sprint wearing a paper mill worker's hard hat",
+        "motto": "Press On",
+        "arena": "The Mill",
+        "team_archetype": None,
+        "play_style": (
+            "Relentless hustle, second chance points, outwork everyone. Never "
+            "the most talented team but always the hardest playing."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
+    {
+        "city": "Pocatello",
+        "name": "Lava",
+        "abbreviation": "POC",
+        "mascot": "A coyote",
+        "colors": "Burnt orange + charcoal black + ash grey",
+        "logo_description": "A coyote howling, silhouetted against a glowing lava flow",
+        "motto": "Born From Fire",
+        "arena": "The Crater",
+        "team_archetype": None,
+        "play_style": (
+            "Run and gun, high variance, zero filter. They'll drop 130 on you "
+            "or lose by 25. Nobody knows which team shows up."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
+    {
+        "city": "Laredo",
+        "name": "Vivos",
+        "abbreviation": "LAR",
+        "mascot": "A roadrunner",
+        "colors": "Deep purple + gold + white",
+        "logo_description": "A roadrunner mid-sprint, legs blurred, beak forward and aggressive",
+        "motto": "Siempre Vivos",
+        "arena": "Rio Grande Arena",
+        "team_archetype": None,
+        "play_style": (
+            "Fast, flashy, improvised. Heavy on flair and individual brilliance. "
+            "Sometimes too chaotic but electric when clicking."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
+    {
+        "city": "Chattanooga",
+        "name": "Rapids",
+        "abbreviation": "CHA",
+        "mascot": "A snapping turtle",
+        "colors": "Teal + navy + white",
+        "logo_description": "A snapping turtle lunging forward, mouth wide open, water spraying",
+        "motto": "Don't Test the Current",
+        "arena": "Riverbend Arena",
+        "team_archetype": None,
+        "play_style": (
+            "Physical, defensive grinders. Slow the game down, make it ugly, "
+            "wear you out. Nobody likes playing in Riverbend Arena."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
+    {
+        "city": "Flagstaff",
+        "name": "Nightfall",
+        "abbreviation": "FLG",
+        "mascot": "An elk",
+        "colors": "Black + pine green + gold",
+        "logo_description": "An elk head straight on, eyes glowing, stars reflected in them",
+        "motto": "Chase the Sun, Own the Night",
+        "arena": "The Ponderosa",
+        "team_archetype": None,
+        "play_style": (
+            "Precision half-court offense, suffocating man defense. Every "
+            "possession is calculated. They don't beat you with athleticism; "
+            "they beat you with preparation."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
+    {
+        "city": "Mankato",
+        "name": "Polar",
+        "abbreviation": "MNK",
+        "mascot": "A bison",
+        "colors": "Arctic white + charcoal + electric blue",
+        "logo_description": "A massive bison head straight on, frost and ice crystals covering its fur",
+        "motto": "Built for This",
+        "arena": "Blue Earth Center",
+        "team_archetype": None,
+        "play_style": (
+            "Disciplined, systematic, cold-blooded. Excellent in late game "
+            "situations. Nobody panics, nobody celebrates early."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
+    {
+        "city": "Payson",
+        "name": "Peaks",
+        "abbreviation": "PAY",
+        "mascot": "A mountain goat",
+        "colors": "Slate grey + snow white + deep blue",
+        "logo_description": "A mountain goat head straight on, horns framing a mountain peak behind it",
+        "motto": "Nothing Stops the Climb",
+        "arena": "Wasatch Center",
+        "team_archetype": None,
+        "play_style": (
+            "Inconsistent, always experimenting, never quite settled on an "
+            "identity. Flashes of brilliance buried in losing streaks."
+        ),
+        "reputation": None,
+        "rivalry": None,
+        "signature_trait": None,
+    },
 ]
 
 # ── Name pools ────────────────────────────────────────────────────────────────
@@ -91,39 +232,75 @@ def _generate_traits(base_traits):
 GM_DATA = [
     {
         "team_abbr":      "SMA",
-        "name":           "Marcus 'The Builder' Reed",
-        "archetype":      "aggressive_rebuilder",
-        "risk_tolerance":  0.85,
-        "veteran_loyalty": 0.15,
-        "youth_preference": 0.90,
-        "trade_frequency": 0.22,
+        "name":           "Rafael 'The Closer' Mendoza",
+        "archetype":      "loyal_to_veterans",
+        "risk_tolerance":  0.35,
+        "veteran_loyalty": 0.78,
+        "youth_preference": 0.28,
+        "trade_frequency": 0.10,
     },
     {
         "team_abbr":      "APL",
-        "name":           "Victor 'V-Max' Castellano",
-        "archetype":      "win_now",
-        "risk_tolerance":  0.70,
-        "veteran_loyalty": 0.55,
-        "youth_preference": 0.20,
-        "trade_frequency": 0.18,
+        "name":           "Elliot 'Press On' Greer",
+        "archetype":      "analytics_driven",
+        "risk_tolerance":  0.52,
+        "veteran_loyalty": 0.48,
+        "youth_preference": 0.56,
+        "trade_frequency": 0.13,
     },
     {
-        "team_abbr":      "PRV",
+        "team_abbr":      "POC",
+        "name":           "Tessa 'Fireline' Cruz",
+        "archetype":      "wild_card",
+        "risk_tolerance":  0.86,
+        "veteran_loyalty": 0.30,
+        "youth_preference": 0.64,
+        "trade_frequency": 0.24,
+    },
+    {
+        "team_abbr":      "LAR",
+        "name":           "Victor 'V-Max' Castellano",
+        "archetype":      "win_now",
+        "risk_tolerance":  0.74,
+        "veteran_loyalty": 0.44,
+        "youth_preference": 0.25,
+        "trade_frequency": 0.20,
+    },
+    {
+        "team_abbr":      "CHA",
         "name":           "Frank 'Old School' Navarro",
         "archetype":      "loyal_to_veterans",
-        "risk_tolerance":  0.25,
-        "veteran_loyalty": 0.90,
-        "youth_preference": 0.10,
+        "risk_tolerance":  0.24,
+        "veteran_loyalty": 0.86,
+        "youth_preference": 0.16,
         "trade_frequency": 0.08,
     },
     {
-        "team_abbr":      "PGR",
+        "team_abbr":      "FLG",
         "name":           "Samira 'The Algorithm' Chen",
         "archetype":      "analytics_driven",
-        "risk_tolerance":  0.55,
-        "veteran_loyalty": 0.40,
-        "youth_preference": 0.45,
-        "trade_frequency": 0.14,
+        "risk_tolerance":  0.50,
+        "veteran_loyalty": 0.42,
+        "youth_preference": 0.44,
+        "trade_frequency": 0.12,
+    },
+    {
+        "team_abbr":      "MNK",
+        "name":           "Nora 'Blue Line' Halvorsen",
+        "archetype":      "analytics_driven",
+        "risk_tolerance":  0.38,
+        "veteran_loyalty": 0.62,
+        "youth_preference": 0.34,
+        "trade_frequency": 0.09,
+    },
+    {
+        "team_abbr":      "PAY",
+        "name":           "Marcus 'The Builder' Reed",
+        "archetype":      "aggressive_rebuilder",
+        "risk_tolerance":  0.82,
+        "veteran_loyalty": 0.18,
+        "youth_preference": 0.88,
+        "trade_frequency": 0.22,
     },
 ]
 
@@ -162,7 +339,7 @@ def round_robin_weeks(team_ids):
 
 
 def build_schedule(team_ids, num_rounds=4):
-    """4 rounds of round-robin = 12 weeks, 12 games per team."""
+    """Build repeated round-robin seasons; weeks scale with league size."""
     schedule = []
     week_offset = 1
 
@@ -210,8 +387,26 @@ def seed():
     team_ids = []
     for t in TEAMS:
         c.execute(
-            "INSERT INTO teams (city, name, abbreviation) VALUES (?, ?, ?)",
-            (t["city"], t["name"], t["abbreviation"]),
+            "INSERT INTO teams"
+            " (city, name, abbreviation, mascot, colors, logo_description,"
+            "  motto, arena, team_archetype, play_style, reputation, rivalry,"
+            "  signature_trait)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                t["city"],
+                t["name"],
+                t["abbreviation"],
+                t["mascot"],
+                t["colors"],
+                t["logo_description"],
+                t["motto"],
+                t["arena"],
+                t["team_archetype"],
+                t["play_style"],
+                t["reputation"],
+                t["rivalry"],
+                t["signature_trait"],
+            ),
         )
         team_ids.append(c.lastrowid)
 

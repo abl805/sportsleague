@@ -86,13 +86,15 @@ def view_league():
                ROUND(AVG(pgs.assists), 1) AS apg,
                COUNT(pgs.id)              AS gp
         FROM   player_game_stats pgs
+        JOIN   games g ON pgs.game_id = g.id
         JOIN   players p ON pgs.player_id = p.id
         JOIN   teams   t ON p.team_id = t.id
+        WHERE  g.season_year = ?
         GROUP  BY p.id
         HAVING gp >= 1
         ORDER  BY ppg DESC
         LIMIT  10
-    """).fetchall()
+    """, (season_year,)).fetchall()
 
     if not stars:
         print("  No stats yet.")

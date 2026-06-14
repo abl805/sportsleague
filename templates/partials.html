@@ -1,0 +1,95 @@
+{% macro standings_table(rows, compact=False) %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Team</th>
+          <th>W</th>
+          <th>L</th>
+          <th>PCT</th>
+          <th>PF</th>
+          <th>PA</th>
+          <th>DIFF</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.rank }}</td>
+            <td><a href="{{ url_for('team_page', abbr=row.abbreviation) }}">{{ row.team_name }}</a></td>
+            <td>{{ row.wins or 0 }}</td>
+            <td>{{ row.losses or 0 }}</td>
+            <td>{{ row.win_pct|pct }}</td>
+            <td>{{ row.points_for or 0 }}</td>
+            <td>{{ row.points_against or 0 }}</td>
+            <td class="{{ 'good' if row.point_diff and row.point_diff > 0 else 'bad' if row.point_diff and row.point_diff < 0 else '' }}">{{ row.point_diff|diff }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8">No standings yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endmacro %}
+
+{% macro leader_table(rows, stat='ppg') %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th>Team</th>
+          <th>Pos</th>
+          <th>PPG</th>
+          <th>RPG</th>
+          <th>APG</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.rank }}</td>
+            <td><a href="{{ url_for('player_page', player_id=row.id) }}">{{ row.player }}</a></td>
+            <td><a href="{{ url_for('team_page', abbr=row.abbreviation) }}">{{ row.abbreviation }}</a></td>
+            <td>{{ row.position }}</td>
+            <td class="{{ 'stat-focus' if stat == 'ppg' else '' }}">{{ row.ppg or 0 }}</td>
+            <td class="{{ 'stat-focus' if stat == 'rpg' else '' }}">{{ row.rpg or 0 }}</td>
+            <td class="{{ 'stat-focus' if stat == 'apg' else '' }}">{{ row.apg or 0 }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">No stat leaders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endmacro %}
+
+{% macro game_card(game) %}
+  <article class="score-card">
+    <a class="score-week" href="{{ url_for('game_page', game_id=game.id) }}">Week {{ game.week }}</a>
+    <div class="score-row {{ 'winner' if game.home_score and game.home_score > game.away_score else '' }}">
+      <span>{{ game.home_name }}</span>
+      <strong>{{ game.home_score if game.played or game.home_score is not none else "-" }}</strong>
+    </div>
+    <div class="score-row {{ 'winner' if game.away_score and game.away_score > game.home_score else '' }}">
+      <span>{{ game.away_name }}</span>
+      <strong>{{ game.away_score if game.played or game.away_score is not none else "-" }}</strong>
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro storyline_list(rows) %}
+  <div class="story-list">
+    {% for item in rows %}
+      <article class="story-item">
+        <div class="story-meta">Week {{ item.week }} / {{ item.abbreviation or item.team_name or "AIBL" }} / {{ (item.type or item.event_type)|event_label }}</div>
+        <h3>{{ item.primary_name or item.player or (item.event_type|event_label) }}</h3>
+        <p>{{ item.detail }}</p>
+      </article>
+    {% else %}
+      <p class="empty">No storylines yet. Once games and agents run, the league page will start to breathe.</p>
+    {% endfor %}
+  </div>
+{% endmacro %}

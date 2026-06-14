@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% from "partials.html" import game_card, storyline_list %}
+{% block title %}{{ detail.team.city }} {{ detail.team.name }}{% endblock %}
+{% block content %}
+<section class="team-hero">
+  <div class="team-abbr xl">{{ detail.team.abbreviation }}</div>
+  <div>
+    <p class="eyebrow">{{ detail.team.arena or "Arena TBA" }}</p>
+    <h1>{{ detail.team.city }} {{ detail.team.name }}</h1>
+    <p>{{ detail.team.play_style or detail.team.motto or "A franchise profile will grow as the league evolves." }}</p>
+  </div>
+  <dl class="hero-stats">
+    <div><dt>Record</dt><dd>{{ detail.record.wins if detail.record else 0 }}-{{ detail.record.losses if detail.record else 0 }}</dd></div>
+    <div><dt>Diff</dt><dd>{{ detail.record.point_diff|diff if detail.record else "-" }}</dd></div>
+    <div><dt>Chemistry</dt><dd>{{ "%.1f"|format(detail.chemistry.chemistry) if detail.chemistry else "-" }}</dd></div>
+  </dl>
+</section>
+
+<section class="section-grid">
+  <div class="panel wide">
+    <div class="section-head"><h2>Roster</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Player</th><th>Pos</th><th>Age</th><th>OVR</th><th>Salary</th><th>Yrs</th></tr></thead>
+        <tbody>
+          {% for p in detail.roster %}
+            <tr>
+              <td><a href="{{ url_for('player_page', player_id=p.id) }}">{{ p.player }}</a></td>
+              <td>{{ p.position }}</td>
+              <td>{{ p.age }}</td>
+              <td>{{ p.skill_rating }}</td>
+              <td>{{ p.salary|money }}</td>
+              <td>{{ p.years_remaining or "-" }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6">No active players.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="section-head"><h2>Recent Games</h2></div>
+    <div class="score-grid single">
+      {% for game in detail.recent_games %}
+        {{ game_card(game) }}
+      {% else %}
+        <p class="empty">No games played yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-grid">
+  <div class="panel">
+    <div class="section-head"><h2>Storylines</h2></div>
+    {{ storyline_list(detail.events) }}
+  </div>
+  <div class="panel">
+    <div class="section-head"><h2>Schedule</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Week</th><th>Site</th><th>Opponent</th><th>Result</th></tr></thead>
+        <tbody>
+          {% for game in detail.schedule %}
+            <tr>
+              <td>{{ game.week }}</td>
+              <td>{{ game.site }}</td>
+              <td>{{ game.opponent }}</td>
+              <td>{% if game.played %}<a href="{{ url_for('game_page', game_id=game.id) }}">{{ game.home_score }}-{{ game.away_score }}</a>{% else %}Upcoming{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -19,7 +19,17 @@ def create_tables():
             id          INTEGER PRIMARY KEY,
             city        TEXT NOT NULL,
             name        TEXT NOT NULL,
-            abbreviation TEXT NOT NULL
+            abbreviation TEXT NOT NULL,
+            mascot     TEXT,
+            colors      TEXT,
+            logo_description TEXT,
+            motto       TEXT,
+            arena       TEXT,
+            team_archetype TEXT,
+            play_style  TEXT,
+            reputation  TEXT,
+            rivalry     TEXT,
+            signature_trait TEXT
         );
 
         CREATE TABLE IF NOT EXISTS players (
@@ -30,7 +40,9 @@ def create_tables():
             age          INTEGER NOT NULL,
             position     TEXT NOT NULL,
             skill_rating INTEGER NOT NULL,
-            salary       INTEGER NOT NULL
+            salary       INTEGER NOT NULL,
+            status       TEXT DEFAULT 'active',
+            retired_season INTEGER
         );
 
         CREATE TABLE IF NOT EXISTS contracts (
@@ -180,6 +192,36 @@ def create_tables():
 
 def _migrate_existing_schema(conn):
     """Small additive migrations for databases created by earlier prototypes."""
+    player_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(players)").fetchall()
+    }
+    if "status" not in player_columns:
+        conn.execute("ALTER TABLE players ADD COLUMN status TEXT DEFAULT 'active'")
+    if "retired_season" not in player_columns:
+        conn.execute("ALTER TABLE players ADD COLUMN retired_season INTEGER")
+    conn.execute("UPDATE players SET status = COALESCE(status, 'active')")
+
+    team_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(teams)").fetchall()
+    }
+    team_migrations = {
+        "mascot": "TEXT",
+        "colors": "TEXT",
+        "logo_description": "TEXT",
+        "motto": "TEXT",
+        "arena": "TEXT",
+        "team_archetype": "TEXT",
+        "play_style": "TEXT",
+        "reputation": "TEXT",
+        "rivalry": "TEXT",
+        "signature_trait": "TEXT",
+    }
+    for column, column_type in team_migrations.items():
+        if column not in team_columns:
+            conn.execute(f"ALTER TABLE teams ADD COLUMN {column} {column_type}")
+
     columns = {
         row["name"]
         for row in conn.execute("PRAGMA table_info(league_state)").fetchall()

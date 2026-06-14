@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "partials.html" import storyline_list %}
+{% block title %}{{ detail.player.player }}{% endblock %}
+{% block content %}
+<section class="player-hero">
+  <div class="player-number">{{ detail.player.position }}</div>
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('team_page', abbr=detail.player.abbreviation) }}">{{ detail.player.team_name }}</a></p>
+    <h1>{{ detail.player.player }}</h1>
+    <p>Age {{ detail.player.age }} / OVR {{ detail.player.skill_rating }} / {{ detail.player.salary|money }} / {{ detail.player.archetype|event_label if detail.player.archetype else "Personality pending" }}</p>
+  </div>
+  <dl class="hero-stats">
+    <div><dt>PPG</dt><dd>{{ detail.averages.ppg or 0 }}</dd></div>
+    <div><dt>RPG</dt><dd>{{ detail.averages.rpg or 0 }}</dd></div>
+    <div><dt>APG</dt><dd>{{ detail.averages.apg or 0 }}</dd></div>
+  </dl>
+</section>
+<section class="section-grid">
+  <div class="panel wide">
+    <div class="section-head"><h2>Game Log</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Week</th><th>Opp</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead>
+        <tbody>
+          {% for g in detail.game_log %}
+            <tr>
+              <td><a href="{{ url_for('game_page', game_id=g.game_id) }}">{{ g.week }}</a></td>
+              <td>{{ g.opponent }}</td>
+              <td>{{ g.points }}</td>
+              <td>{{ g.rebounds }}</td>
+              <td>{{ g.assists }}</td>
+              <td>{{ g.steals }}</td>
+              <td>{{ g.blocks }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7">No games played yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="section-head"><h2>Player Notes</h2></div>
+    {{ storyline_list(detail.events) }}
+  </div>
+</section>
+{% endblock %}

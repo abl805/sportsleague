@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Commissioner Console</title>
+  <link rel="stylesheet" href="../static/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">AIBL</span>
+      <span class="brand-copy">Basketball League</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a class="" href="index.html">Home</a>
+      <a class="" href="standings.html">Standings</a>
+      <a class="" href="teams.html">Teams</a>
+      <a class="" href="players.html">Players</a>
+      <a class="" href="scores.html">Scores</a>
+      <a class="" href="leaders.html">Leaders</a>
+      <a class="" href="storylines.html">Storylines</a>
+      <a class="commissioner-link active" href="commissioner.html">Commissioner</a>
+    </nav>
+  </header>
+
+  
+    
+  
+
+  <main>
+    
+<section class="commissioner-hero">
+  <div>
+    <p class="eyebrow">Behind the scenes</p>
+    <h1>Commissioner Console</h1>
+    <p>Run the league, review exceptions, and prepare structured copy/paste packets.</p>
+  </div>
+  <dl class="hero-stats">
+    <div><dt>Season</dt><dd>2026</dd></div>
+    <div><dt>Week</dt><dd>1</dd></div>
+    <div><dt>Games</dt><dd>0</dd></div>
+  </dl>
+</section>
+
+<section class="section-grid">
+  <div class="panel">
+    <div class="section-head"><h2>League Operations</h2></div>
+    <div class="action-stack">
+      <form method="post" action="/commissioner/action">
+        <input type="hidden" name="action" value="run_week">
+        <button type="submit">Run Next Week</button>
+      </form>
+      <form method="post" action="/commissioner/action">
+        <input type="hidden" name="action" value="start_official">
+        <button type="submit">Start Official Week 1</button>
+      </form>
+      <form method="post" action="/commissioner/action">
+        <input type="hidden" name="action" value="run_offseason">
+        <button type="submit">Run Offseason</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>Pending Trades</h2></div>
+    
+      <p class="empty">No pending trades need review.</p>
+    
+  </div>
+</section>
+
+<section class="section-grid">
+  <div class="panel wide">
+    <div class="section-head"><h2>Manual ChatGPT Exchange</h2></div>
+    <form method="post" action="/commissioner/packet" class="packet-form">
+      <label>Context
+        <select name="context_type">
+          
+            <option value="League snapshot" >League snapshot</option>
+          
+            <option value="Team report" >Team report</option>
+          
+            <option value="Pending trade review" >Pending trade review</option>
+          
+            <option value="Commissioner note" >Commissioner note</option>
+          
+        </select>
+      </label>
+      <label>Team
+        <select name="team_id">
+          <option value="">None</option>
+          
+            <option value="2" >Appleton Papermakers</option>
+          
+            <option value="5" >Chattanooga Rapids</option>
+          
+            <option value="6" >Flagstaff Nightfall</option>
+          
+            <option value="4" >Laredo Vivos</option>
+          
+            <option value="7" >Mankato Polar</option>
+          
+            <option value="8" >Payson Peaks</option>
+          
+            <option value="3" >Pocatello Lava</option>
+          
+            <option value="1" >Santa Maria Vaqueros</option>
+          
+        </select>
+      </label>
+      <label>Pending Trade
+        <select name="trade_id">
+          <option value="">None</option>
+          
+        </select>
+      </label>
+      <label class="full-field">Commissioner Request
+        <textarea name="commissioner_request" rows="4">Summarize the league state, identify the strongest storylines, and suggest what I should watch next.</textarea>
+      </label>
+      <label class="full-field">Paste ChatGPT Response
+        <textarea name="pasted_response" rows="5"></textarea>
+      </label>
+      <button type="submit" name="build_packet" value="1">Build Packet / Parse Response</button>
+    </form>
+    
+    
+    
+  </div>
+
+  <div class="panel">
+    <div class="section-head"><h2>Recent Internal Logs</h2></div>
+    <div class="log-list">
+      
+        <p class="empty">No internal logs yet.</p>
+      
+    </div>
+  </div>
+</section>
+
+  </main>
+
+  <footer class="footer">
+    <span>Season 2026</span>
+    <span>Week 1</span>
+    <span>TEST</span>
+  </footer>
+</body>
+</html>

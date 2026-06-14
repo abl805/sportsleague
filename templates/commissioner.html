@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Commissioner Console{% endblock %}
+{% block content %}
+<section class="commissioner-hero">
+  <div>
+    <p class="eyebrow">Behind the scenes</p>
+    <h1>Commissioner Console</h1>
+    <p>Run the league, review exceptions, and prepare structured copy/paste packets.</p>
+  </div>
+  <dl class="hero-stats">
+    <div><dt>Season</dt><dd>{{ state.season_year }}</dd></div>
+    <div><dt>Week</dt><dd>{{ state.current_week }}</dd></div>
+    <div><dt>Games</dt><dd>{{ games_played }}</dd></div>
+  </dl>
+</section>
+
+<section class="section-grid">
+  <div class="panel">
+    <div class="section-head"><h2>League Operations</h2></div>
+    <div class="action-stack">
+      <form method="post" action="{{ url_for('commissioner_action') }}">
+        <input type="hidden" name="action" value="run_week">
+        <button type="submit">Run Next Week</button>
+      </form>
+      <form method="post" action="{{ url_for('commissioner_action') }}">
+        <input type="hidden" name="action" value="start_official">
+        <button type="submit">Start Official Week 1</button>
+      </form>
+      <form method="post" action="{{ url_for('commissioner_action') }}">
+        <input type="hidden" name="action" value="run_offseason">
+        <button type="submit">Run Offseason</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>Pending Trades</h2></div>
+    {% for trade in pending_trades %}
+      <article class="trade-card">
+        <div>
+          <p class="eyebrow">Trade #{{ trade.id }} / Week {{ trade.week }}</p>
+          <h3>{{ trade.proposing_team }} with {{ trade.receiving_team }}</h3>
+          <p><strong>{{ trade.proposing_team }} sends:</strong> {{ trade.offered_players|map(attribute='player')|join(', ') }}</p>
+          <p><strong>{{ trade.receiving_team }} sends:</strong> {{ trade.requested_players|map(attribute='player')|join(', ') }}</p>
+          {% if trade.rejection_reason %}<p class="note">{{ trade.rejection_reason }}</p>{% endif %}
+        </div>
+        <div class="trade-actions">
+          <form method="post" action="{{ url_for('commissioner_action') }}">
+            <input type="hidden" name="action" value="approve_trade">
+            <input type="hidden" name="trade_id" value="{{ trade.id }}">
+            <button type="submit">Approve</button>
+          </form>
+          <form method="post" action="{{ url_for('commissioner_action') }}">
+            <input type="hidden" name="action" value="skip_trade">
+            <input type="hidden" name="trade_id" value="{{ trade.id }}">
+            <button type="submit" class="secondary">Skip</button>
+          </form>
+          <form method="post" action="{{ url_for('commissioner_action') }}" class="veto-form">
+            <input type="hidden" name="action" value="veto_trade">
+            <input type="hidden" name="trade_id" value="{{ trade.id }}">
+            <input name="reason" placeholder="Veto reason">
+            <button type="submit" class="danger">Veto</button>
+          </form>
+        </div>
+      </article>
+    {% else %}
+      <p class="empty">No pending trades need review.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section-grid">
+  <div class="panel wide">
+    <div class="section-head"><h2>Manual ChatGPT Exchange</h2></div>
+    <form method="post" action="{{ url_for('commissioner_packet') }}" class="packet-form">
+      <label>Context
+        <select name="context_type">
+          {% for item in ["League snapshot", "Team report", "Pending trade review", "Commissioner note"] %}
+            <option value="{{ item }}" {{ "selected" if form.context_type == item else "" }}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Team
+        <select name="team_id">
+          <option value="">None</option>
+          {% for team in team_options %}
+            <option value="{{ team.id }}" {{ "selected" if form.team_id == team.id else "" }}>{{ team.team_name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Pending Trade
+        <select name="trade_id">
+          <option value="">None</option>
+          {% for trade in trade_options %}
+            <option value="{{ trade.id }}" {{ "selected" if form.trade_id == trade.id else "" }}>#{{ trade.id }} {{ trade.proposing_team }} / {{ trade.receiving_team }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="full-field">Commissioner Request
+        <textarea name="commissioner_request" rows="4">{{ form.commissioner_request or "Summarize the league state, identify the strongest storylines, and suggest what I should watch next." }}</textarea>
+      </label>
+      <label class="full-field">Paste ChatGPT Response
+        <textarea name="pasted_response" rows="5">{{ form.pasted_response or "" }}</textarea>
+      </label>
+      <button type="submit" name="build_packet" value="1">Build Packet / Parse Response</button>
+    </form>
+    {% if packet %}
+      <h3>Copy This To ChatGPT</h3>
+      <textarea class="copy-box" rows="18" readonly>{{ packet }}</textarea>
+    {% endif %}
+    {% if parse_warning %}<p class="note">{{ parse_warning }}</p>{% endif %}
+    {% if parsed_response %}
+      <h3>Parsed Response</h3>
+      <div class="parsed-response">
+        {% if parsed_response.summary %}<p>{{ parsed_response.summary }}</p>{% endif %}
+        {% for key, title in [("recommendations", "Recommendations"), ("suggested_actions", "Suggested Actions"), ("questions", "Questions"), ("notes_for_commissioner", "Notes")] %}
+          <h4>{{ title }}</h4>
+          <ul>
+            {% for item in parsed_response.get(key, []) %}
+              <li>{{ item }}</li>
+            {% else %}
+              <li>None.</li>
+            {% endfor %}
+          </ul>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="section-head"><h2>Recent Internal Logs</h2></div>
+    <div class="log-list">
+      {% for log in logs %}
+        <article>
+          <div class="story-meta">{{ log.source }} / {{ log.abbreviation }} / Week {{ log.week }}</div>
+          <strong>{{ log.actor }}: {{ log.event_type|event_label }}</strong>
+          <p>{{ log.detail }}</p>
+        </article>
+      {% else %}
+        <p class="empty">No internal logs yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

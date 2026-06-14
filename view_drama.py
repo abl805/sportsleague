@@ -61,6 +61,7 @@ def view_drama():
         " FROM players p"
         " JOIN player_personalities pp ON p.id = pp.player_id"
         " JOIN teams t ON p.team_id = t.id"
+        " WHERE COALESCE(p.status, 'active') = 'active'"
     ).fetchall():
         m = get_current_morale(conn, row["id"])
         if m < 45:

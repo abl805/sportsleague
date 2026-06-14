@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "partials.html" import game_card %}
+{% block title %}Scores{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">Results</p>
+  <h1>Scores</h1>
+  <p>Jump by week, open a game, and inspect the box score.</p>
+</section>
+<section class="filters">
+  {% for week in played_weeks %}
+    <a class="{{ 'active' if selected_week == week else '' }}" href="{{ url_for('scores', week=week) }}">Week {{ week }}</a>
+  {% else %}
+    <span>No played weeks yet.</span>
+  {% endfor %}
+</section>
+<section class="panel full">
+  <div class="section-head">
+    <h2>{{ "Week " ~ selected_week if selected_week else "No results yet" }}</h2>
+  </div>
+  <div class="score-grid">
+    {% for game in games %}
+      {{ game_card(game) }}
+    {% else %}
+      <p class="empty">No games have been played yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

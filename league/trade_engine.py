@@ -64,6 +64,8 @@ def validate_trade(conn, trade_id):
         p = c.execute("SELECT * FROM players WHERE id = ?", (pid,)).fetchone()
         if not p:
             return False, f"Offered player id={pid} does not exist."
+        if (p["status"] or "active") != "active":
+            return False, f"{p['first_name']} {p['last_name']} is not on an active roster."
         if p["team_id"] != prop_team:
             return False, (
                 f"{p['first_name']} {p['last_name']} is no longer on the proposing team."
@@ -73,6 +75,8 @@ def validate_trade(conn, trade_id):
         p = c.execute("SELECT * FROM players WHERE id = ?", (pid,)).fetchone()
         if not p:
             return False, f"Requested player id={pid} does not exist."
+        if (p["status"] or "active") != "active":
+            return False, f"{p['first_name']} {p['last_name']} is not on an active roster."
         if p["team_id"] != recv_team:
             return False, (
                 f"{p['first_name']} {p['last_name']} is no longer on the receiving team."
@@ -81,7 +85,9 @@ def validate_trade(conn, trade_id):
     # Cap check: compute team totals, then swap
     def team_total(team_id):
         row = c.execute(
-            "SELECT SUM(salary) AS s FROM players WHERE team_id = ?", (team_id,)
+            "SELECT SUM(salary) AS s FROM players "
+            "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+            (team_id,),
         ).fetchone()
         return row["s"] or 0
 
