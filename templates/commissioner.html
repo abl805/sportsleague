@@ -135,64 +135,72 @@
   </div>
 </section>
 
-{# ── CHATGPT + LOGS ──────────────────────────────────────────── #}
-<section class="section-grid">
-  <div class="panel wide">
-    <div class="section-head"><h2>ChatGPT Packet Builder</h2></div>
-    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 16px;">Build a structured data packet to copy into ChatGPT, then paste the response back here to parse it.</p>
-    <form method="post" action="{{ url_for('commissioner_packet') }}" class="packet-form">
-      <label>Context Type
-        <select name="context_type">
-          {% for item in ["League snapshot", "Team report", "Pending trade review", "Commissioner note"] %}
-            <option value="{{ item }}" {{ "selected" if form.context_type == item else "" }}>{{ item }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label>Team
-        <select name="team_id">
-          <option value="">None</option>
-          {% for team in team_options %}
-            <option value="{{ team.id }}" {{ "selected" if form.team_id == team.id else "" }}>{{ team.team_name }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label>Pending Trade
-        <select name="trade_id">
-          <option value="">None</option>
-          {% for trade in trade_options %}
-            <option value="{{ trade.id }}" {{ "selected" if form.trade_id == trade.id else "" }}>#{{ trade.id }} {{ trade.proposing_team }} / {{ trade.receiving_team }}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label class="full-field">Your Request to ChatGPT
-        <textarea name="commissioner_request" rows="4">{{ form.commissioner_request or "Summarize the league state, identify the strongest storylines, and suggest what I should watch next." }}</textarea>
-      </label>
-      <label class="full-field">Paste ChatGPT Response Here
-        <textarea name="pasted_response" rows="5">{{ form.pasted_response or "" }}</textarea>
-      </label>
-      <button type="submit" name="build_packet" value="1">Build Packet / Parse Response</button>
-    </form>
-    {% if packet %}
-      <h3 style="margin-top:20px;">Copy This Into ChatGPT</h3>
-      <textarea class="copy-box" rows="18" readonly>{{ packet }}</textarea>
-    {% endif %}
-    {% if parse_warning %}<p class="note">{{ parse_warning }}</p>{% endif %}
-    {% if parsed_response %}
-      <h3 style="margin-top:20px;">Parsed Response</h3>
-      <div class="parsed-response">
-        {% if parsed_response.summary %}<p>{{ parsed_response.summary }}</p>{% endif %}
-        {% for key, title in [("recommendations", "Recommendations"), ("suggested_actions", "Suggested Actions"), ("questions", "Questions"), ("notes_for_commissioner", "Notes")] %}
-          <h4>{{ title }}</h4>
-          <ul>
-            {% for item in parsed_response.get(key, []) %}
-              <li>{{ item }}</li>
-            {% else %}
-              <li style="color:var(--muted)">None.</li>
-            {% endfor %}
-          </ul>
-        {% endfor %}
+{# ── CHATGPT PACKETS + LOGS ──────────────────────────────────── #}
+<section class="section-grid" style="grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);">
+  <div class="panel">
+    <div class="section-head">
+      <h2>ChatGPT Packets</h2>
+      <span style="color:var(--muted);font-size:0.78rem;">Auto-built &mdash; click copy, paste into ChatGPT</span>
+    </div>
+
+    {# League Snapshot #}
+    <div class="packet-block">
+      <div class="packet-block-head">
+        <span class="packet-label">League Snapshot</span>
+        <span style="color:var(--muted);font-size:0.8rem;">Season {{ state.season_year }} &middot; Week {{ state.current_week }}</span>
       </div>
+      {% if auto_snapshot %}
+        <textarea class="copy-box" rows="10" readonly id="snapshot-packet">{{ auto_snapshot }}</textarea>
+        <button type="button" class="btn-copy secondary" data-target="snapshot-packet">Copy Snapshot</button>
+      {% else %}
+        <p class="empty">No data yet &mdash; run Week 1 first.</p>
+      {% endif %}
+    </div>
+
+    {# Team Reports #}
+    {% if auto_team_packets %}
+    <div class="packet-block">
+      <div class="packet-block-head">
+        <span class="packet-label">Team Report</span>
+        <select id="team-packet-select" onchange="switchTeamPacket()">
+          {% for tp in auto_team_packets %}
+            <option value="{{ loop.index0 }}">{{ tp.team_name }} ({{ tp.abbreviation }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <textarea class="copy-box" rows="10" readonly id="team-packet">{{ auto_team_packets[0].packet }}</textarea>
+      <button type="button" class="btn-copy secondary" data-target="team-packet">Copy Team Report</button>
+    </div>
     {% endif %}
+
+    {# Paste Response Back #}
+    <div class="packet-block">
+      <div class="packet-block-head">
+        <span class="packet-label">Paste ChatGPT Response</span>
+      </div>
+      <form method="post" action="{{ url_for('commissioner_packet') }}">
+        <input type="hidden" name="context_type" value="League snapshot">
+        <textarea name="pasted_response" rows="6" placeholder="Paste ChatGPT&#39;s response here to parse it back into the app&hellip;">{{ form.pasted_response or "" }}</textarea>
+        <button type="submit" name="build_packet" value="1" style="margin-top:10px;">Parse Response</button>
+      </form>
+      {% if parse_warning %}<p class="note" style="margin-top:10px;">{{ parse_warning }}</p>{% endif %}
+      {% if parsed_response %}
+        <div class="parsed-response" style="margin-top:16px;">
+          {% if parsed_response.summary %}<p>{{ parsed_response.summary }}</p>{% endif %}
+          {% for key, title in [("recommendations", "Recommendations"), ("suggested_actions", "Suggested Actions"), ("questions", "Questions"), ("notes_for_commissioner", "Notes")] %}
+            <h4>{{ title }}</h4>
+            <ul>
+              {% for item in parsed_response.get(key, []) %}
+                <li>{{ item }}</li>
+              {% else %}
+                <li style="color:var(--muted)">None.</li>
+              {% endfor %}
+            </ul>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
   </div>
 
   <div class="panel">
@@ -210,4 +218,36 @@
     </div>
   </div>
 </section>
+
+<script>
+var _teamPackets = {{ auto_team_packets | map(attribute='packet') | list | tojson }};
+
+function switchTeamPacket() {
+  var idx = parseInt(document.getElementById('team-packet-select').value, 10);
+  document.getElementById('team-packet').value = _teamPackets[idx];
+}
+
+document.querySelectorAll('.btn-copy').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var ta = document.getElementById(btn.dataset.target);
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    var orig = btn.textContent;
+    try {
+      navigator.clipboard.writeText(ta.value).then(function() {
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 1800);
+      }).catch(function() {
+        document.execCommand('copy');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 1800);
+      });
+    } catch(e) {
+      document.execCommand('copy');
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = orig; }, 1800);
+    }
+  });
+});
+</script>
 {% endblock %}

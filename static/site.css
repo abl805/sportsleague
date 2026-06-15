@@ -699,6 +699,56 @@ label {
 .note { color: var(--blue); font-weight: 700; }
 .empty { color: var(--muted); font-size: 0.9rem; }
 
+/* ── PACKET BLOCKS ── */
+.packet-block {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.packet-block:last-child { border-bottom: none; }
+
+.packet-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.packet-label {
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+
+.packet-block-head select {
+  width: auto;
+  min-width: 200px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+.btn-copy {
+  width: auto;
+  min-width: 150px;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  padding: 8px 16px;
+  min-height: 36px;
+}
+
+h4 {
+  margin: 14px 0 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
 /* ── FLASH MESSAGES ── */
 .flash-band {
   width: min(1440px, 100%);

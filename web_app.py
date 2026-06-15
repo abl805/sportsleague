@@ -282,7 +282,45 @@ def commissioner_data(packet=None, parsed_response=None, parse_warning=None, for
             "form": form or {},
         }
 
-    return with_conn(load)
+    data = with_conn(load)
+    if not data:
+        return None
+
+    state = data["state"]
+    season = state["season_year"]
+    week = state["current_week"]
+
+    snap_req = (
+        f"Season {season}, Week {week}: Summarize the league state, identify the "
+        f"strongest storylines across all teams, and suggest what the commissioner "
+        f"should watch heading into next week."
+    )
+    try:
+        data["auto_snapshot"] = build_chatgpt_packet("League snapshot", snap_req)
+    except Exception:
+        data["auto_snapshot"] = None
+
+    auto_team_packets = []
+    for team in data["team_options"]:
+        try:
+            team_req = (
+                f"Give a full narrative report on the {team['team_name']}: recent "
+                f"game results, roster health and standout performers, GM personality "
+                f"and trade tendencies, and what storylines the commissioner should "
+                f"follow for this team."
+            )
+            pkt = build_chatgpt_packet("Team report", team_req, team_id=team["id"])
+            auto_team_packets.append({
+                "id": team["id"],
+                "team_name": team["team_name"],
+                "abbreviation": team["abbreviation"],
+                "packet": pkt,
+            })
+        except Exception:
+            pass
+    data["auto_team_packets"] = auto_team_packets
+
+    return data
 
 
 @app.route("/commissioner")
