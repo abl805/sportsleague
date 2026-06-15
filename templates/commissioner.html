@@ -1,11 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Commissioner Console{% endblock %}
 {% block content %}
-<section class="commissioner-hero">
+
+{# ── NEXT ACTION BANNER ─────────────────────────────────────── #}
+{% if state.mode == 'offseason' %}
+  <div class="next-action offseason">
+    <div>
+      <p class="na-label">Offseason Mode</p>
+      <h2>The regular season is over.</h2>
+      <p>Run the offseason to process contracts, update rosters, and prepare for next season.</p>
+    </div>
+    <form method="post" action="{{ url_for('commissioner_action') }}">
+      <input type="hidden" name="action" value="run_offseason">
+      <button type="submit" class="cta-big">Run Offseason &rarr;</button>
+    </form>
+  </div>
+
+{% elif pending_trades %}
+  <div class="next-action trades-pending">
+    <div>
+      <p class="na-label">Action Required &mdash; {{ pending_trades|length }} Trade{{ 's' if pending_trades|length != 1 else '' }} Pending</p>
+      <h2>Trades are waiting for your review.</h2>
+      <p>GM agents proposed {{ pending_trades|length }} trade{{ 's' if pending_trades|length != 1 else '' }} this week. Approve, skip, or veto each one before simulating the next week.</p>
+    </div>
+    <div>
+      <p style="color:var(--muted);font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;">After reviewing trades:</p>
+      <form method="post" action="{{ url_for('commissioner_action') }}">
+        <input type="hidden" name="action" value="run_week">
+        <button type="submit" class="secondary">Then Run Week {{ state.current_week + 1 }} &rarr;</button>
+      </form>
+    </div>
+  </div>
+
+{% elif games_played == 0 %}
+  <div class="next-action ready">
+    <div>
+      <p class="na-label">Season {{ state.season_year }} &mdash; Ready to Start</p>
+      <h2>No games have been played yet.</h2>
+      <p>Kick off the season by starting Official Week 1. This locks in rosters and begins regular-season play.</p>
+    </div>
+    <form method="post" action="{{ url_for('commissioner_action') }}">
+      <input type="hidden" name="action" value="start_official">
+      <button type="submit" class="cta-big">Start Official Week 1 &rarr;</button>
+    </form>
+  </div>
+
+{% else %}
+  <div class="next-action ready">
+    <div>
+      <p class="na-label">Season {{ state.season_year }} &mdash; Week {{ state.current_week }} Complete</p>
+      <h2>Ready to simulate Week {{ state.current_week + 1 }}.</h2>
+      <p>Running a week simulates all {{ games_played // state.current_week if state.current_week else 0 }} games, updates player morale, and lets GM agents propose new trades.</p>
+    </div>
+    <form method="post" action="{{ url_for('commissioner_action') }}">
+      <input type="hidden" name="action" value="run_week">
+      <button type="submit" class="cta-big">Run Week {{ state.current_week + 1 }} &rarr;</button>
+    </form>
+  </div>
+{% endif %}
+
+{# ── HERO ────────────────────────────────────────────────────── #}
+<section class="commissioner-hero" style="margin-top:16px;">
   <div>
     <p class="eyebrow">Behind the scenes</p>
     <h1>Commissioner Console</h1>
-    <p>Run the league, review exceptions, and prepare structured copy/paste packets.</p>
+    <p>Run the league, review trades, and send structured packets to ChatGPT for AI commentary.</p>
   </div>
   <dl class="hero-stats">
     <div><dt>Season</dt><dd>{{ state.season_year }}</dd></div>
@@ -14,32 +73,39 @@
   </dl>
 </section>
 
+{# ── OPERATIONS + TRADES ─────────────────────────────────────── #}
 <section class="section-grid">
   <div class="panel">
-    <div class="section-head"><h2>League Operations</h2></div>
+    <div class="section-head"><h2>All League Operations</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 16px;">Use these any time — or just follow the Next Action banner above.</p>
     <div class="action-stack">
       <form method="post" action="{{ url_for('commissioner_action') }}">
         <input type="hidden" name="action" value="run_week">
-        <button type="submit">Run Next Week</button>
+        <button type="submit">Simulate Next Week</button>
       </form>
       <form method="post" action="{{ url_for('commissioner_action') }}">
         <input type="hidden" name="action" value="start_official">
-        <button type="submit">Start Official Week 1</button>
+        <button type="submit" class="secondary">Start Official Week 1</button>
       </form>
       <form method="post" action="{{ url_for('commissioner_action') }}">
         <input type="hidden" name="action" value="run_offseason">
-        <button type="submit">Run Offseason</button>
+        <button type="submit" class="secondary">Run Offseason</button>
       </form>
     </div>
   </div>
 
   <div class="panel wide">
-    <div class="section-head"><h2>Pending Trades</h2></div>
+    <div class="section-head">
+      <h2>Pending Trades</h2>
+      {% if pending_trades %}
+        <span style="color:var(--gold);font-size:0.78rem;font-weight:800;">{{ pending_trades|length }} awaiting review</span>
+      {% endif %}
+    </div>
     {% for trade in pending_trades %}
       <article class="trade-card">
         <div>
-          <p class="eyebrow">Trade #{{ trade.id }} / Week {{ trade.week }}</p>
-          <h3>{{ trade.proposing_team }} with {{ trade.receiving_team }}</h3>
+          <p class="eyebrow">Trade #{{ trade.id }} &mdash; Week {{ trade.week }}</p>
+          <h3>{{ trade.proposing_team }} &harr; {{ trade.receiving_team }}</h3>
           <p><strong>{{ trade.proposing_team }} sends:</strong> {{ trade.offered_players|map(attribute='player')|join(', ') }}</p>
           <p><strong>{{ trade.receiving_team }} sends:</strong> {{ trade.requested_players|map(attribute='player')|join(', ') }}</p>
           {% if trade.rejection_reason %}<p class="note">{{ trade.rejection_reason }}</p>{% endif %}
@@ -58,22 +124,24 @@
           <form method="post" action="{{ url_for('commissioner_action') }}" class="veto-form">
             <input type="hidden" name="action" value="veto_trade">
             <input type="hidden" name="trade_id" value="{{ trade.id }}">
-            <input name="reason" placeholder="Veto reason">
+            <input name="reason" placeholder="Veto reason…">
             <button type="submit" class="danger">Veto</button>
           </form>
         </div>
       </article>
     {% else %}
-      <p class="empty">No pending trades need review.</p>
+      <p class="empty">No pending trades — you're clear to simulate the next week.</p>
     {% endfor %}
   </div>
 </section>
 
+{# ── CHATGPT + LOGS ──────────────────────────────────────────── #}
 <section class="section-grid">
   <div class="panel wide">
-    <div class="section-head"><h2>Manual ChatGPT Exchange</h2></div>
+    <div class="section-head"><h2>ChatGPT Packet Builder</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 16px;">Build a structured data packet to copy into ChatGPT, then paste the response back here to parse it.</p>
     <form method="post" action="{{ url_for('commissioner_packet') }}" class="packet-form">
-      <label>Context
+      <label>Context Type
         <select name="context_type">
           {% for item in ["League snapshot", "Team report", "Pending trade review", "Commissioner note"] %}
             <option value="{{ item }}" {{ "selected" if form.context_type == item else "" }}>{{ item }}</option>
@@ -96,21 +164,21 @@
           {% endfor %}
         </select>
       </label>
-      <label class="full-field">Commissioner Request
+      <label class="full-field">Your Request to ChatGPT
         <textarea name="commissioner_request" rows="4">{{ form.commissioner_request or "Summarize the league state, identify the strongest storylines, and suggest what I should watch next." }}</textarea>
       </label>
-      <label class="full-field">Paste ChatGPT Response
+      <label class="full-field">Paste ChatGPT Response Here
         <textarea name="pasted_response" rows="5">{{ form.pasted_response or "" }}</textarea>
       </label>
       <button type="submit" name="build_packet" value="1">Build Packet / Parse Response</button>
     </form>
     {% if packet %}
-      <h3>Copy This To ChatGPT</h3>
+      <h3 style="margin-top:20px;">Copy This Into ChatGPT</h3>
       <textarea class="copy-box" rows="18" readonly>{{ packet }}</textarea>
     {% endif %}
     {% if parse_warning %}<p class="note">{{ parse_warning }}</p>{% endif %}
     {% if parsed_response %}
-      <h3>Parsed Response</h3>
+      <h3 style="margin-top:20px;">Parsed Response</h3>
       <div class="parsed-response">
         {% if parsed_response.summary %}<p>{{ parsed_response.summary }}</p>{% endif %}
         {% for key, title in [("recommendations", "Recommendations"), ("suggested_actions", "Suggested Actions"), ("questions", "Questions"), ("notes_for_commissioner", "Notes")] %}
@@ -119,7 +187,7 @@
             {% for item in parsed_response.get(key, []) %}
               <li>{{ item }}</li>
             {% else %}
-              <li>None.</li>
+              <li style="color:var(--muted)">None.</li>
             {% endfor %}
           </ul>
         {% endfor %}
