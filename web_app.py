@@ -290,35 +290,67 @@ def commissioner_data(packet=None, parsed_response=None, parse_warning=None, for
     season = state["season_year"]
     week = state["current_week"]
 
-    snap_req = (
-        f"Season {season}, Week {week}: Summarize the league state, identify the "
-        f"strongest storylines across all teams, and suggest what the commissioner "
-        f"should watch heading into next week."
+    def try_packet(context_type, prompt, **kwargs):
+        try:
+            return build_chatgpt_packet(context_type, prompt, **kwargs)
+        except Exception:
+            return None
+
+    data["auto_snapshot"] = try_packet(
+        "League snapshot",
+        f"Season {season}, Week {week}: Summarize the league — standings story, "
+        f"top performers, biggest upsets or surprises, and which storylines are "
+        f"heating up right now."
     )
-    try:
-        data["auto_snapshot"] = build_chatgpt_packet("League snapshot", snap_req)
-    except Exception:
-        data["auto_snapshot"] = None
+    data["auto_power_rankings"] = try_packet(
+        "League snapshot",
+        f"Season {season}, Week {week}: Rank all teams from 1 (strongest) to last "
+        f"(weakest). For each team write one sentence covering their record, best "
+        f"player, and current outlook. Bold the #1 team."
+    )
+    data["auto_week_preview"] = try_packet(
+        "League snapshot",
+        f"Season {season}: Preview Week {week + 1}. Which matchups matter most for "
+        f"the standings? Which players are must-watches? What storylines could shift "
+        f"in the coming week?"
+    )
 
     auto_team_packets = []
     for team in data["team_options"]:
-        try:
-            team_req = (
-                f"Give a full narrative report on the {team['team_name']}: recent "
-                f"game results, roster health and standout performers, GM personality "
-                f"and trade tendencies, and what storylines the commissioner should "
-                f"follow for this team."
-            )
-            pkt = build_chatgpt_packet("Team report", team_req, team_id=team["id"])
+        pkt = try_packet(
+            "Team report",
+            f"Write a narrative team report on the {team['team_name']}: recent game "
+            f"results, standout and struggling players, GM personality and trade "
+            f"tendencies, and what the commissioner should keep an eye on.",
+            team_id=team["id"]
+        )
+        if pkt:
             auto_team_packets.append({
                 "id": team["id"],
                 "team_name": team["team_name"],
                 "abbreviation": team["abbreviation"],
                 "packet": pkt,
             })
-        except Exception:
-            pass
     data["auto_team_packets"] = auto_team_packets
+
+    auto_trade_packets = []
+    for trade in data["pending_trades"]:
+        pkt = try_packet(
+            "Pending trade review",
+            f"Analyze this proposed trade between {trade['proposing_team']} and "
+            f"{trade['receiving_team']}. Is it fair? Who benefits more? What is each "
+            f"GM's likely motivation? Should the commissioner approve, push back, or "
+            f"veto it? Give a clear recommendation.",
+            trade_id=trade["id"]
+        )
+        if pkt:
+            auto_trade_packets.append({
+                "trade_id": trade["id"],
+                "proposing_team": trade["proposing_team"],
+                "receiving_team": trade["receiving_team"],
+                "packet": pkt,
+            })
+    data["auto_trade_packets"] = auto_trade_packets
 
     return data
 

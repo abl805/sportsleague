@@ -699,45 +699,68 @@ label {
 .note { color: var(--blue); font-weight: 700; }
 .empty { color: var(--muted); font-size: 0.9rem; }
 
-/* ── PACKET BLOCKS ── */
-.packet-block {
-  padding: 18px 0;
-  border-bottom: 1px solid var(--border);
+/* ── PACKET CARDS ── */
+.packet-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
-.packet-block:last-child { border-bottom: none; }
-
-.packet-block-head {
+.packet-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  background: var(--surface-2);
+  border-radius: 8px;
 }
 
-.packet-label {
-  font-size: 0.68rem;
+.packet-card.accent-orange { border-left-color: var(--accent); }
+.packet-card.accent-gold   { border-left-color: var(--gold); }
+.packet-card.accent-blue   { border-left-color: var(--blue); }
+.packet-card.accent-green  { border-left-color: var(--green); }
+.packet-card.accent-red    { border-left-color: var(--red); }
+
+.pc-type {
+  margin: 0;
+  font-size: 0.65rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--accent);
+  color: var(--muted);
 }
 
-.packet-block-head select {
-  width: auto;
-  min-width: 200px;
-  padding: 6px 10px;
+.packet-card.accent-orange .pc-type { color: var(--accent); }
+.packet-card.accent-gold   .pc-type { color: var(--gold); }
+.packet-card.accent-blue   .pc-type { color: var(--blue); }
+.packet-card.accent-green  .pc-type { color: var(--green); }
+.packet-card.accent-red    .pc-type { color: var(--red); }
+
+.packet-card h3 { margin: 0; font-size: 0.97rem; }
+
+.pc-prompt {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--border-bright);
+  color: var(--muted);
   font-size: 0.82rem;
+  font-style: italic;
+}
+
+.pc-box {
+  flex: 1;
+  margin: 0;
+  font-size: 0.75rem;
+  min-height: 120px;
 }
 
 .btn-copy {
-  width: auto;
-  min-width: 150px;
-  margin-top: 8px;
-  font-size: 0.75rem;
-  padding: 8px 16px;
-  min-height: 36px;
+  width: 100%;
+  margin: 0;
+  font-size: 0.78rem;
+  min-height: 38px;
 }
 
 h4 {
@@ -829,6 +852,7 @@ h4 {
   .section-grid,
   .trade-card,
   .packet-form,
+  .packet-cards,
   .next-action {
     grid-template-columns: 1fr;
   }
