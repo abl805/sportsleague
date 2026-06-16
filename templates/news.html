@@ -10,11 +10,11 @@
 
 {% if articles %}
 <section class="panel full">
-  <div class="section-head"><h2>Commissioner Reports</h2></div>
+  <div class="section-head"><h2>League News</h2></div>
   <div class="story-list">
     {% for art in articles %}
       <article class="story-item article-item">
-        <div class="story-meta">Week {{ art.week }} / AAIBL / Report</div>
+        <div class="story-meta">Week {{ art.week }} / AAIBL / League News</div>
         <h3>{{ art.headline }}</h3>
         <p>{{ art.body }}</p>
       </article>
