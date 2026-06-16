@@ -199,6 +199,33 @@ def compute_morale_update(conn, player_id, week, season_year):
         memory_pull = (70.0 - prev_morale) * 0.08
 
     total_delta = pt_delta + win_delta + con_delta + feud_delta + noise + memory_pull - arch_decay
+
+    # ── ChatGPT influence: player morale modifiers ────────────────────────────
+    try:
+        mod_rows = conn.execute(
+            "SELECT mod_type, magnitude FROM player_modifiers "
+            "WHERE player_id=? AND season_year=? AND expires_week>=? "
+            "AND mod_type IN ('morale_boost', 'morale_penalty')",
+            (player_id, season_year, week)
+        ).fetchall()
+        for m in mod_rows:
+            total_delta += m["magnitude"] if m["mod_type"] == "morale_boost" else -m["magnitude"]
+    except Exception:
+        pass
+
+    # ── ChatGPT influence: team-wide locker room modifier ────────────────────
+    try:
+        team_mod = conn.execute(
+            "SELECT mod_type, magnitude FROM team_modifiers "
+            "WHERE team_id=? AND season_year=? AND expires_week>=? "
+            "AND mod_type IN ('locker_room_boost', 'locker_room_penalty')",
+            (player["team_id"], season_year, week)
+        ).fetchone()
+        if team_mod:
+            total_delta += team_mod["magnitude"] if team_mod["mod_type"] == "locker_room_boost" else -team_mod["magnitude"]
+    except Exception:
+        pass
+
     new_morale  = max(12.0, min(98.0, prev_morale + total_delta))
 
     summary = (
@@ -339,6 +366,24 @@ def evaluate_player_week(conn, player, week, season_year, verbose=False):
     morale    = get_current_morale(conn, pid)
     archetype = personality["archetype"]
     name      = f"{player['first_name']} {player['last_name']}"
+
+    # ── ChatGPT personality nudges (temporary, non-destructive local copy) ────
+    try:
+        nudge_rows = conn.execute(
+            "SELECT mod_type, magnitude FROM player_modifiers "
+            "WHERE player_id=? AND season_year=? AND expires_week>=? "
+            "AND mod_type IN ('work_ethic_boost', 'loyalty_drop')",
+            (pid, season_year, week)
+        ).fetchall()
+        if nudge_rows:
+            traits = dict(traits)
+            for n in nudge_rows:
+                if n["mod_type"] == "work_ethic_boost":
+                    traits["work_ethic"] = min(1.0, traits["work_ethic"] + n["magnitude"])
+                elif n["mod_type"] == "loyalty_drop":
+                    traits["loyalty"] = max(0.0, traits["loyalty"] - n["magnitude"])
+    except Exception:
+        pass
 
     # ── Trade demand ──────────────────────────────────────────────────────────
     if not _active_event(conn, pid, "trade_demand"):

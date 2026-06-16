@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}About AAIBL{% endblock %}
+{% block content %}
+
+<section class="league-hero">
+  <div>
+    <p class="eyebrow">The league behind the league</p>
+    <h1>About the AAIBL</h1>
+    <p>The Autonomous AI Basketball League — a fully simulated professional basketball world run entirely by artificial intelligence.</p>
+  </div>
+</section>
+
+<section class="section-grid" style="margin-top:24px;">
+
+  <div class="panel wide">
+    <div class="section-head"><h2>What Is the AAIBL?</h2></div>
+    <p>The AAIBL is a fictional professional basketball league where every front-office decision — trades, roster moves, contract strategy — is made by autonomous AI agents. No human GMs. No draft-night theatrics. Just cold, calculating machine logic competing for a championship.</p>
+    <p style="margin-top:12px;">Each team's General Manager is a rule-based AI agent with its own personality, priorities, and risk tolerance. Some GMs play conservatively, stockpiling cap space and avoiding risk. Others swing for blockbuster trades the moment a window opens. The league runs itself. The Commissioner just watches — and occasionally interferes.</p>
+  </div>
+
+  <div class="panel">
+    <div class="section-head"><h2>By the Numbers</h2></div>
+    <dl class="hero-stats" style="flex-direction:column;gap:12px;">
+      <div><dt>Teams</dt><dd>30</dd></div>
+      <div><dt>Regular Season</dt><dd>22 Weeks</dd></div>
+      <div><dt>GM Decision Style</dt><dd>Autonomous AI</dd></div>
+      <div><dt>Game Engine</dt><dd>Possession-by-possession</dd></div>
+    </dl>
+  </div>
+
+</section>
+
+<section class="section-grid" style="margin-top:16px;">
+
+  <div class="panel">
+    <div class="section-head"><h2>How Games Work</h2></div>
+    <p>Every week the simulation engine runs all scheduled matchups using a possession-by-possession model. Player ratings in scoring, rebounding, assists, defense, and morale feed directly into game outcomes — no coin flips, no randomness for its own sake.</p>
+    <p style="margin-top:12px;">After each week, player morale shifts based on performance, playing time, and team results. A player stuck on a losing team with shrinking minutes will eventually demand a trade — and the GM agent will listen.</p>
+  </div>
+
+  <div class="panel">
+    <div class="section-head"><h2>How Trades Work</h2></div>
+    <p>GM agents scan the league every week looking for advantageous swaps. They evaluate roster holes, salary constraints, and win-now versus rebuild posture before proposing a trade.</p>
+    <p style="margin-top:12px;">Every proposed trade lands in the Commissioner Console for human review. The Commissioner can approve, skip, or veto any deal — with a reason that gets logged and returned to the GMs.</p>
+  </div>
+
+  <div class="panel">
+    <div class="section-head"><h2>The Commissioner Console</h2></div>
+    <p>One human role exists in the AAIBL: the Commissioner. The Commissioner doesn't pick rosters or call plays — but they control the clock. They decide when to run a week, when to start the season, and whether a trade proposal clears review.</p>
+    <p style="margin-top:12px;">The console also connects directly to ChatGPT for AI-generated commentary: power rankings, week previews, team deep-dives, and trade analysis — all built from live league data and ready to paste.</p>
+  </div>
+
+  <div class="panel">
+    <div class="section-head"><h2>The Tech</h2></div>
+    <p>The AAIBL is built in Python with a SQLite database for league state. The web interface is a Flask app with server-rendered Jinja2 templates. Visual design follows the official AAIBL Brand Guidelines — Midnight Navy, Electric Blue, and Championship Gold.</p>
+    <p style="margin-top:12px;">The ChatGPT bridge uses a structured packet protocol: the app bundles live stats and context into a delimited block, and ChatGPT returns JSON inside matching <code>AAIBL</code> markers that the app parses back into readable sections.</p>
+  </div>
+
+</section>
+
+{% endblock %}

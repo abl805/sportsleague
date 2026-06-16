@@ -280,6 +280,33 @@ def team_detail(conn, abbreviation, season_year):
         LIMIT 1
     """, (team_id, season_year)).fetchone())
 
+    gm = one(conn.execute("""
+        SELECT name, archetype, risk_tolerance, veteran_loyalty,
+               youth_preference, trade_frequency
+        FROM general_managers
+        WHERE team_id = ?
+    """, (team_id,)).fetchone())
+
+    team_leaders = dicts(conn.execute("""
+        SELECT p.id,
+               p.first_name || ' ' || p.last_name AS player,
+               p.position,
+               ROUND(AVG(pgs.points), 1)   AS ppg,
+               ROUND(AVG(pgs.rebounds), 1) AS rpg,
+               ROUND(AVG(pgs.assists), 1)  AS apg,
+               ROUND(AVG(pgs.steals), 1)   AS spg,
+               ROUND(AVG(pgs.blocks), 1)   AS bpg,
+               COUNT(pgs.id) AS gp
+        FROM player_game_stats pgs
+        JOIN games g ON g.id = pgs.game_id
+        JOIN players p ON p.id = pgs.player_id
+        WHERE p.team_id = ? AND g.season_year = ?
+        GROUP BY p.id
+        ORDER BY ppg DESC
+    """, (team_id, season_year)).fetchall())
+
+    articles = articles_for_team(conn, team_id, season_year)
+
     return {
         "team": team,
         "record": record,
@@ -288,6 +315,9 @@ def team_detail(conn, abbreviation, season_year):
         "schedule": schedule,
         "events": events,
         "chemistry": chemistry,
+        "gm": gm,
+        "team_leaders": team_leaders,
+        "articles": articles,
     }
 
 
@@ -373,12 +403,15 @@ def player_detail(conn, player_id, season_year):
         ORDER BY week DESC
         LIMIT 1
     """, (player_id, season_year)).fetchone())
+    articles = articles_for_player(conn, player_id, season_year)
+
     return {
         "player": player,
         "averages": averages,
         "game_log": game_log,
         "events": events,
         "morale": morale,
+        "articles": articles,
     }
 
 
@@ -414,7 +447,45 @@ def game_detail(conn, game_id):
         WHERE pgs.game_id = ?
         ORDER BY t.id, pgs.points DESC
     """, (game_id,)).fetchall())
-    return {"game": game, "box": box}
+    mvp = None
+    if box:
+        mvp = max(box, key=lambda r: (
+            r["points"] + r["rebounds"] * 0.75 + r["assists"] * 0.5
+            + r["steals"] * 1.5 + r["blocks"] * 1.0
+        ))
+    return {"game": game, "box": box, "mvp": mvp}
+
+
+def articles_for_team(conn, team_id, season_year, limit=8):
+    return dicts(conn.execute("""
+        SELECT a.id, a.week, a.season_year, a.headline, a.body, a.created_at
+        FROM articles a
+        JOIN article_tags tag ON tag.article_id = a.id
+        WHERE tag.tag_type = 'team' AND tag.tag_id = ? AND a.season_year = ?
+        ORDER BY a.week DESC, a.id DESC
+        LIMIT ?
+    """, (team_id, season_year, limit)).fetchall())
+
+
+def articles_for_player(conn, player_id, season_year, limit=8):
+    return dicts(conn.execute("""
+        SELECT a.id, a.week, a.season_year, a.headline, a.body, a.created_at
+        FROM articles a
+        JOIN article_tags tag ON tag.article_id = a.id
+        WHERE tag.tag_type = 'player' AND tag.tag_id = ? AND a.season_year = ?
+        ORDER BY a.week DESC, a.id DESC
+        LIMIT ?
+    """, (player_id, season_year, limit)).fetchall())
+
+
+def recent_articles(conn, season_year, limit=20):
+    return dicts(conn.execute("""
+        SELECT id, week, season_year, headline, body, created_at
+        FROM articles
+        WHERE season_year = ?
+        ORDER BY week DESC, id DESC
+        LIMIT ?
+    """, (season_year, limit)).fetchall())
 
 
 def public_storylines(conn, season_year, limit=20):

@@ -2,12 +2,15 @@
 {% from "partials.html" import game_card, storyline_list %}
 {% block title %}{{ detail.team.city }} {{ detail.team.name }}{% endblock %}
 {% block content %}
+
 <section class="team-hero">
-  <div class="team-abbr xl">{{ detail.team.abbreviation }}</div>
-  <div>
-    <p class="eyebrow">{{ detail.team.arena or "Arena TBA" }}</p>
-    <h1>{{ detail.team.city }} {{ detail.team.name }}</h1>
-    <p>{{ detail.team.play_style or detail.team.motto or "A franchise profile will grow as the league evolves." }}</p>
+  <div style="display:flex;align-items:center;gap:24px;">
+    <div class="team-abbr xl">{{ detail.team.abbreviation }}</div>
+    <div>
+      <p class="eyebrow">{{ detail.team.arena or "Arena TBA" }}</p>
+      <h1>{{ detail.team.city }} {{ detail.team.name }}</h1>
+      <p>{{ detail.team.play_style or detail.team.motto or "A franchise profile will grow as the league evolves." }}</p>
+    </div>
   </div>
   <dl class="hero-stats">
     <div><dt>Record</dt><dd>{{ detail.record.wins if detail.record else 0 }}-{{ detail.record.losses if detail.record else 0 }}</dd></div>
@@ -16,12 +19,15 @@
   </dl>
 </section>
 
-<section class="section-grid">
+{# ── ROSTER + SEASON STATS ───────────────────────────────────── #}
+<section class="section-grid" style="margin-top:16px;">
   <div class="panel wide">
     <div class="section-head"><h2>Roster</h2></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Player</th><th>Pos</th><th>Age</th><th>OVR</th><th>Salary</th><th>Yrs</th></tr></thead>
+        <thead>
+          <tr><th>Player</th><th>Pos</th><th>Age</th><th>OVR</th><th>Salary</th><th>Yrs</th></tr>
+        </thead>
         <tbody>
           {% for p in detail.roster %}
             <tr>
@@ -30,7 +36,7 @@
               <td>{{ p.age }}</td>
               <td>{{ p.skill_rating }}</td>
               <td>{{ p.salary|money }}</td>
-              <td>{{ p.years_remaining or "-" }}</td>
+              <td>{{ p.years_remaining or "—" }}</td>
             </tr>
           {% else %}
             <tr><td colspan="6">No active players.</td></tr>
@@ -39,8 +45,99 @@
       </table>
     </div>
   </div>
+
   <div class="panel">
-    <div class="section-head"><h2>Recent Games</h2></div>
+    <div class="section-head"><h2>Season Stats</h2></div>
+    {% if detail.team_leaders %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Player</th><th>Pos</th><th>PPG</th><th>RPG</th><th>APG</th><th>GP</th></tr>
+        </thead>
+        <tbody>
+          {% for p in detail.team_leaders %}
+            <tr>
+              <td><a href="{{ url_for('player_page', player_id=p.id) }}">{{ p.player }}</a></td>
+              <td>{{ p.position }}</td>
+              <td>{{ p.ppg }}</td>
+              <td>{{ p.rpg }}</td>
+              <td>{{ p.apg }}</td>
+              <td>{{ p.gp }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="empty">No stats yet — simulate Week 1 to populate.</p>
+    {% endif %}
+  </div>
+</section>
+
+{# ── SCHEDULE + GM ───────────────────────────────────────────── #}
+<section class="section-grid" style="margin-top:16px;">
+  <div class="panel wide">
+    <div class="section-head"><h2>Schedule</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Week</th><th>Site</th><th>Opponent</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          {% for game in detail.schedule %}
+            <tr>
+              <td>{{ game.week }}</td>
+              <td>{{ game.site }}</td>
+              <td>{{ game.opponent }}</td>
+              <td>
+                {% if game.played %}
+                  {% set ts = game.home_score if game.site == 'Home' else game.away_score %}
+                  {% set os = game.away_score if game.site == 'Home' else game.home_score %}
+                  <a href="{{ url_for('game_page', game_id=game.id) }}"
+                     style="color:{{ 'var(--green)' if ts > os else 'var(--red)' }};font-weight:700;">
+                    {{ 'W' if ts > os else 'L' }} {{ ts }}&ndash;{{ os }}
+                  </a>
+                {% else %}
+                  <span style="color:var(--muted);">Upcoming</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    {% if detail.gm %}
+    <div class="section-head"><h2>General Manager</h2></div>
+    <div style="margin-bottom:16px;">
+      <p style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0 0 4px;">{{ detail.gm.name }}</p>
+      <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin:0;">
+        {{ detail.gm.archetype.replace('_', ' ').title() }}
+      </p>
+    </div>
+    <dl style="display:grid;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <dt style="font-size:0.78rem;color:var(--muted);font-weight:700;">Risk Tolerance</dt>
+        <dd><div class="gm-bar"><div class="gm-fill" style="width:{{ (detail.gm.risk_tolerance * 100)|int }}%"></div></div></dd>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <dt style="font-size:0.78rem;color:var(--muted);font-weight:700;">Veteran Loyalty</dt>
+        <dd><div class="gm-bar"><div class="gm-fill" style="width:{{ (detail.gm.veteran_loyalty * 100)|int }}%"></div></div></dd>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <dt style="font-size:0.78rem;color:var(--muted);font-weight:700;">Youth Preference</dt>
+        <dd><div class="gm-bar"><div class="gm-fill" style="width:{{ (detail.gm.youth_preference * 100)|int }}%"></div></div></dd>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+        <dt style="font-size:0.78rem;color:var(--muted);font-weight:700;">Trade Frequency</dt>
+        <dd><div class="gm-bar"><div class="gm-fill" style="width:{{ (detail.gm.trade_frequency * 100)|int }}%"></div></div></dd>
+      </div>
+    </dl>
+    {% endif %}
+
+    <div class="section-head" style="margin-top:24px;"><h2>Recent Games</h2></div>
     <div class="score-grid single">
       {% for game in detail.recent_games %}
         {{ game_card(game) }}
@@ -51,28 +148,30 @@
   </div>
 </section>
 
-<section class="section-grid">
+{# ── IN THE NEWS + STORYLINES ─────────────────────────────────── #}
+{% if detail.articles or detail.events %}
+<section style="margin-top:16px;">
+  {% if detail.articles %}
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="section-head"><h2>In the News</h2></div>
+    <div class="article-list">
+      {% for art in detail.articles %}
+        <article class="article-item">
+          <div class="story-meta">Week {{ art.week }}</div>
+          <h3 class="article-headline">{{ art.headline }}</h3>
+          <p class="article-body">{{ art.body }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% if detail.events %}
   <div class="panel">
     <div class="section-head"><h2>Storylines</h2></div>
     {{ storyline_list(detail.events) }}
   </div>
-  <div class="panel">
-    <div class="section-head"><h2>Schedule</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Week</th><th>Site</th><th>Opponent</th><th>Result</th></tr></thead>
-        <tbody>
-          {% for game in detail.schedule %}
-            <tr>
-              <td>{{ game.week }}</td>
-              <td>{{ game.site }}</td>
-              <td>{{ game.opponent }}</td>
-              <td>{% if game.played %}<a href="{{ url_for('game_page', game_id=game.id) }}">{{ game.home_score }}-{{ game.away_score }}</a>{% else %}Upcoming{% endif %}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+  {% endif %}
 </section>
+{% endif %}
+
 {% endblock %}

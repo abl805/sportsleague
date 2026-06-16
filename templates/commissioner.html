@@ -215,6 +215,93 @@
   </div>
 </section>
 
+{# ── PUBLISH ARTICLES ─────────────────────────────────────────── #}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head"><h2>Publish Articles</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 6px;">
+      Paste the JSON ChatGPT returns to publish articles to team and player pages.
+      Each article can tag teams by abbreviation and players by full name.
+    </p>
+    <details style="margin-bottom:14px;">
+      <summary style="cursor:pointer;font-size:0.8rem;color:var(--accent);font-weight:700;">Expected format</summary>
+      <pre style="background:var(--surface-2);padding:10px;border-radius:6px;font-size:0.72rem;overflow-x:auto;margin-top:8px;">{
+  "articles": [
+    {
+      "headline": "Polar Bears Roll Past Rapids in Overtime Thriller",
+      "body": "Full article text here...",
+      "week": 4,
+      "team_tags": ["MAN", "CHA"],
+      "player_tags": ["Marcus Jordan", "Tyler Webb"]
+    }
+  ]
+}</pre>
+    </details>
+    <form method="post" action="{{ url_for('commissioner_articles_add') }}">
+      <textarea name="articles_json" rows="8" placeholder='{"articles": [{"headline": "...", "body": "...", "week": 1, "team_tags": ["ABR"], "player_tags": ["First Last"]}]}'></textarea>
+      <button type="submit" style="margin-top:10px;">Publish to League</button>
+    </form>
+  </div>
+</section>
+
+{# ── CHATGPT INFLUENCES ───────────────────────────────────────── #}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head"><h2>ChatGPT Influences</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 6px;">
+      Apply minor behavioral and performance modifiers to players, teams, and GMs.
+      Influences expire automatically after the specified number of weeks.
+    </p>
+    <details style="margin-bottom:14px;">
+      <summary style="cursor:pointer;font-size:0.8rem;color:var(--accent);font-weight:700;">Influence types &amp; format</summary>
+      <pre style="background:var(--surface-2);padding:10px;border-radius:6px;font-size:0.72rem;overflow-x:auto;margin-top:8px;">{
+  "influences": [
+    {
+      "player": "Marcus Jordan",
+      "streak": "hot",
+      "morale": 8,
+      "work_ethic_boost": 0.10,
+      "duration_weeks": 2,
+      "reason": "Back-to-back 40-pt games, locked in"
+    },
+    {
+      "player": "Devon Price",
+      "streak": "cold",
+      "morale": -6,
+      "loyalty_drop": 0.08,
+      "duration_weeks": 1,
+      "reason": "Shooting slump, frustrated"
+    },
+    {
+      "team": "MAN",
+      "momentum": "hot",
+      "locker_room_boost": 5,
+      "duration_weeks": 2,
+      "reason": "Three-game win streak, energy is high"
+    },
+    {
+      "gm": "MAN",
+      "trade_urgency": "high",
+      "duration_weeks": 2,
+      "reason": "GM eyeing a deal at the deadline"
+    }
+  ]
+}</pre>
+      <p style="font-size:0.78rem;color:var(--muted);margin:8px 0 0;">
+        <strong>streak:</strong> "hot" (+5 effective skill) or "cold" (−5 effective skill) &bull;
+        <strong>morale:</strong> positive = boost, negative = penalty &bull;
+        <strong>momentum:</strong> "hot" (+6 chemistry) or "cold" (−6 chemistry) &bull;
+        <strong>trade_urgency:</strong> "high" or "low" &bull;
+        All magnitudes are minor by design.
+      </p>
+    </details>
+    <form method="post" action="{{ url_for('commissioner_influences_add') }}">
+      <textarea name="influences_json" rows="8" placeholder='{"influences": [{"player": "First Last", "streak": "hot", "duration_weeks": 2, "reason": "..."}]}'></textarea>
+      <button type="submit" style="margin-top:10px;">Apply Influences</button>
+    </form>
+  </div>
+</section>
+
 {# ── PASTE RESPONSE + LOGS ───────────────────────────────────── #}
 <section class="section-grid" style="margin-top:16px;">
   <div class="panel">

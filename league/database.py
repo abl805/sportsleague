@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import random
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "db", "league.db")
 LEAGUE_YEAR = 2026
@@ -184,6 +185,58 @@ def create_tables():
             chemistry   REAL NOT NULL,
             PRIMARY KEY (team_id, week, season_year)
         );
+
+        CREATE TABLE IF NOT EXISTS articles (
+            id          INTEGER PRIMARY KEY,
+            week        INTEGER NOT NULL,
+            season_year INTEGER NOT NULL,
+            headline    TEXT NOT NULL,
+            body        TEXT NOT NULL,
+            created_at  TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS article_tags (
+            id         INTEGER PRIMARY KEY,
+            article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+            tag_type   TEXT NOT NULL,
+            tag_id     INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS player_modifiers (
+            id           INTEGER PRIMARY KEY,
+            player_id    INTEGER NOT NULL REFERENCES players(id),
+            week_set     INTEGER NOT NULL,
+            season_year  INTEGER NOT NULL,
+            expires_week INTEGER NOT NULL,
+            mod_type     TEXT NOT NULL,
+            magnitude    REAL NOT NULL DEFAULT 5.0,
+            reason       TEXT,
+            created_at   TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS team_modifiers (
+            id           INTEGER PRIMARY KEY,
+            team_id      INTEGER NOT NULL REFERENCES teams(id),
+            week_set     INTEGER NOT NULL,
+            season_year  INTEGER NOT NULL,
+            expires_week INTEGER NOT NULL,
+            mod_type     TEXT NOT NULL,
+            magnitude    REAL NOT NULL DEFAULT 6.0,
+            reason       TEXT,
+            created_at   TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS gm_modifiers (
+            id           INTEGER PRIMARY KEY,
+            gm_id        INTEGER NOT NULL REFERENCES general_managers(id),
+            week_set     INTEGER NOT NULL,
+            season_year  INTEGER NOT NULL,
+            expires_week INTEGER NOT NULL,
+            mod_type     TEXT NOT NULL,
+            magnitude    REAL NOT NULL DEFAULT 0.15,
+            reason       TEXT,
+            created_at   TEXT DEFAULT (datetime('now'))
+        );
     """)
     _migrate_existing_schema(conn)
     conn.commit()
@@ -222,6 +275,22 @@ def _migrate_existing_schema(conn):
         if column not in team_columns:
             conn.execute(f"ALTER TABLE teams ADD COLUMN {column} {column_type}")
 
+    games_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(games)").fetchall()
+    }
+    for col in ["q1_home", "q2_home", "q3_home", "q4_home",
+                "q1_away", "q2_away", "q3_away", "q4_away"]:
+        if col not in games_columns:
+            conn.execute(f"ALTER TABLE games ADD COLUMN {col} INTEGER")
+
+    games_columns2 = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(games)").fetchall()
+    }
+    if "mvp_player_id" not in games_columns2:
+        conn.execute("ALTER TABLE games ADD COLUMN mvp_player_id INTEGER")
+
     columns = {
         row["name"]
         for row in conn.execute("PRAGMA table_info(league_state)").fetchall()
@@ -236,3 +305,48 @@ def _migrate_existing_schema(conn):
         "UPDATE league_state SET mode = COALESCE(mode, 'test'), "
         "official_started = COALESCE(official_started, 0)"
     )
+
+    # Backfill quarter scores for games played before this column was added
+    stale = conn.execute(
+        "SELECT id, home_score, away_score FROM games WHERE played=1 AND q1_home IS NULL"
+    ).fetchall()
+    for g in stale:
+        hq = _split_quarters(g["home_score"] or 100)
+        aq = _split_quarters(g["away_score"] or 100)
+        conn.execute(
+            "UPDATE games SET q1_home=?,q2_home=?,q3_home=?,q4_home=?,"
+            "q1_away=?,q2_away=?,q3_away=?,q4_away=? WHERE id=?",
+            (*hq, *aq, g["id"]),
+        )
+
+    # Backfill MVP for games played before this column was added
+    mvp_stale = conn.execute(
+        "SELECT id FROM games WHERE played=1 AND mvp_player_id IS NULL"
+    ).fetchall()
+    for g in mvp_stale:
+        best = conn.execute("""
+            SELECT player_id,
+                   points + rebounds*0.75 + assists*0.5 + steals*1.5 + blocks AS score
+            FROM player_game_stats
+            WHERE game_id=?
+            ORDER BY score DESC
+            LIMIT 1
+        """, (g["id"],)).fetchone()
+        if best:
+            conn.execute(
+                "UPDATE games SET mvp_player_id=? WHERE id=?",
+                (best["player_id"], g["id"]),
+            )
+
+
+def _split_quarters(total):
+    weights = [random.gauss(1.0, 0.12) for _ in range(4)]
+    weights = [max(0.4, w) for w in weights]
+    total_w = sum(weights)
+    raw = [total * w / total_w for w in weights]
+    floored = [int(r) for r in raw]
+    remainder = total - sum(floored)
+    fracs = sorted(range(4), key=lambda i: raw[i] - floored[i], reverse=True)
+    for i in range(remainder):
+        floored[fracs[i % 4]] += 1
+    return floored

@@ -1,12 +1,82 @@
 {% extends "base.html" %}
 {% block title %}Game {{ detail.game.id }}{% endblock %}
 {% block content %}
+
 <section class="game-hero">
-  <p class="eyebrow">Week {{ detail.game.week }}</p>
-  <h1>{{ detail.game.home_name }} {{ detail.game.home_score or "-" }} - {{ detail.game.away_score or "-" }} {{ detail.game.away_name }}</h1>
-  <p>{{ detail.game.season_year }} season box score.</p>
+  <div>
+    <p class="eyebrow">Week {{ detail.game.week }} &mdash; {{ detail.game.season_year }} Season</p>
+    <h1>{{ detail.game.home_name }} {{ detail.game.home_score or "—" }} &ndash; {{ detail.game.away_score or "—" }} {{ detail.game.away_name }}</h1>
+  </div>
 </section>
-<section class="section-grid">
+
+{# ── LINE SCORE ───────────────────────────────────────────────── #}
+{% if detail.game.q1_home is not none %}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head"><h2>Line Score</h2></div>
+    <div class="table-wrap">
+      <table class="linescore">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>
+            <th class="total">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>{{ detail.game.home_abbr }}</strong> <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.home_name }}</span></td>
+            <td>{{ detail.game.q1_home }}</td>
+            <td>{{ detail.game.q2_home }}</td>
+            <td>{{ detail.game.q3_home }}</td>
+            <td>{{ detail.game.q4_home }}</td>
+            <td class="total">{{ detail.game.home_score }}</td>
+          </tr>
+          <tr>
+            <td><strong>{{ detail.game.away_abbr }}</strong> <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.away_name }}</span></td>
+            <td>{{ detail.game.q1_away }}</td>
+            <td>{{ detail.game.q2_away }}</td>
+            <td>{{ detail.game.q3_away }}</td>
+            <td>{{ detail.game.q4_away }}</td>
+            <td class="total">{{ detail.game.away_score }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ── GAME MVP ─────────────────────────────────────────────────── #}
+{% if detail.mvp %}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head">
+      <h2>Game MVP</h2>
+      <span style="color:var(--gold);font-size:0.78rem;font-weight:800;">Best performance this game</span>
+    </div>
+    <div class="mvp-card">
+      <div class="mvp-badge">MVP</div>
+      <div>
+        <p class="mvp-name">
+          <a href="{{ url_for('player_page', player_id=detail.mvp.player_id) }}" style="color:var(--gold);text-decoration:none;">{{ detail.mvp.player }}</a>
+        </p>
+        <p class="mvp-team">{{ detail.mvp.position }} &mdash; {{ detail.mvp.team_name }}</p>
+        <div class="mvp-stats">
+          <div class="mvp-stat"><strong>{{ detail.mvp.points }}</strong><span>PTS</span></div>
+          <div class="mvp-stat"><strong>{{ detail.mvp.rebounds }}</strong><span>REB</span></div>
+          <div class="mvp-stat"><strong>{{ detail.mvp.assists }}</strong><span>AST</span></div>
+          <div class="mvp-stat"><strong>{{ detail.mvp.steals }}</strong><span>STL</span></div>
+          <div class="mvp-stat"><strong>{{ detail.mvp.blocks }}</strong><span>BLK</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ── BOX SCORES ───────────────────────────────────────────────── #}
+<section class="section-grid" style="margin-top:16px;">
   {% for team_name in [detail.game.home_name, detail.game.away_name] %}
     <div class="panel">
       <div class="section-head"><h2>{{ team_name }}</h2></div>
@@ -15,8 +85,8 @@
           <thead><tr><th>Player</th><th>Pos</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead>
           <tbody>
             {% for row in detail.box if row.team_name == team_name %}
-              <tr>
-                <td><a href="{{ url_for('player_page', player_id=row.player_id) }}">{{ row.player }}</a></td>
+              <tr{% if detail.mvp and row.player_id == detail.mvp.player_id %} class="mvp-row"{% endif %}>
+                <td><a href="{{ url_for('player_page', player_id=row.player_id) }}">{{ row.player }}</a>{% if detail.mvp and row.player_id == detail.mvp.player_id %} <span class="mvp-pip">MVP</span>{% endif %}</td>
                 <td>{{ row.position }}</td>
                 <td>{{ row.points }}</td>
                 <td>{{ row.rebounds }}</td>
@@ -33,4 +103,5 @@
     </div>
   {% endfor %}
 </section>
+
 {% endblock %}

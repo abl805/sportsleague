@@ -503,8 +503,22 @@ def run_gm_week(conn, gm, week, season_year, archetypes_data):
         conn.commit()
         return False
 
-    # Roll for activity this week
-    if random.random() > gm["trade_frequency"]:
+    # Roll for activity this week (apply ChatGPT trade-urgency modifier if active)
+    eff_freq = gm["trade_frequency"]
+    try:
+        gm_mod = conn.execute(
+            "SELECT mod_type, magnitude FROM gm_modifiers "
+            "WHERE gm_id=? AND season_year=? AND expires_week>=?",
+            (gm["id"], season_year, week)
+        ).fetchone()
+        if gm_mod:
+            if gm_mod["mod_type"] == "trade_hungry":
+                eff_freq = min(0.95, eff_freq + gm_mod["magnitude"])
+            elif gm_mod["mod_type"] == "trade_conservative":
+                eff_freq = max(0.05, eff_freq - gm_mod["magnitude"])
+    except Exception:
+        pass
+    if random.random() > eff_freq:
         log_memory(conn, gm["id"], week, season_year, "inactive",
                    detail=f"Sat out (trade_frequency={gm['trade_frequency']:.2f})")
         conn.commit()

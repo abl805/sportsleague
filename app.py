@@ -32,10 +32,10 @@ def fmt_diff(n):
 
 
 CHATGPT_SCHEMA = "aibl.manual_chatgpt.v1"
-APP_TO_GPT_START = "=== AIBL APP TO CHATGPT ==="
-APP_TO_GPT_END = "=== END AIBL APP TO CHATGPT ==="
-GPT_TO_APP_START = "=== CHATGPT TO AIBL ==="
-GPT_TO_APP_END = "=== END CHATGPT TO AIBL ==="
+APP_TO_GPT_START = "=== AAIBL APP TO CHATGPT ==="
+APP_TO_GPT_END = "=== END AAIBL APP TO CHATGPT ==="
+GPT_TO_APP_START = "=== CHATGPT TO AAIBL ==="
+GPT_TO_APP_END = "=== END CHATGPT TO AAIBL ==="
 
 
 def rows_to_dicts(rows):
@@ -317,7 +317,7 @@ def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade
         "instructions_for_chatgpt": [
             "Read the packet as source-of-truth league data.",
             "Answer the commissioner request without inventing missing stats.",
-            "Return a JSON packet inside the CHATGPT TO AIBL markers.",
+            "Return a JSON packet inside the CHATGPT TO AAIBL markers.",
             "Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.",
         ],
         "response_contract": {
@@ -380,7 +380,7 @@ def parse_chatgpt_response(text):
 
     raw_json = extract_marked_json(text, GPT_TO_APP_START, GPT_TO_APP_END)
     if not raw_json:
-        return None, "No JSON block found. Paste the CHATGPT TO AIBL block or a raw JSON object."
+        return None, "No JSON block found. Paste the CHATGPT TO AAIBL block or a raw JSON object."
 
     try:
         parsed = json.loads(raw_json)
@@ -739,7 +739,7 @@ with tab_chatgpt:
         """
         1. Pick the league context and write the commissioner request.
         2. Copy the app packet into ChatGPT.
-        3. Ask ChatGPT to return the `CHATGPT TO AIBL` block.
+        3. Ask ChatGPT to return the `CHATGPT TO AAIBL` block.
         4. Paste that block back here to review it in app-readable sections.
         """
     )

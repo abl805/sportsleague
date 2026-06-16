@@ -19,6 +19,37 @@ from league.player_agents import (
 from league.trade_engine import autopilot_review_pending_trades
 
 
+def _active_player_mods(conn, season_year, week):
+    """Returns {player_id: net_skill_delta} for active hot/cold streak modifiers."""
+    try:
+        rows = conn.execute(
+            "SELECT player_id, mod_type, magnitude FROM player_modifiers "
+            "WHERE season_year=? AND expires_week>=? AND mod_type IN ('hot_streak', 'cold_streak')",
+            (season_year, week)
+        ).fetchall()
+    except Exception:
+        return {}
+    mods = {}
+    for r in rows:
+        delta = r["magnitude"] if r["mod_type"] == "hot_streak" else -r["magnitude"]
+        mods[r["player_id"]] = mods.get(r["player_id"], 0) + delta
+    return mods
+
+
+def _active_team_chemistry_mod(conn, team_id, season_year, week):
+    """Returns net chemistry delta for active momentum_hot/cold modifiers."""
+    try:
+        rows = conn.execute(
+            "SELECT mod_type, magnitude FROM team_modifiers "
+            "WHERE team_id=? AND season_year=? AND expires_week>=? "
+            "AND mod_type IN ('momentum_hot', 'momentum_cold')",
+            (team_id, season_year, week)
+        ).fetchall()
+    except Exception:
+        return 0.0
+    return sum(r["magnitude"] if r["mod_type"] == "momentum_hot" else -r["magnitude"] for r in rows)
+
+
 def run_week(verbose=None, start_official=None):
     if verbose is None:
         verbose = "--verbose" in sys.argv or "-v" in sys.argv
@@ -90,6 +121,8 @@ def run_week(verbose=None, start_official=None):
     if has_personalities:
         compute_all_team_chemistry(conn, week, season_year)
 
+    all_player_mods = _active_player_mods(conn, season_year, week)
+
     for game in games:
         home_players = [dict(p) for p in c.execute(
             "SELECT * FROM players "
@@ -104,13 +137,31 @@ def run_week(verbose=None, start_official=None):
 
         home_chem = get_team_chemistry(conn, game["home_team_id"], week, season_year)
         away_chem = get_team_chemistry(conn, game["away_team_id"], week, season_year)
-        h_score, a_score, h_box, a_box = simulate_game(
-            home_players, away_players, home_chem, away_chem
+        home_team_mod = _active_team_chemistry_mod(conn, game["home_team_id"], season_year, week)
+        away_team_mod = _active_team_chemistry_mod(conn, game["away_team_id"], season_year, week)
+        h_score, a_score, h_box, a_box, h_q, a_q = simulate_game(
+            home_players, away_players, home_chem, away_chem,
+            home_player_mods=all_player_mods,
+            away_player_mods=all_player_mods,
+            home_team_mod=home_team_mod,
+            away_team_mod=away_team_mod,
         )
 
+        all_stats = h_box + a_box
+        mvp_id = max(all_stats, key=lambda s: (
+            s["points"] + s["rebounds"] * 0.75 + s["assists"] * 0.5
+            + s["steals"] * 1.5 + s["blocks"] * 1.0
+        ))["player_id"]
+
         c.execute(
-            "UPDATE games SET home_score=?, away_score=?, played=1 WHERE id=?",
-            (h_score, a_score, game["id"]),
+            "UPDATE games SET home_score=?, away_score=?, played=1, "
+            "q1_home=?, q2_home=?, q3_home=?, q4_home=?, "
+            "q1_away=?, q2_away=?, q3_away=?, q4_away=?, "
+            "mvp_player_id=? WHERE id=?",
+            (h_score, a_score,
+             h_q[0], h_q[1], h_q[2], h_q[3],
+             a_q[0], a_q[1], a_q[2], a_q[3],
+             mvp_id, game["id"]),
         )
 
         for stat in h_box + a_box:
@@ -148,7 +199,7 @@ def run_week(verbose=None, start_official=None):
         print(f"      Winner: {winner}\n")
 
         # Top performers this game
-        all_stats = sorted(h_box + a_box, key=lambda s: s["points"], reverse=True)
+        all_stats = sorted(all_stats, key=lambda s: s["points"], reverse=True)
         print(f"      {'Top performers':}")
         for s in all_stats[:3]:
             player = c.execute(

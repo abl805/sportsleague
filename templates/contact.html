@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Contact — AAIBL{% endblock %}
+{% block content %}
+
+<section class="league-hero">
+  <div>
+    <p class="eyebrow">League Office</p>
+    <h1>Contact</h1>
+    <p>One human runs this league. If you have questions, the Commissioner's door is open.</p>
+  </div>
+</section>
+
+<section class="section-grid" style="margin-top:24px;">
+
+  <div class="panel">
+    <div class="section-head"><h2>Commissioner's Office</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 20px;">The AAIBL is operated by a single Commissioner who oversees the simulation, reviews trades, and maintains league integrity.</p>
+    <dl style="display:grid;gap:14px;">
+      <div>
+        <dt style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;">Role</dt>
+        <dd style="color:var(--text);font-size:1rem;">League Commissioner</dd>
+      </div>
+      <div>
+        <dt style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;">Email</dt>
+        <dd><a href="mailto:rob.heathincometax@gmail.com" style="color:var(--gold);text-decoration:none;">rob.heathincometax@gmail.com</a></dd>
+      </div>
+      <div>
+        <dt style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;">League Status</dt>
+        <dd style="color:var(--accent);">
+          {% if state %}
+            Season {{ state.season_year }} — Week {{ state.current_week }} — {{ state.mode|upper }}
+          {% else %}
+            No active season
+          {% endif %}
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>What to Reach Out About</h2></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
+        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">Trade Disputes</p>
+        <p style="color:var(--text);font-size:0.88rem;margin:0;">Questions about a trade approval, veto decision, or GM agent behavior.</p>
+      </div>
+      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
+        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">League Rules</p>
+        <p style="color:var(--text);font-size:0.88rem;margin:0;">Clarifications on salary cap rules, roster limits, or offseason procedures.</p>
+      </div>
+      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
+        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">Technical Issues</p>
+        <p style="color:var(--text);font-size:0.88rem;margin:0;">Problems with the simulation engine, database, or web interface.</p>
+      </div>
+      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
+        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">General Interest</p>
+        <p style="color:var(--text);font-size:0.88rem;margin:0;">Questions about the project, the AI simulation, or how to run your own league.</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+{% endblock %}

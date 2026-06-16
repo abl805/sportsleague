@@ -40,6 +40,18 @@
     </div>
   </div>
   <div class="panel">
+    {% if detail.articles %}
+    <div class="section-head"><h2>In the News</h2></div>
+    <div class="article-list" style="margin-bottom:24px;">
+      {% for art in detail.articles %}
+        <article class="article-item">
+          <div class="story-meta">Week {{ art.week }}</div>
+          <h3 class="article-headline">{{ art.headline }}</h3>
+          <p class="article-body">{{ art.body }}</p>
+        </article>
+      {% endfor %}
+    </div>
+    {% endif %}
     <div class="section-head"><h2>Player Notes</h2></div>
     {{ storyline_list(detail.events) }}
   </div>

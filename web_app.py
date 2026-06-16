@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import os
 
 from flask import Flask, flash, redirect, render_template, request, url_for
@@ -17,7 +18,7 @@ from run_week import run_week
 
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("AIBL_SECRET_KEY", "aibl-local-dev-console")
+app.secret_key = os.environ.get("AAIBL_SECRET_KEY", "aaibl-local-dev-console")
 
 
 def capture_output(callback):
@@ -355,6 +356,22 @@ def commissioner_data(packet=None, parsed_response=None, parse_warning=None, for
     return data
 
 
+@app.route("/about")
+def about():
+    def load(conn):
+        return {"state": q.get_state(conn)}
+    data = with_conn(load)
+    return render_template("about.html", **(data or {"state": None}), active="about")
+
+
+@app.route("/contact")
+def contact():
+    def load(conn):
+        return {"state": q.get_state(conn)}
+    data = with_conn(load)
+    return render_template("contact.html", **(data or {"state": None}), active="contact")
+
+
 @app.route("/commissioner")
 def commissioner():
     data = commissioner_data()
@@ -425,6 +442,240 @@ def veto_trade_action(trade_id, reason):
         conn.close()
 
 
+@app.post("/commissioner/articles/add")
+def commissioner_articles_add():
+    raw = request.form.get("articles_json", "").strip()
+    if not raw:
+        flash("No JSON provided.", "error")
+        return redirect(url_for("commissioner"))
+
+    try:
+        payload = json.loads(raw)
+        article_list = payload if isinstance(payload, list) else payload.get("articles", [])
+    except Exception as exc:
+        flash(f"JSON parse error: {exc}", "error")
+        return redirect(url_for("commissioner"))
+
+    if not article_list:
+        flash("No articles found in JSON.", "error")
+        return redirect(url_for("commissioner"))
+
+    def save(conn):
+        state = q.get_state(conn)
+        current_week = state["current_week"] if state else 1
+        season_year = state["season_year"] if state else 2026
+        count = 0
+        for art in article_list:
+            headline = (art.get("headline") or "").strip()
+            body = (art.get("body") or "").strip()
+            if not headline or not body:
+                continue
+            week = int(art.get("week") or current_week)
+            cur = conn.execute(
+                "INSERT INTO articles (week, season_year, headline, body) VALUES (?, ?, ?, ?)",
+                (week, season_year, headline, body),
+            )
+            article_id = cur.lastrowid
+            for abbr in art.get("team_tags") or []:
+                row = conn.execute(
+                    "SELECT id FROM teams WHERE UPPER(abbreviation) = UPPER(?)", (abbr,)
+                ).fetchone()
+                if row:
+                    conn.execute(
+                        "INSERT INTO article_tags (article_id, tag_type, tag_id) VALUES (?, 'team', ?)",
+                        (article_id, row["id"]),
+                    )
+            for name in art.get("player_tags") or []:
+                parts = name.strip().split(None, 1)
+                if len(parts) == 2:
+                    row = conn.execute(
+                        "SELECT id FROM players WHERE LOWER(first_name)=LOWER(?) AND LOWER(last_name)=LOWER(?)",
+                        (parts[0], parts[1]),
+                    ).fetchone()
+                    if row:
+                        conn.execute(
+                            "INSERT INTO article_tags (article_id, tag_type, tag_id) VALUES (?, 'player', ?)",
+                            (article_id, row["id"]),
+                        )
+            count += 1
+        conn.commit()
+        return count
+
+    count = with_conn(save)
+    flash(f"{count} article{'s' if count != 1 else ''} published to the league.", "operation")
+    return redirect(url_for("commissioner"))
+
+
+@app.post("/commissioner/influences/add")
+def commissioner_influences_add():
+    raw = request.form.get("influences_json", "").strip()
+    if not raw:
+        flash("No JSON provided.", "error")
+        return redirect(url_for("commissioner"))
+    try:
+        payload = json.loads(raw)
+        influence_list = payload if isinstance(payload, list) else payload.get("influences", [])
+    except Exception as exc:
+        flash(f"JSON parse error: {exc}", "error")
+        return redirect(url_for("commissioner"))
+    if not influence_list:
+        flash("No influences found in JSON.", "error")
+        return redirect(url_for("commissioner"))
+
+    def save(conn):
+        state = q.get_state(conn)
+        current_week = state["current_week"] if state else 1
+        season_year = state["season_year"] if state else 2026
+        count = 0
+
+        for inf in influence_list:
+            duration = max(1, int(inf.get("duration_weeks") or 2))
+            expires = current_week + duration
+            reason = (inf.get("reason") or "").strip() or None
+
+            # ── Player influences ─────────────────────────────────────────────
+            if inf.get("player"):
+                parts = inf["player"].strip().split(None, 1)
+                if len(parts) != 2:
+                    continue
+                row = conn.execute(
+                    "SELECT id FROM players WHERE LOWER(first_name)=LOWER(?) AND LOWER(last_name)=LOWER(?)",
+                    (parts[0], parts[1]),
+                ).fetchone()
+                if not row:
+                    continue
+                pid = row["id"]
+
+                streak = (inf.get("streak") or "").lower()
+                if streak == "hot":
+                    mag = float(inf.get("magnitude") or 5.0)
+                    conn.execute(
+                        "INSERT INTO player_modifiers (player_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'hot_streak', ?, ?)",
+                        (pid, current_week, season_year, expires, mag, reason),
+                    )
+                elif streak == "cold":
+                    mag = float(inf.get("magnitude") or 5.0)
+                    conn.execute(
+                        "INSERT INTO player_modifiers (player_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'cold_streak', ?, ?)",
+                        (pid, current_week, season_year, expires, mag, reason),
+                    )
+
+                morale_val = inf.get("morale")
+                if morale_val is not None:
+                    m = float(morale_val)
+                    if m > 0:
+                        conn.execute(
+                            "INSERT INTO player_modifiers (player_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                            " VALUES (?, ?, ?, ?, 'morale_boost', ?, ?)",
+                            (pid, current_week, season_year, expires, abs(m), reason),
+                        )
+                    elif m < 0:
+                        conn.execute(
+                            "INSERT INTO player_modifiers (player_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                            " VALUES (?, ?, ?, ?, 'morale_penalty', ?, ?)",
+                            (pid, current_week, season_year, expires, abs(m), reason),
+                        )
+
+                we_boost = inf.get("work_ethic_boost")
+                if we_boost:
+                    conn.execute(
+                        "INSERT INTO player_modifiers (player_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'work_ethic_boost', ?, ?)",
+                        (pid, current_week, season_year, expires, float(we_boost), reason),
+                    )
+
+                loyalty_drop = inf.get("loyalty_drop")
+                if loyalty_drop:
+                    conn.execute(
+                        "INSERT INTO player_modifiers (player_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'loyalty_drop', ?, ?)",
+                        (pid, current_week, season_year, expires, float(loyalty_drop), reason),
+                    )
+
+                count += 1
+                continue
+
+            # ── Team influences ───────────────────────────────────────────────
+            if inf.get("team"):
+                team_row = conn.execute(
+                    "SELECT id FROM teams WHERE UPPER(abbreviation) = UPPER(?)", (inf["team"],)
+                ).fetchone()
+                if not team_row:
+                    continue
+                tid = team_row["id"]
+
+                momentum = (inf.get("momentum") or "").lower()
+                if momentum == "hot":
+                    mag = float(inf.get("magnitude") or 6.0)
+                    conn.execute(
+                        "INSERT INTO team_modifiers (team_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'momentum_hot', ?, ?)",
+                        (tid, current_week, season_year, expires, mag, reason),
+                    )
+                elif momentum == "cold":
+                    mag = float(inf.get("magnitude") or 6.0)
+                    conn.execute(
+                        "INSERT INTO team_modifiers (team_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'momentum_cold', ?, ?)",
+                        (tid, current_week, season_year, expires, mag, reason),
+                    )
+
+                lr_boost = inf.get("locker_room_boost")
+                if lr_boost:
+                    conn.execute(
+                        "INSERT INTO team_modifiers (team_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'locker_room_boost', ?, ?)",
+                        (tid, current_week, season_year, expires, float(lr_boost), reason),
+                    )
+
+                lr_penalty = inf.get("locker_room_penalty")
+                if lr_penalty:
+                    conn.execute(
+                        "INSERT INTO team_modifiers (team_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'locker_room_penalty', ?, ?)",
+                        (tid, current_week, season_year, expires, float(lr_penalty), reason),
+                    )
+
+                count += 1
+                continue
+
+            # ── GM influences ─────────────────────────────────────────────────
+            if inf.get("gm"):
+                gm_row = conn.execute(
+                    "SELECT gm.id FROM general_managers gm "
+                    "JOIN teams t ON gm.team_id = t.id "
+                    "WHERE UPPER(t.abbreviation) = UPPER(?)", (inf["gm"],)
+                ).fetchone()
+                if not gm_row:
+                    continue
+                gm_id = gm_row["id"]
+
+                urgency = (inf.get("trade_urgency") or "").lower()
+                if urgency == "high":
+                    conn.execute(
+                        "INSERT INTO gm_modifiers (gm_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'trade_hungry', 0.15, ?)",
+                        (gm_id, current_week, season_year, expires, reason),
+                    )
+                    count += 1
+                elif urgency == "low":
+                    conn.execute(
+                        "INSERT INTO gm_modifiers (gm_id, week_set, season_year, expires_week, mod_type, magnitude, reason)"
+                        " VALUES (?, ?, ?, ?, 'trade_conservative', 0.15, ?)",
+                        (gm_id, current_week, season_year, expires, reason),
+                    )
+                    count += 1
+
+        conn.commit()
+        return count
+
+    count = with_conn(save)
+    flash(f"{count} influence{'s' if count != 1 else ''} applied to the league.", "operation")
+    return redirect(url_for("commissioner"))
+
+
 @app.post("/commissioner/packet")
 def commissioner_packet():
     context_type = request.form.get("context_type", "League snapshot")
@@ -468,5 +719,5 @@ def commissioner_packet():
 
 
 if __name__ == "__main__":
-    debug = os.environ.get("AIBL_DEBUG") == "1"
+    debug = os.environ.get("AAIBL_DEBUG") == "1"
     app.run(debug=debug, use_reloader=debug)
