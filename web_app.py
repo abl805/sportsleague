@@ -21,6 +21,61 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("AAIBL_SECRET_KEY", "aaibl-local-dev-console")
 
 
+def _extract_list(raw, wrapper_key, item_keys):
+    """
+    Flexibly pull a list of dicts out of a pasted ChatGPT response.
+
+    Handles:
+    - {"articles": [...]}  /  {"influences": [...]}   (wrapper object)
+    - [{"headline": ...}, ...]                         (plain array)
+    - {"headline": ...}                                (single item)
+    - ```json ... ```  code fences (one or many blocks)
+    - Free text with JSON embedded — finds the first { or [ and parses from there
+    - Multiple code blocks, each containing one item or a list
+    """
+    import re as _re
+
+    if not raw:
+        return []
+
+    # Pull out every ```json ... ``` or ``` ... ``` block.
+    # If none found, treat the whole paste as one candidate.
+    code_blocks = _re.findall(r"```(?:json)?\s*([\s\S]*?)```", raw)
+    candidates = code_blocks if code_blocks else [raw]
+
+    results = []
+    for candidate in candidates:
+        candidate = candidate.strip()
+        if not candidate:
+            continue
+
+        # Find the first JSON delimiter ({ or [), whichever comes first.
+        ci = candidate.find("{")
+        bi = candidate.find("[")
+        if ci < 0 and bi < 0:
+            continue
+        if bi >= 0 and (ci < 0 or bi < ci):
+            start = bi
+        else:
+            start = ci
+
+        try:
+            data = json.loads(candidate[start:])
+        except json.JSONDecodeError:
+            continue
+
+        if isinstance(data, list):
+            results.extend(data)
+        elif isinstance(data, dict):
+            if wrapper_key in data and isinstance(data[wrapper_key], list):
+                results.extend(data[wrapper_key])
+            elif any(k in data for k in item_keys):
+                # Single item — wrap it
+                results.append(data)
+
+    return results
+
+
 def capture_output(callback):
     buffer = io.StringIO()
     with contextlib.redirect_stdout(buffer):
@@ -447,15 +502,9 @@ def commissioner_articles_add():
         flash("No JSON provided.", "error")
         return redirect(url_for("commissioner"))
 
-    try:
-        payload = json.loads(raw)
-        article_list = payload if isinstance(payload, list) else payload.get("articles", [])
-    except Exception as exc:
-        flash(f"JSON parse error: {exc}", "error")
-        return redirect(url_for("commissioner"))
-
+    article_list = _extract_list(raw, "articles", ["headline", "body"])
     if not article_list:
-        flash("No articles found in JSON.", "error")
+        flash("No articles found. Paste a JSON array, a {\"articles\":[...]} object, or a response containing ```json``` blocks.", "error")
         return redirect(url_for("commissioner"))
 
     def save(conn):
@@ -510,14 +559,9 @@ def commissioner_influences_add():
     if not raw:
         flash("No JSON provided.", "error")
         return redirect(url_for("commissioner"))
-    try:
-        payload = json.loads(raw)
-        influence_list = payload if isinstance(payload, list) else payload.get("influences", [])
-    except Exception as exc:
-        flash(f"JSON parse error: {exc}", "error")
-        return redirect(url_for("commissioner"))
+    influence_list = _extract_list(raw, "influences", ["player", "team", "gm"])
     if not influence_list:
-        flash("No influences found in JSON.", "error")
+        flash("No influences found. Paste a JSON array, a {\"influences\":[...]} object, or a response containing ```json``` blocks.", "error")
         return redirect(url_for("commissioner"))
 
     def save(conn):
