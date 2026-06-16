@@ -13,7 +13,7 @@ ROUTES = {
     "/players": "players.html",
     "/scores": "scores.html",
     "/leaders": "leaders.html",
-    "/storylines": "storylines.html",
+    "/news": "news.html",
     "/commissioner": "commissioner.html",
 }
 

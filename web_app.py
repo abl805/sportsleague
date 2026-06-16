@@ -93,6 +93,7 @@ def home():
             "standings": q.standings(conn, season, limit=6),
             "leaders": q.stat_leaders(conn, season, limit=6),
             "latest_results": q.latest_results(conn, season, limit=6),
+            "latest_articles": q.recent_articles(conn, season, limit=3),
             "storylines": q.public_storylines(conn, season, limit=6),
         }
 
@@ -245,21 +246,23 @@ def leaders():
     return render_template("leaders.html", **data, active="leaders")
 
 
-@app.route("/storylines")
-def storylines():
+@app.route("/news")
+def news():
     def load(conn):
         state = q.get_state(conn)
         if not state:
             return None
+        season = state["season_year"]
         return {
             "state": state,
-            "storylines": q.public_storylines(conn, state["season_year"], limit=40),
+            "articles": q.recent_articles(conn, season, limit=40),
+            "storylines": q.public_storylines(conn, season, limit=40),
         }
 
     data = with_conn(load)
     if not data:
         return render_no_league()
-    return render_template("storylines.html", **data, active="storylines")
+    return render_template("news.html", **data, active="news")
 
 
 def commissioner_data():

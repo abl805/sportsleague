@@ -48,10 +48,22 @@
   </div>
   <div class="panel">
     <div class="section-head">
-      <h2>Storylines</h2>
-      <a href="{{ url_for('storylines') }}">All storylines</a>
+      <h2>News</h2>
+      <a href="{{ url_for('news') }}">All news</a>
     </div>
-    {{ storyline_list(storylines) }}
+    {% if latest_articles %}
+      <div class="story-list">
+        {% for art in latest_articles %}
+          <article class="story-item article-item">
+            <div class="story-meta">Week {{ art.week }} / AAIBL / News</div>
+            <h3>{{ art.headline }}</h3>
+            <p>{{ art.body | truncate(160) }}</p>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      {{ storyline_list(storylines) }}
+    {% endif %}
   </div>
 </section>
 {% endblock %}
