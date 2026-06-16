@@ -262,7 +262,7 @@ def storylines():
     return render_template("storylines.html", **data, active="storylines")
 
 
-def commissioner_data(packet=None, parsed_response=None, parse_warning=None, form=None):
+def commissioner_data():
     def load(conn):
         state = q.get_state(conn)
         if not state:
@@ -276,11 +276,6 @@ def commissioner_data(packet=None, parsed_response=None, parse_warning=None, for
             "logs": q.commissioner_logs(conn),
             "team_options": q.teams_index(conn, season),
             "trade_options": q.trade_options(conn),
-            "packet": packet,
-            "parsed_response": parsed_response,
-            "parse_warning": parse_warning,
-            "packet_template": response_template((form or {}).get("context_type", "League snapshot")),
-            "form": form or {},
         }
 
     data = with_conn(load)
@@ -674,48 +669,6 @@ def commissioner_influences_add():
     count = with_conn(save)
     flash(f"{count} influence{'s' if count != 1 else ''} applied to the league.", "operation")
     return redirect(url_for("commissioner"))
-
-
-@app.post("/commissioner/packet")
-def commissioner_packet():
-    context_type = request.form.get("context_type", "League snapshot")
-    commissioner_request = request.form.get("commissioner_request", "").strip()
-    team_id = request.form.get("team_id", type=int)
-    trade_id = request.form.get("trade_id", type=int)
-    pasted_response = request.form.get("pasted_response", "")
-    form = {
-        "context_type": context_type,
-        "commissioner_request": commissioner_request,
-        "team_id": team_id,
-        "trade_id": trade_id,
-        "pasted_response": pasted_response,
-    }
-
-    packet = None
-    parsed_response = None
-    parse_warning = None
-    try:
-        if request.form.get("build_packet"):
-            packet = build_chatgpt_packet(
-                context_type,
-                commissioner_request,
-                team_id=team_id,
-                trade_id=trade_id,
-            )
-        if pasted_response.strip():
-            parsed_response, parse_warning = parse_chatgpt_response(pasted_response)
-    except Exception as exc:
-        flash(str(exc), "error")
-
-    data = commissioner_data(
-        packet=packet,
-        parsed_response=parsed_response,
-        parse_warning=parse_warning,
-        form=form,
-    )
-    if not data:
-        return render_no_league()
-    return render_template("commissioner.html", **data, active="commissioner")
 
 
 if __name__ == "__main__":

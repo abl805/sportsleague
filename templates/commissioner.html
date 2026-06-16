@@ -302,34 +302,8 @@
   </div>
 </section>
 
-{# ── PASTE RESPONSE + LOGS ───────────────────────────────────── #}
-<section class="section-grid" style="margin-top:16px;">
-  <div class="panel">
-    <div class="section-head"><h2>Paste ChatGPT Response</h2></div>
-    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 14px;">After ChatGPT replies, paste the response here to parse it back into the app.</p>
-    <form method="post" action="{{ url_for('commissioner_packet') }}">
-      <input type="hidden" name="context_type" value="League snapshot">
-      <textarea name="pasted_response" rows="8" placeholder="Paste ChatGPT&#39;s response here&hellip;">{{ form.pasted_response or "" }}</textarea>
-      <button type="submit" name="build_packet" value="1" style="margin-top:10px;">Parse Response</button>
-    </form>
-    {% if parse_warning %}<p class="note" style="margin-top:10px;">{{ parse_warning }}</p>{% endif %}
-    {% if parsed_response %}
-      <div class="parsed-response" style="margin-top:16px;">
-        {% if parsed_response.summary %}<p>{{ parsed_response.summary }}</p>{% endif %}
-        {% for key, title in [("recommendations", "Recommendations"), ("suggested_actions", "Suggested Actions"), ("questions", "Questions"), ("notes_for_commissioner", "Notes")] %}
-          <h4>{{ title }}</h4>
-          <ul>
-            {% for item in parsed_response.get(key, []) %}
-              <li>{{ item }}</li>
-            {% else %}
-              <li style="color:var(--muted)">None.</li>
-            {% endfor %}
-          </ul>
-        {% endfor %}
-      </div>
-    {% endif %}
-  </div>
-
+{# ── INTERNAL LOGS ───────────────────────────────────────────── #}
+<section style="margin-top:16px;">
   <div class="panel">
     <div class="section-head"><h2>Recent Internal Logs</h2></div>
     <div class="log-list">
