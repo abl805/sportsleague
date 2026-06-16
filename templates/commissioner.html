@@ -32,6 +32,32 @@
     </div>
   </div>
 
+{% elif state.phase == 'complete' %}
+  <div class="next-action ready">
+    <div>
+      <p class="na-label">Season {{ state.season_year }} &mdash; Complete</p>
+      <h2>The season is over.</h2>
+      <p>The playoffs have concluded. Run the offseason to process contracts, update rosters, and set up next season.</p>
+    </div>
+    <form method="post" action="{{ url_for('commissioner_action') }}">
+      <input type="hidden" name="action" value="run_offseason">
+      <button type="submit" class="cta-big">Run Offseason &rarr;</button>
+    </form>
+  </div>
+
+{% elif state.phase == 'playoffs' %}
+  <div class="next-action ready" style="border-color: var(--gold);">
+    <div>
+      <p class="na-label" style="color:var(--gold);">Playoffs &mdash; Week {{ state.current_week }}</p>
+      <h2>Ready to simulate the next playoff week.</h2>
+      <p>Run the week exactly as you would during the regular season. The bracket advances automatically.</p>
+    </div>
+    <form method="post" action="{{ url_for('commissioner_action') }}">
+      <input type="hidden" name="action" value="run_week">
+      <button type="submit" class="cta-big" style="background:var(--gold);color:#08132B;">Run Playoff Week {{ state.current_week + 1 }} &rarr;</button>
+    </form>
+  </div>
+
 {% elif games_played == 0 %}
   <div class="next-action ready">
     <div>
@@ -50,7 +76,7 @@
     <div>
       <p class="na-label">Season {{ state.season_year }} &mdash; Week {{ state.current_week }} Complete</p>
       <h2>Ready to simulate Week {{ state.current_week + 1 }}.</h2>
-      <p>Running a week simulates all {{ games_played // state.current_week if state.current_week else 0 }} games, updates player morale, and lets GM agents propose new trades.</p>
+      <p>Running a week simulates all games, updates player morale, and lets GM agents propose new trades.</p>
     </div>
     <form method="post" action="{{ url_for('commissioner_action') }}">
       <input type="hidden" name="action" value="run_week">

@@ -14,6 +14,7 @@ from league.chatgpt_bridge import (
 from league.database import create_tables, get_connection
 from league.offseason import advance_offseason_from_default_db
 from league.trade_engine import execute_trade, invalidate_trade, validate_trade, veto_trade
+from league.playoffs import get_bracket
 from run_week import run_week
 
 
@@ -141,8 +142,12 @@ def home():
         if not state:
             return None
         season = state["season_year"]
+        phase = state.get("phase", "regular_season")
+        bracket = get_bracket(conn, season) if phase in ("playoffs", "complete") else []
         return {
             "state": state,
+            "phase": phase,
+            "bracket": bracket,
             "games_played": q.get_games_played(conn, season),
             "max_week": q.get_max_week(conn, season),
             "standings": q.standings(conn, season, limit=6),

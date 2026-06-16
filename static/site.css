@@ -965,6 +965,212 @@ tr.mvp-row td { background: rgba(255, 184, 0, 0.05); }
   white-space: pre-wrap;
 }
 
+/* ── PLAYOFF BRACKET ────────────────────────────────────────────── */
+.playoff-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(28px, 4vw, 52px);
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 0 48px rgba(255, 184, 0, 0.10), var(--shadow);
+  margin-bottom: 16px;
+}
+
+.playoff-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(255, 184, 0, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(0, 229, 255, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.playoff-hero-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.playoff-hero-header h1 {
+  color: var(--gold);
+  font-size: clamp(2.4rem, 5vw, 4.5rem);
+}
+
+.playoff-hero-header p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  max-width: none;
+}
+
+.playoff-phase-tag {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  background: rgba(255, 184, 0, 0.08);
+  margin-top: 4px;
+}
+
+.bracket {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.bracket.with-champion {
+  grid-template-columns: 1fr 48px 1fr 48px auto;
+}
+
+.bracket-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bracket-col-finals {
+  justify-content: center;
+}
+
+.bracket-round-label {
+  margin: 0 0 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.bracket-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+.bracket-matchup {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.bracket-matchup.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.08);
+}
+
+.bracket-matchup.complete {
+  border-color: var(--border-bright);
+}
+
+.bracket-matchup.tbd {
+  opacity: 0.45;
+}
+
+.bracket-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bracket-team:last-of-type { border-bottom: none; }
+
+.bracket-team.winner { background: rgba(255, 184, 0, 0.07); }
+
+.bracket-seed {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--muted);
+  min-width: 22px;
+  letter-spacing: 0.04em;
+}
+
+.bracket-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.bracket-team.winner .bracket-name { color: var(--gold); }
+
+.bracket-wins {
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  min-width: 20px;
+  text-align: right;
+  color: var(--muted);
+}
+
+.bracket-team.winner .bracket-wins { color: var(--gold); }
+
+.bracket-series-status {
+  padding: 5px 14px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  background: var(--surface-3);
+}
+
+.bracket-matchup.active .bracket-series-status { color: var(--accent); }
+.bracket-matchup.complete .bracket-series-status { color: var(--gold-light); }
+
+.bracket-champion {
+  padding: 24px 28px;
+  border: 2px solid var(--gold);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255, 184, 0, 0.12) 0%, rgba(255, 184, 0, 0.03) 100%);
+  text-align: center;
+}
+
+.bracket-champion-label {
+  margin: 0 0 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+
+.bracket-champion-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.bracket-champion-year {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 960px) {
   .site-header {

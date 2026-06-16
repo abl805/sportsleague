@@ -2,6 +2,106 @@
 {% from "partials.html" import standings_table, leader_table, game_card, storyline_list %}
 {% block title %}AAIBL Home{% endblock %}
 {% block content %}
+
+{# ── PLAYOFF BRACKET (shown when playoffs are active or complete) ── #}
+{% if phase in ('playoffs', 'complete') and bracket %}
+{% set semis = bracket | selectattr('round', 'equalto', 1) | list %}
+{% set finals = bracket | selectattr('round', 'equalto', 2) | list %}
+{% set champion = finals[0] if finals and finals[0].status == 'complete' else None %}
+<section class="playoff-hero">
+  <div class="playoff-hero-header">
+    <div>
+      <p class="eyebrow">{{ state.season_year }} Season</p>
+      <h1>Playoffs</h1>
+      <p>
+        {% if phase == 'complete' %}Season complete.{% else %}Week {{ state.current_week }} — run each week as usual to advance.{% endif %}
+      </p>
+    </div>
+    <span class="playoff-phase-tag">
+      {% if phase == 'complete' %}Season Complete
+      {% elif finals %}Finals
+      {% else %}Semifinals{% endif %}
+    </span>
+  </div>
+
+  <div class="bracket {% if champion %}with-champion{% endif %}">
+
+    {# — SEMIFINALS — #}
+    <div class="bracket-col">
+      <p class="bracket-round-label">Semifinals</p>
+      {% for s in semis %}
+        <div class="bracket-matchup {% if s.status == 'complete' %}complete{% else %}active{% endif %}">
+          <div class="bracket-team {% if s.winner_id == s.team_a_id %}winner{% endif %}">
+            <span class="bracket-seed">#{{ s.seed_a }}</span>
+            <span class="bracket-name">{{ s.name_a }}</span>
+            <span class="bracket-wins">{{ s.team_a_wins }}</span>
+          </div>
+          <div class="bracket-team {% if s.winner_id == s.team_b_id %}winner{% endif %}">
+            <span class="bracket-seed">#{{ s.seed_b }}</span>
+            <span class="bracket-name">{{ s.name_b }}</span>
+            <span class="bracket-wins">{{ s.team_b_wins }}</span>
+          </div>
+          <div class="bracket-series-status">
+            {% if s.status == 'complete' %}{{ s.winner_name }} advances{% else %}Best of 3{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {# — CONNECTOR — #}
+    <div class="bracket-connector">&#9658;</div>
+
+    {# — FINALS — #}
+    <div class="bracket-col bracket-col-finals">
+      <p class="bracket-round-label">Finals</p>
+      {% if finals %}
+        {% set f = finals[0] %}
+        <div class="bracket-matchup {% if f.status == 'complete' %}complete{% else %}active{% endif %}">
+          <div class="bracket-team {% if f.winner_id == f.team_a_id %}winner{% endif %}">
+            <span class="bracket-seed">#{{ f.seed_a }}</span>
+            <span class="bracket-name">{{ f.name_a }}</span>
+            <span class="bracket-wins">{{ f.team_a_wins }}</span>
+          </div>
+          <div class="bracket-team {% if f.winner_id == f.team_b_id %}winner{% endif %}">
+            <span class="bracket-seed">#{{ f.seed_b }}</span>
+            <span class="bracket-name">{{ f.name_b }}</span>
+            <span class="bracket-wins">{{ f.team_b_wins }}</span>
+          </div>
+          <div class="bracket-series-status">
+            {% if f.status == 'complete' %}{{ f.winner_name }} wins{% else %}Best of 3{% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div class="bracket-matchup tbd">
+          <div class="bracket-team">
+            <span class="bracket-seed"></span>
+            <span class="bracket-name">TBD</span>
+            <span class="bracket-wins"></span>
+          </div>
+          <div class="bracket-team">
+            <span class="bracket-seed"></span>
+            <span class="bracket-name">TBD</span>
+            <span class="bracket-wins"></span>
+          </div>
+          <div class="bracket-series-status">Finals — pending</div>
+        </div>
+      {% endif %}
+    </div>
+
+    {# — CHAMPION — #}
+    {% if champion %}
+    <div class="bracket-connector">&#9658;</div>
+    <div class="bracket-champion">
+      <p class="bracket-champion-label">Champion</p>
+      <p class="bracket-champion-name">{{ champion.winner_name }}</p>
+      <p class="bracket-champion-year">{{ state.season_year }}</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endif %}
+
 <section class="league-hero">
   <div>
     <p class="eyebrow">Season {{ state.season_year }} / Week {{ state.current_week }}</p>
