@@ -254,6 +254,8 @@ def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade
             "Answer the commissioner request without inventing missing stats.",
             "Return a JSON packet inside the CHATGPT TO AAIBL markers.",
             "Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.",
+            "REQUIRED: populate 'articles' with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.",
+            "REQUIRED: populate 'influences' with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.",
         ],
         "response_contract": {
             "schema": CHATGPT_SCHEMA,
@@ -264,6 +266,38 @@ def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade
             "suggested_actions": ["Action strings the commissioner may take manually."],
             "questions": ["Optional clarification questions."],
             "notes_for_commissioner": ["Optional caveats or narrative hooks."],
+            "articles": [
+                {
+                    "headline": "FILL IN — real headline based on the data",
+                    "body": "FILL IN — 2 to 4 sentences of narrative using real names and scores.",
+                    "week": packet_week,
+                    "team_tags": ["USE REAL ABBREVIATIONS FROM CONTEXT"],
+                    "player_tags": ["Use Real Full Name From Context"]
+                }
+            ],
+            "influences": [
+                {
+                    "player": "Full Name of a standout or struggling player",
+                    "streak": "hot or cold",
+                    "morale": 6,
+                    "work_ethic_boost": 0.10,
+                    "duration_weeks": 2,
+                    "reason": "FILL IN — one sentence explaining why"
+                },
+                {
+                    "team": "REAL ABBR",
+                    "momentum": "hot or cold",
+                    "locker_room_boost": 5,
+                    "duration_weeks": 2,
+                    "reason": "FILL IN — one sentence explaining why"
+                },
+                {
+                    "gm": "REAL ABBR",
+                    "trade_urgency": "high or low",
+                    "duration_weeks": 2,
+                    "reason": "FILL IN — one sentence explaining why"
+                }
+            ],
         },
         "context": context,
     }
