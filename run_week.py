@@ -17,6 +17,123 @@ from league.player_agents import (
     get_team_chemistry,
 )
 from league.trade_engine import autopilot_review_pending_trades
+from league.playoffs import (
+    seed_playoffs,
+    schedule_next_playoff_game,
+    record_game_result,
+)
+
+
+def _process_playoff_results(conn, playoff_game_ids, current_week, season_year):
+    """
+    After playoff games for a week are simulated:
+      - Update series win counts
+      - Schedule the next game for any series still alive
+      - If a round is swept clean, advance the bracket (start Finals or crown champion)
+    """
+    if not playoff_game_ids:
+        return
+
+    # Determine which round these games belong to
+    round_num = conn.execute("""
+        SELECT ps.round FROM playoff_series ps
+        WHERE  ps.id = (SELECT playoff_series_id FROM games WHERE id = ?)
+    """, (playoff_game_ids[0],)).fetchone()["round"]
+
+    round_label = "SEMIFINALS" if round_num == 1 else "FINALS"
+    print(f"\n{'-'*54}")
+    print(f"  PLAYOFFS  --  {round_label}  UPDATE")
+    print(f"{'-'*54}")
+
+    for game_id in playoff_game_ids:
+        series_id, done, winner_id = record_game_result(conn, game_id)
+        s = conn.execute("""
+            SELECT ps.seed_a, ps.seed_b,
+                   ps.team_a_wins, ps.team_b_wins,
+                   ta.city || ' ' || ta.name AS name_a,
+                   tb.city || ' ' || tb.name AS name_b
+            FROM   playoff_series ps
+            JOIN   teams ta ON ps.team_a_id = ta.id
+            JOIN   teams tb ON ps.team_b_id = tb.id
+            WHERE  ps.id = ?
+        """, (series_id,)).fetchone()
+
+        if done:
+            w_name = conn.execute(
+                "SELECT city || ' ' || name AS n FROM teams WHERE id = ?",
+                (winner_id,)
+            ).fetchone()["n"]
+            print(f"\n  #{s['seed_a']} {s['name_a']}  vs  #{s['seed_b']} {s['name_b']}")
+            print(f"  >> {w_name} wins the series  "
+                  f"({s['team_a_wins']}-{s['team_b_wins']})")
+        else:
+            print(f"\n  #{s['seed_a']} {s['name_a']}  vs  #{s['seed_b']} {s['name_b']}")
+            print(f"  Series: {s['name_a']} {s['team_a_wins']}  —  "
+                  f"{s['team_b_wins']} {s['name_b']}")
+
+    conn.commit()
+
+    next_week = current_week + 1
+
+    # Schedule next game for still-active series
+    active = conn.execute("""
+        SELECT id FROM playoff_series
+        WHERE  season_year = ? AND round = ? AND status = 'active'
+    """, (season_year, round_num)).fetchall()
+
+    for row in active:
+        schedule_next_playoff_game(conn, row["id"], next_week, season_year)
+
+    # If all series in this round are done, advance the bracket
+    if not active:
+        if round_num == 1:
+            r1 = conn.execute("""
+                SELECT * FROM playoff_series
+                WHERE  season_year = ? AND round = 1
+                ORDER  BY seed_a
+            """, (season_year,)).fetchall()
+            w1 = r1[0]["winner_id"]
+            w2 = r1[1]["winner_id"]
+
+            conn.execute("""
+                INSERT INTO playoff_series
+                    (season_year, round, seed_a, seed_b, team_a_id, team_b_id)
+                VALUES (?, 2, 1, 2, ?, ?)
+            """, (season_year, w1, w2))
+            finals_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+            # Finals Game 1: #1-bracket winner at home
+            conn.execute("""
+                INSERT INTO games
+                    (home_team_id, away_team_id, week, season_year, playoff_series_id)
+                VALUES (?, ?, ?, ?, ?)
+            """, (w1, w2, next_week, season_year, finals_id))
+
+            n1 = conn.execute(
+                "SELECT city || ' ' || name AS n FROM teams WHERE id = ?", (w1,)
+            ).fetchone()["n"]
+            n2 = conn.execute(
+                "SELECT city || ' ' || name AS n FROM teams WHERE id = ?", (w2,)
+            ).fetchone()["n"]
+            print(f"\n  FINALS SET:  {n1}  vs  {n2}")
+            print(f"  Finals begin Week {next_week}.\n")
+        else:
+            finals = conn.execute(
+                "SELECT * FROM playoff_series WHERE season_year = ? AND round = 2",
+                (season_year,)
+            ).fetchone()
+            champ_name = conn.execute(
+                "SELECT city || ' ' || name AS n FROM teams WHERE id = ?",
+                (finals["winner_id"],)
+            ).fetchone()["n"]
+            print(f"\n  {'*'*50}")
+            print(f"    CHAMPION:  {champ_name}!")
+            print(f"  {'*'*50}\n")
+            conn.execute(
+                "UPDATE league_state SET phase = 'complete' WHERE id = 1"
+            )
+
+    conn.commit()
 
 
 def _active_player_mods(conn, season_year, week):
@@ -83,14 +200,21 @@ def run_week(verbose=None, start_official=None):
         conn.commit()
         official_started = 1
 
+    phase = state["phase"] if "phase" in state.keys() else "regular_season"
+
     print(f"\n{'='*54}")
-    label = "TEST SIM" if mode == "test" else "OFFICIAL"
-    print(f"  WEEK {week}  --  {season_year} SEASON  [{label}]")
+    if phase == "playoffs":
+        print(f"  WEEK {week}  --  {season_year} PLAYOFFS")
+    elif mode == "test":
+        print(f"  WEEK {week}  --  {season_year} SEASON  [TEST SIM]")
+    else:
+        print(f"  WEEK {week}  --  {season_year} SEASON  [OFFICIAL]")
     print(f"{'='*54}\n")
 
     games = c.execute("""
         SELECT g.id,
                g.home_team_id, g.away_team_id,
+               g.playoff_series_id,
                ht.city || ' ' || ht.name AS home_name,
                at.city || ' ' || at.name AS away_name,
                ht.abbreviation AS home_abbr,
@@ -107,8 +231,11 @@ def run_week(verbose=None, start_official=None):
             (season_year,),
         ).fetchone()[0]
         if remaining == 0:
-            print("The season is over! Run  python view_league.py  for final standings.")
-            print("GM personality review already ran at end of the final week.\n")
+            if phase == "complete":
+                print("The season is complete! Run  python view_league.py  to see the champion.\n")
+            else:
+                print("The season is over! Run  python view_league.py  for final standings.")
+                print("GM personality review already ran at end of the final week.\n")
         else:
             print(f"No games scheduled for week {week}.")
         conn.close()
@@ -122,6 +249,8 @@ def run_week(verbose=None, start_official=None):
         compute_all_team_chemistry(conn, week, season_year)
 
     all_player_mods = _active_player_mods(conn, season_year, week)
+
+    playoff_game_ids = []
 
     for game in games:
         home_players = [dict(p) for p in c.execute(
@@ -174,24 +303,28 @@ def run_week(verbose=None, start_official=None):
                   stat["steals"], stat["blocks"]))
 
         home_won = h_score > a_score
-        c.execute("""
-            UPDATE standings
-            SET wins = wins + ?,
-                losses = losses + ?,
-                points_for = points_for + ?,
-                points_against = points_against + ?
-            WHERE team_id = ? AND season_year = ?
-        """, (1 if home_won else 0, 0 if home_won else 1,
-              h_score, a_score, game["home_team_id"], season_year))
-        c.execute("""
-            UPDATE standings
-            SET wins = wins + ?,
-                losses = losses + ?,
-                points_for = points_for + ?,
-                points_against = points_against + ?
-            WHERE team_id = ? AND season_year = ?
-        """, (0 if home_won else 1, 1 if home_won else 0,
-              a_score, h_score, game["away_team_id"], season_year))
+
+        if game["playoff_series_id"]:
+            playoff_game_ids.append(game["id"])
+        else:
+            c.execute("""
+                UPDATE standings
+                SET wins = wins + ?,
+                    losses = losses + ?,
+                    points_for = points_for + ?,
+                    points_against = points_against + ?
+                WHERE team_id = ? AND season_year = ?
+            """, (1 if home_won else 0, 0 if home_won else 1,
+                  h_score, a_score, game["home_team_id"], season_year))
+            c.execute("""
+                UPDATE standings
+                SET wins = wins + ?,
+                    losses = losses + ?,
+                    points_for = points_for + ?,
+                    points_against = points_against + ?
+                WHERE team_id = ? AND season_year = ?
+            """, (0 if home_won else 1, 1 if home_won else 0,
+                  a_score, h_score, game["away_team_id"], season_year))
 
         winner = game["home_name"] if home_won else game["away_name"]
         marker = "  "
@@ -215,58 +348,80 @@ def run_week(verbose=None, start_official=None):
     )
     conn.commit()
 
-    # ── Player morale + actions ───────────────────────────────────────────────
+    # ── Player morale + actions (runs in both regular season and playoffs) ─────
     if has_personalities:
         run_all_player_agents(conn, week, season_year, verbose=verbose)
 
-    games_remaining = c.execute(
-        "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
+    reg_games_remaining = c.execute(
+        "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0"
+        " AND playoff_series_id IS NULL",
         (season_year,),
     ).fetchone()[0]
 
-    # ── GM weekly decisions ───────────────────────────────────────────────────
+    # ── Playoff result processing ─────────────────────────────────────────────
+    if playoff_game_ids:
+        _process_playoff_results(conn, playoff_game_ids, week, season_year)
+
+    # ── Regular-season end: seed playoffs ─────────────────────────────────────
+    if phase == "regular_season" and reg_games_remaining == 0:
+        seed_playoffs(conn, week + 1, season_year)
+        conn.execute("UPDATE league_state SET phase = 'playoffs' WHERE id = 1")
+        conn.commit()
+        phase = "playoffs"
+
+    # ── GM weekly decisions (regular season only) ─────────────────────────────
     gm_count = c.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
-    if gm_count > 0 and games_remaining > 0:
-        run_all_gm_agents(conn, week, season_year, verbose=True)
+    if phase == "regular_season":
+        if gm_count > 0 and reg_games_remaining > 0:
+            run_all_gm_agents(conn, week, season_year, verbose=True)
 
-        print(f"\n{'-'*54}")
-        print("  AUTOPILOT TRADE REVIEW")
-        print(f"{'-'*54}")
-        trade_summary = autopilot_review_pending_trades(conn, season_year, verbose=True)
-        if not any(trade_summary.values()):
-            print("  No pending trades to review.")
-    elif gm_count > 0:
-        print(f"\n{'-'*54}")
-        print("  GM AGENTS")
-        print(f"{'-'*54}")
-        print("  Regular-season trade proposals are closed; offseason comes next.\n")
+            print(f"\n{'-'*54}")
+            print("  AUTOPILOT TRADE REVIEW")
+            print(f"{'-'*54}")
+            trade_summary = autopilot_review_pending_trades(conn, season_year, verbose=True)
+            if not any(trade_summary.values()):
+                print("  No pending trades to review.")
+        elif gm_count > 0:
+            print(f"\n{'-'*54}")
+            print("  GM AGENTS")
+            print(f"{'-'*54}")
+            print("  Regular-season trade proposals are closed; playoffs begin.\n")
 
-        print(f"\n{'-'*54}")
-        print("  AUTOPILOT TRADE REVIEW")
-        print(f"{'-'*54}")
-        trade_summary = autopilot_review_pending_trades(conn, season_year, verbose=True)
-        if not any(trade_summary.values()):
-            print("  No pending trades to review.")
+            print(f"\n{'-'*54}")
+            print("  AUTOPILOT TRADE REVIEW")
+            print(f"{'-'*54}")
+            trade_summary = autopilot_review_pending_trades(conn, season_year, verbose=True)
+            if not any(trade_summary.values()):
+                print("  No pending trades to review.")
 
-    # ── Season-end personality drift (fires only on the final week) ───────────
-    if games_remaining == 0 and gm_count > 0:
-        evaluate_all_gms_season_end(conn, season_year, verbose=True)
-    # ─────────────────────────────────────────────────────────────────────────
+        # Season-end GM personality drift fires when the regular season ends
+        if gm_count > 0 and reg_games_remaining == 0:
+            evaluate_all_gms_season_end(conn, season_year, verbose=True)
 
+    # ── End-of-week summary ───────────────────────────────────────────────────
+    # Re-read phase: _process_playoff_results may have set it to 'complete'
+    fresh_phase = c.execute(
+        "SELECT phase FROM league_state WHERE id = 1"
+    ).fetchone()["phase"]
     pending_review_count = c.execute(
         "SELECT COUNT(*) FROM pending_trades WHERE status = 'pending'"
     ).fetchone()[0]
     conn.close()
 
-    if games_remaining == 0:
-        print(f"Week {week} complete.  Season {season_year} is finished.")
-        print("Run  python view_league.py  for final standings.\n")
+    if fresh_phase == "complete":
+        print(f"Week {week} complete.  The season is over — champion has been crowned!")
+        print("Run  python view_league.py  to see the final standings and champion.\n")
         print("Run  python run_offseason.py  when you are ready for next season.\n")
+    elif fresh_phase == "playoffs":
+        print(f"Week {week} complete.  Now entering week {week + 1}  (playoffs).")
+        print("Run  python view_league.py  to see the playoff bracket.")
+        print("Run  python run_week.py  to simulate the next playoff game.\n")
     else:
         print(f"Week {week} complete.  Now entering week {week + 1}.")
         print("Run  python view_league.py  to see updated standings.")
         if pending_review_count:
-            print(f"{pending_review_count} trade(s) still need commissioner review: python review_trades.py\n")
+            print(f"{pending_review_count} trade(s) still need commissioner review:"
+                  f"  python review_trades.py\n")
         else:
             print("No commissioner trade review needed right now.\n")
 

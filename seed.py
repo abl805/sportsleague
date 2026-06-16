@@ -376,6 +376,7 @@ def seed():
         DELETE FROM general_managers;
         DELETE FROM player_game_stats;
         DELETE FROM games;
+        DELETE FROM playoff_series;
         DELETE FROM contracts;
         DELETE FROM standings;
         DELETE FROM players;
@@ -497,7 +498,7 @@ def seed():
         )
 
     # Build and insert schedule
-    schedule, total_weeks = build_schedule(team_ids, num_rounds=4)
+    schedule, total_weeks = build_schedule(team_ids, num_rounds=2)
     for home, away, week in schedule:
         c.execute(
             "INSERT INTO games (home_team_id, away_team_id, week, season_year) VALUES (?, ?, ?, ?)",
@@ -506,8 +507,9 @@ def seed():
 
     # Initialize league state
     c.execute(
-        "INSERT INTO league_state (current_week, season_year, mode, official_started, last_updated)"
-        " VALUES (1, ?, ?, ?, datetime('now'))",
+        "INSERT INTO league_state"
+        " (current_week, season_year, mode, official_started, phase, last_updated)"
+        " VALUES (1, ?, ?, ?, 'regular_season', datetime('now'))",
         (LEAGUE_YEAR, mode, official_started),
     )
 

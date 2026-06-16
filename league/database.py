@@ -186,6 +186,20 @@ def create_tables():
             PRIMARY KEY (team_id, week, season_year)
         );
 
+        CREATE TABLE IF NOT EXISTS playoff_series (
+            id           INTEGER PRIMARY KEY,
+            season_year  INTEGER NOT NULL,
+            round        INTEGER NOT NULL,
+            seed_a       INTEGER NOT NULL,
+            seed_b       INTEGER NOT NULL,
+            team_a_id    INTEGER NOT NULL REFERENCES teams(id),
+            team_b_id    INTEGER NOT NULL REFERENCES teams(id),
+            team_a_wins  INTEGER DEFAULT 0,
+            team_b_wins  INTEGER DEFAULT 0,
+            winner_id    INTEGER REFERENCES teams(id),
+            status       TEXT DEFAULT 'active'
+        );
+
         CREATE TABLE IF NOT EXISTS articles (
             id          INTEGER PRIMARY KEY,
             week        INTEGER NOT NULL,
@@ -304,6 +318,23 @@ def _migrate_existing_schema(conn):
     conn.execute(
         "UPDATE league_state SET mode = COALESCE(mode, 'test'), "
         "official_started = COALESCE(official_started, 0)"
+    )
+
+    games_columns3 = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(games)").fetchall()
+    }
+    if "playoff_series_id" not in games_columns3:
+        conn.execute("ALTER TABLE games ADD COLUMN playoff_series_id INTEGER")
+
+    ls_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(league_state)").fetchall()
+    }
+    if "phase" not in ls_columns:
+        conn.execute("ALTER TABLE league_state ADD COLUMN phase TEXT DEFAULT 'regular_season'")
+    conn.execute(
+        "UPDATE league_state SET phase = COALESCE(phase, 'regular_season')"
     )
 
     # Backfill quarter scores for games played before this column was added

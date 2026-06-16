@@ -6,6 +6,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(__file__))
 from league.database import get_connection
+from league.playoffs import get_bracket
 
 
 def view_league():
@@ -21,9 +22,17 @@ def view_league():
     week        = state["current_week"]
     season_year = state["season_year"]
     last_week   = week - 1
+    phase = state["phase"] if "phase" in state.keys() else "regular_season"
+
+    if phase == "complete":
+        header = f"  BASKETBALL LEAGUE  |  {season_year} SEASON  |  COMPLETE"
+    elif phase == "playoffs":
+        header = f"  BASKETBALL LEAGUE  |  {season_year} SEASON  |  PLAYOFFS — WEEK {week}"
+    else:
+        header = f"  BASKETBALL LEAGUE  |  {season_year} SEASON  |  ENTERING WEEK {week}"
 
     print(f"\n{'='*58}")
-    print(f"  BASKETBALL LEAGUE  |  {season_year} SEASON  |  ENTERING WEEK {week}")
+    print(header)
     print(f"{'='*58}\n")
 
     # ── Standings ─────────────────────────────────────────────
@@ -43,8 +52,13 @@ def view_league():
 
     for i, row in enumerate(rows, 1):
         diff_str = f"+{row['diff']}" if row['diff'] >= 0 else str(row['diff'])
+        playoff_marker = " *" if i <= 4 and phase == "regular_season" else "  "
         print(f"  {i:<3} {row['team_name']:<28} {row['wins']:>3} {row['losses']:>3}"
-              f" {row['points_for']:>6} {row['points_against']:>6} {diff_str:>6}")
+              f" {row['points_for']:>6} {row['points_against']:>6} {diff_str:>6}"
+              f"{playoff_marker}")
+
+    if phase == "regular_season":
+        print(f"  {'':3} * = playoff position")
 
     # ── Last week's results ────────────────────────────────────
     if last_week >= 1:
@@ -102,6 +116,41 @@ def view_league():
         for row in stars:
             print(f"  {row['name']:<24} {row['abbreviation']:>4} {row['position']:>3}"
                   f" {row['ppg']:>6} {row['rpg']:>6} {row['apg']:>6} {row['gp']:>4}")
+
+    # ── Playoff bracket ────────────────────────────────────────
+    if phase in ("playoffs", "complete"):
+        series_list = get_bracket(conn, season_year)
+        if series_list:
+            print("\nPLAYOFF BRACKET")
+            current_round = None
+            for s in series_list:
+                if s["round"] != current_round:
+                    current_round = s["round"]
+                    round_label = "SEMIFINALS" if current_round == 1 else "FINALS"
+                    print(f"\n  {round_label}")
+                    print(f"  {'-'*50}")
+
+                if s["status"] == "complete":
+                    record = f"{s['team_a_wins']}-{s['team_b_wins']}"
+                    result = f">> {s['winner_name']} wins  ({record})"
+                    print(f"  #{s['seed_a']} {s['name_a']}  vs  #{s['seed_b']} {s['name_b']}")
+                    print(f"     {result}")
+                else:
+                    print(f"  #{s['seed_a']} {s['name_a']}  vs  #{s['seed_b']} {s['name_b']}")
+                    print(f"     {s['name_a']} {s['team_a_wins']}  —  "
+                          f"{s['team_b_wins']} {s['name_b']}  (best of 3)")
+
+        if phase == "complete":
+            champ = conn.execute("""
+                SELECT t.city || ' ' || t.name AS n
+                FROM   playoff_series ps
+                JOIN   teams t ON ps.winner_id = t.id
+                WHERE  ps.season_year = ? AND ps.round = 2
+            """, (season_year,)).fetchone()
+            if champ:
+                print(f"\n  {'*'*50}")
+                print(f"    {season_year} CHAMPION:  {champ['n']}")
+                print(f"  {'*'*50}")
 
     print()
     conn.close()
