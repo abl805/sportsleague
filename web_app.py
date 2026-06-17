@@ -359,6 +359,7 @@ def news():
             "state": state,
             "articles": q.recent_articles(conn, season, limit=40),
             "storylines": q.public_storylines(conn, season, limit=40),
+            "interviews": get_recent_interviews(conn, season, limit=20),
         }
 
     data = with_conn(load)
@@ -382,6 +383,8 @@ def commissioner_data():
             "offseason_events": q.offseason_events(conn),
             "team_options": q.teams_index(conn, season),
             "trade_options": q.trade_options(conn),
+            "pending_interviews": get_pending_interviews(conn, season_year=season),
+            "recent_interviews": get_recent_interviews(conn, season, limit=20),
         }
 
     data = with_conn(load)
@@ -830,41 +833,7 @@ def commissioner_influences_add():
 
 @app.route("/interviews")
 def interviews():
-    def load(conn):
-        state = q.get_state(conn)
-        if not state:
-            return None
-        season_year = state["season_year"]
-        return {
-            "state": state,
-            "pending": get_pending_interviews(conn, season_year=season_year),
-            "completed": get_recent_interviews(conn, season_year, limit=40),
-        }
-
-    data = with_conn(load)
-    if not data:
-        return render_no_league()
-    return render_template("interviews.html", **data, active="interviews")
-
-
-@app.route("/commissioner/interview/<int:interview_id>")
-def interview_prompt(interview_id):
-    def load(conn):
-        row = conn.execute(
-            "SELECT * FROM player_interviews WHERE id = ?", (interview_id,)
-        ).fetchone()
-        if not row:
-            return None
-        player = conn.execute(
-            "SELECT first_name || ' ' || last_name AS name FROM players WHERE id = ?",
-            (row["player_id"],)
-        ).fetchone()
-        return {"interview": dict(row), "player_name": player["name"] if player else "Player"}
-
-    data = with_conn(load)
-    if not data or not data["interview"]:
-        return render_template("not_found.html", title="Interview not found"), 404
-    return render_template("interview_prompt.html", **data, active="interviews")
+    return redirect(url_for("commissioner") + "#interviews")
 
 
 @app.route("/commissioner/interview/<int:interview_id>/submit", methods=["POST"])
@@ -872,14 +841,14 @@ def interview_submit(interview_id):
     response_text = (request.form.get("response") or "").strip()
     if not response_text:
         flash("No response text provided.", "error")
-        return redirect(url_for("interview_prompt", interview_id=interview_id))
+        return redirect(url_for("commissioner") + "#interviews")
 
     def save(conn):
         save_interview_response(interview_id, response_text, db=conn)
 
     with_conn(save)
-    flash("Interview response saved!", "success")
-    return redirect(url_for("interviews"))
+    flash("Interview response saved and published!", "success")
+    return redirect(url_for("commissioner") + "#interviews")
 
 
 if __name__ == "__main__":

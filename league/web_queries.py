@@ -306,6 +306,18 @@ def team_detail(conn, abbreviation, season_year):
     """, (team_id, season_year)).fetchall())
 
     articles = articles_for_team(conn, team_id, season_year)
+    interviews = dicts(conn.execute("""
+        SELECT pi.id, pi.week, pi.question, pi.response,
+               p.id AS player_id,
+               p.first_name || ' ' || p.last_name AS player_name,
+               pb.personality_label
+        FROM player_interviews pi
+        JOIN players p ON p.id = pi.player_id
+        LEFT JOIN player_backstories pb ON pb.player_id = pi.player_id
+        WHERE p.team_id = ? AND pi.season_year = ? AND pi.response IS NOT NULL
+        ORDER BY pi.id DESC
+        LIMIT 6
+    """, (team_id, season_year)).fetchall())
 
     return {
         "team": team,
@@ -318,6 +330,7 @@ def team_detail(conn, abbreviation, season_year):
         "gm": gm,
         "team_leaders": team_leaders,
         "articles": articles,
+        "interviews": interviews,
     }
 
 

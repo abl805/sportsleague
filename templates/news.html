@@ -23,6 +23,26 @@
 </section>
 {% endif %}
 
+{% if interviews %}
+<section class="panel full" style="margin-top:16px;">
+  <div class="section-head"><h2>Player Voices</h2></div>
+  <div class="article-list">
+    {% for iv in interviews %}
+      <article class="article-item">
+        <div class="story-meta">
+          Week {{ iv.week }} &middot;
+          <a href="{{ url_for('player_page', player_id=iv.player_id) }}">{{ iv.player_name }}</a>
+          ({{ iv.team_name }})
+          {% if iv.personality_label %}&middot; <em>{{ iv.personality_label }}</em>{% endif %}
+        </div>
+        <p style="font-size:0.84em;color:var(--muted);margin-bottom:4px;">{{ iv.question }}</p>
+        <p style="font-style:italic;">"{{ iv.response }}"</p>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 <section class="panel full">
   {% if articles %}<div class="section-head"><h2>League Storylines</h2></div>{% endif %}
   {{ storyline_list(storylines) }}

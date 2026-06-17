@@ -364,6 +364,69 @@
   </div>
 </section>
 
+{# ── POST-GAME INTERVIEWS ─────────────────────────────────────── #}
+<section id="interviews" style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head">
+      <h2>Post-Game Interviews</h2>
+      {% if pending_interviews %}
+        <span style="color:var(--gold);font-size:0.78rem;font-weight:800;">{{ pending_interviews|length }} pending</span>
+      {% endif %}
+    </div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 16px;">
+      Copy a prompt into ChatGPT, paste the response back here — it goes live immediately on the player's profile, team page, and news feed.
+    </p>
+
+    {% for iv in pending_interviews %}
+    <article style="border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+      <p class="eyebrow" style="margin:0 0 4px;">Week {{ iv.week }} &mdash;
+        <a href="{{ url_for('player_page', player_id=iv.player_id) }}">{{ iv.player_name }}</a>
+        &middot; {{ iv.team_name }}
+      </p>
+      <p style="font-size:0.88rem;color:var(--muted);margin:0 0 10px;font-style:italic;">Q: {{ iv.question }}</p>
+
+      <details style="margin-bottom:10px;">
+        <summary style="cursor:pointer;font-size:0.8rem;color:var(--accent);font-weight:700;">View / Copy Full Prompt</summary>
+        <textarea readonly id="iv-prompt-{{ iv.id }}"
+          style="width:100%;min-height:220px;font-family:monospace;font-size:0.78em;
+                 background:var(--surface-2);border:1px solid var(--border);
+                 padding:10px;resize:vertical;margin-top:8px;">{{ iv.context_packet }}</textarea>
+        <button type="button" class="btn-copy secondary"
+                data-target="iv-prompt-{{ iv.id }}"
+                style="margin-top:6px;">Copy &rarr; ChatGPT</button>
+      </details>
+
+      <form method="post" action="{{ url_for('interview_submit', interview_id=iv.id) }}">
+        <textarea name="response" rows="3"
+          style="width:100%;font-family:Georgia,serif;font-size:0.9em;
+                 border:1px solid var(--border);padding:8px;resize:vertical;"
+          placeholder="Paste ChatGPT's response here&hellip;" required></textarea>
+        <button type="submit" style="margin-top:8px;">Publish Quote</button>
+      </form>
+    </article>
+    {% else %}
+      <p class="empty" style="margin-bottom:16px;">No pending interview prompts — run a week to generate new ones.</p>
+    {% endfor %}
+
+    {% if recent_interviews %}
+    <div class="section-head" style="margin-top:8px;"><h3 style="font-size:0.9rem;">Recent Published Quotes</h3></div>
+    <div class="log-list">
+      {% for iv in recent_interviews %}
+        <article>
+          <div class="story-meta">
+            Week {{ iv.week }} &middot;
+            <a href="{{ url_for('player_page', player_id=iv.player_id) }}">{{ iv.player_name }}</a>
+            &middot; {{ iv.team_name }}
+            {% if iv.personality_label %}&middot; {{ iv.personality_label }}{% endif %}
+          </div>
+          <p style="font-style:italic;margin:4px 0 0;">"{{ iv.response }}"</p>
+        </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+
 {# ── INTERNAL LOGS ───────────────────────────────────────────── #}
 <section style="margin-top:16px;">
   <div class="panel">

@@ -32,7 +32,6 @@
         </div>
       </div>
       <a class="{{ 'active' if active == 'news' else '' }}" href="{{ url_for('news') }}">News</a>
-      <a class="{{ 'active' if active == 'interviews' else '' }}" href="{{ url_for('interviews') }}">Interviews</a>
       <div class="nav-group">
         <a class="{{ 'active' if active in ('about','contact') else '' }}" href="{{ url_for('about') }}">About</a>
         <div class="nav-dropdown">

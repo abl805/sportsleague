@@ -149,8 +149,26 @@
 </section>
 
 {# ── IN THE NEWS + STORYLINES ─────────────────────────────────── #}
-{% if detail.articles or detail.events %}
+{% if detail.articles or detail.events or detail.interviews %}
 <section style="margin-top:16px;">
+  {% if detail.interviews %}
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="section-head"><h2>In Their Own Words</h2></div>
+    <div class="article-list">
+      {% for iv in detail.interviews %}
+        <article class="article-item">
+          <div class="story-meta">
+            Week {{ iv.week }} &middot;
+            <a href="{{ url_for('player_page', player_id=iv.player_id) }}">{{ iv.player_name }}</a>
+            {% if iv.personality_label %}&middot; <em>{{ iv.personality_label }}</em>{% endif %}
+          </div>
+          <p style="font-size:0.84em;color:var(--muted);margin-bottom:4px;">{{ iv.question }}</p>
+          <p style="font-style:italic;">"{{ iv.response }}"</p>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
   {% if detail.articles %}
   <div class="panel" style="margin-bottom:16px;">
     <div class="section-head"><h2>In the News</h2></div>
