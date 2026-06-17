@@ -4,7 +4,7 @@ import json
 import os
 
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 import functools
 
@@ -33,7 +33,8 @@ from run_week import run_week
 app = Flask(__name__)
 app.secret_key = os.environ.get("AIBA_SECRET_KEY", "aaibl-local-dev-console")
 
-COMMISSIONER_PASSWORD = os.environ.get("COMMISSIONER_PASSWORD", "")
+def _commissioner_password():
+    return os.environ.get("COMMISSIONER_PASSWORD", "")
 
 
 def require_commissioner(f):
@@ -49,7 +50,8 @@ def require_commissioner(f):
 def commissioner_login():
     if request.method == "POST":
         pw = request.form.get("password", "")
-        if COMMISSIONER_PASSWORD and pw == COMMISSIONER_PASSWORD:
+        expected = _commissioner_password()
+        if expected and pw == expected:
             session["is_commissioner"] = True
             dest = request.form.get("next") or url_for("commissioner")
             return redirect(dest)
