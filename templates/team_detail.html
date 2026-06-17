@@ -4,10 +4,25 @@
 {% block content %}
 
 <section class="team-hero">
-  <div style="display:flex;align-items:center;gap:24px;">
-    <div class="team-abbr xl">{{ detail.team.abbreviation }}</div>
+  <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div style="flex-shrink:0;">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/primary.png') }}"
+           alt="{{ detail.team.abbreviation }}"
+           class="logo-primary"
+           style="height:160px;"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+      <div class="team-abbr xl" style="display:none">{{ detail.team.abbreviation }}</div>
+    </div>
     <div>
-      <p class="eyebrow">{{ detail.team.arena or "Arena TBA" }}</p>
+      <p class="eyebrow" style="display:flex;align-items:center;gap:8px;">
+        <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/citymark.png') }}"
+             alt="" class="logo-citymark" onerror="this.style.display='none'">
+        {{ detail.team.arena or "Arena TBA" }}
+      </p>
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/wordmark.png') }}"
+           alt="{{ detail.team.city }} {{ detail.team.name }}"
+           class="logo-wordmark"
+           onerror="this.style.display='none'">
       <h1>{{ detail.team.city }} {{ detail.team.name }}</h1>
       <p>{{ detail.team.play_style or detail.team.motto or "A franchise profile will grow as the league evolves." }}</p>
     </div>

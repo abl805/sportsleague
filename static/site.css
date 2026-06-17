@@ -1732,3 +1732,49 @@ tr.mvp-row td { background: rgba(255, 184, 0, 0.05); }
     white-space: normal;
   }
 }
+
+/* ── LOGO ASSETS ─────────────────────────────────────────────────── */
+
+/* League logos */
+.logo-league-primary  { height: 36px; width: auto; display: block; }
+.logo-league-secondary { height: 28px; width: auto; display: block; }
+
+/* Team logos — sized by role */
+.logo-primary   { height: 120px; width: auto; display: block; }
+.logo-secondary { height: 30px;  width: auto; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.logo-tertiary  { height: 18px;  width: auto; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.logo-wordmark  { height: 36px;  width: auto; display: block; margin-bottom: 4px; }
+.logo-citymark  { height: 38px;  width: auto; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+
+/* Standings: team cell wraps logo + name */
+.standings-team-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Score card: team name cell wraps city mark + text */
+.score-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Leaders / players table: abbr cell wraps tertiary logo + text */
+.abbr-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Nav brand: league primary logo replaces the AIBA text box */
+.brand-logo {
+  height: 34px;
+  width: auto;
+  display: block;
+}

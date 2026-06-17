@@ -3,6 +3,25 @@
 {% block content %}
 
 <section class="game-hero">
+  <div class="game-matchup-logos" style="display:flex;align-items:center;gap:24px;margin-bottom:16px;flex-wrap:wrap;">
+    <div style="text-align:center;">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.home_abbr ~ '/primary.png') }}"
+           alt="{{ detail.game.home_abbr }}"
+           class="logo-primary"
+           style="height:100px;"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+      <div class="team-abbr" style="display:none">{{ detail.game.home_abbr }}</div>
+    </div>
+    <span style="font-size:1.1rem;font-weight:900;color:var(--muted);letter-spacing:.1em;">VS</span>
+    <div style="text-align:center;">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.away_abbr ~ '/primary.png') }}"
+           alt="{{ detail.game.away_abbr }}"
+           class="logo-primary"
+           style="height:100px;"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+      <div class="team-abbr" style="display:none">{{ detail.game.away_abbr }}</div>
+    </div>
+  </div>
   <div>
     <p class="eyebrow">Week {{ detail.game.week }} &mdash; {{ detail.game.season_year }} Season</p>
     <h1>{{ detail.game.home_name }} {{ detail.game.home_score or "—" }} &ndash; {{ detail.game.away_score or "—" }} {{ detail.game.away_name }}</h1>
@@ -25,7 +44,14 @@
         </thead>
         <tbody>
           <tr>
-            <td><strong>{{ detail.game.home_abbr }}</strong> <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.home_name }}</span></td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:8px;">
+                <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.home_abbr ~ '/secondary.png') }}"
+                     alt="" class="logo-secondary" onerror="this.style.display='none'">
+                <strong>{{ detail.game.home_abbr }}</strong>
+              </span>
+              <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.home_name }}</span>
+            </td>
             <td>{{ detail.game.q1_home }}</td>
             <td>{{ detail.game.q2_home }}</td>
             <td>{{ detail.game.q3_home }}</td>
@@ -33,7 +59,14 @@
             <td class="total">{{ detail.game.home_score }}</td>
           </tr>
           <tr>
-            <td><strong>{{ detail.game.away_abbr }}</strong> <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.away_name }}</span></td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:8px;">
+                <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.away_abbr ~ '/secondary.png') }}"
+                     alt="" class="logo-secondary" onerror="this.style.display='none'">
+                <strong>{{ detail.game.away_abbr }}</strong>
+              </span>
+              <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.away_name }}</span>
+            </td>
             <td>{{ detail.game.q1_away }}</td>
             <td>{{ detail.game.q2_away }}</td>
             <td>{{ detail.game.q3_away }}</td>

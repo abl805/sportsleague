@@ -1,3 +1,12 @@
+{# ── LOGO HELPERS ─────────────────────────────────────────────── #}
+
+{# Renders a team logo image with an abbreviation-text fallback if the file is missing. #}
+{% macro team_logo(abbr, type, css_class='') %}{% if abbr %}<img src="/static/images/teams/{{ abbr }}/{{ type }}.png" alt="{{ abbr }}" class="{{ css_class }}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span style="display:none;font-size:0.75rem;font-weight:800;letter-spacing:0.06em;">{{ abbr }}</span>{% endif %}{% endmacro %}
+
+{# Renders the league logo; silently disappears on error (nav/footer still show text fallback). #}
+{% macro league_logo(type, css_class='') %}<img src="/static/images/league/{{ type }}.png" alt="AIBA" class="{{ css_class }}" onerror="this.style.display='none'">{% endmacro %}
+
+
 {% macro standings_table(rows, compact=False) %}
   <div class="table-wrap">
     <table>
@@ -17,7 +26,12 @@
         {% for row in rows %}
           <tr>
             <td>{{ row.rank }}</td>
-            <td><a href="{{ url_for('team_page', abbr=row.abbreviation) }}">{{ row.team_name }}</a></td>
+            <td>
+              <span class="standings-team-cell">
+                {{ team_logo(row.abbreviation, 'secondary', 'logo-secondary') }}
+                <a href="{{ url_for('team_page', abbr=row.abbreviation) }}">{{ row.team_name }}</a>
+              </span>
+            </td>
             <td>{{ row.wins or 0 }}</td>
             <td>{{ row.losses or 0 }}</td>
             <td>{{ row.win_pct|pct }}</td>
@@ -52,7 +66,12 @@
           <tr>
             <td>{{ row.rank }}</td>
             <td><a href="{{ url_for('player_page', player_id=row.id) }}">{{ row.player }}</a></td>
-            <td><a href="{{ url_for('team_page', abbr=row.abbreviation) }}">{{ row.abbreviation }}</a></td>
+            <td>
+              <a href="{{ url_for('team_page', abbr=row.abbreviation) }}" class="abbr-cell">
+                {{ team_logo(row.abbreviation, 'tertiary', 'logo-tertiary') }}
+                {{ row.abbreviation }}
+              </a>
+            </td>
             <td>{{ row.position }}</td>
             <td class="{{ 'stat-focus' if stat == 'ppg' else '' }}">{{ row.ppg or 0 }}</td>
             <td class="{{ 'stat-focus' if stat == 'rpg' else '' }}">{{ row.rpg or 0 }}</td>
@@ -70,11 +89,17 @@
   <article class="score-card">
     <a class="score-week" href="{{ url_for('game_page', game_id=game.id) }}">Week {{ game.week }}</a>
     <div class="score-row {{ 'winner' if game.home_score and game.home_score > game.away_score else '' }}">
-      <span>{{ game.home_name }}</span>
+      <span class="score-team">
+        {{ team_logo(game.home_abbr, 'citymark', 'logo-citymark') }}
+        {{ game.home_name }}
+      </span>
       <strong>{{ game.home_score if game.played or game.home_score is not none else "-" }}</strong>
     </div>
     <div class="score-row {{ 'winner' if game.away_score and game.away_score > game.home_score else '' }}">
-      <span>{{ game.away_name }}</span>
+      <span class="score-team">
+        {{ team_logo(game.away_abbr, 'citymark', 'logo-citymark') }}
+        {{ game.away_name }}
+      </span>
       <strong>{{ game.away_score if game.played or game.away_score is not none else "-" }}</strong>
     </div>
   </article>

@@ -20,7 +20,13 @@
         {% for p in player_rows %}
           <tr>
             <td><a href="{{ url_for('player_page', player_id=p.id) }}">{{ p.player }}</a></td>
-            <td><a href="{{ url_for('team_page', abbr=p.abbreviation) }}">{{ p.abbreviation }}</a></td>
+            <td>
+              <a href="{{ url_for('team_page', abbr=p.abbreviation) }}" class="abbr-cell">
+                <img src="{{ url_for('static', filename='images/teams/' ~ p.abbreviation ~ '/tertiary.png') }}"
+                     alt="" class="logo-tertiary" onerror="this.style.display='none'">
+                {{ p.abbreviation }}
+              </a>
+            </td>
             <td>{{ p.position }}</td>
             <td>{{ p.age }}</td>
             <td>{{ p.skill_rating }}</td>

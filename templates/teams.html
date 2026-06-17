@@ -9,7 +9,11 @@
 <section class="team-grid">
   {% for team in team_rows %}
     <a class="team-card" href="{{ url_for('team_page', abbr=team.abbreviation) }}">
-      <div class="team-abbr">{{ team.abbreviation }}</div>
+      <img src="{{ url_for('static', filename='images/teams/' ~ team.abbreviation ~ '/primary.png') }}"
+           alt="{{ team.abbreviation }}"
+           class="logo-primary"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+      <div class="team-abbr" style="display:none">{{ team.abbreviation }}</div>
       <h2>{{ team.team_name }}</h2>
       <p>{{ team.motto or team.play_style or "A club still writing its first chapter." }}</p>
       <dl class="mini-stats">

@@ -5,7 +5,13 @@
 <section class="player-hero">
   <div class="player-number">{{ detail.player.position }}</div>
   <div>
-    <p class="eyebrow"><a href="{{ url_for('team_page', abbr=detail.player.abbreviation) }}">{{ detail.player.team_name }}</a></p>
+    <p class="eyebrow" style="display:flex;align-items:center;gap:8px;">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.player.abbreviation ~ '/secondary.png') }}"
+           alt="{{ detail.player.abbreviation }}"
+           class="logo-secondary"
+           onerror="this.style.display='none'">
+      <a href="{{ url_for('team_page', abbr=detail.player.abbreviation) }}">{{ detail.player.team_name }}</a>
+    </p>
     <h1>{{ detail.player.player }}</h1>
     <p>Age {{ detail.player.age }} / OVR {{ detail.player.skill_rating }} / {{ detail.player.salary|money }}
       {% if detail.player.personality_label %}
