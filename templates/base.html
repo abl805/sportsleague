@@ -51,6 +51,8 @@
     <span>Week {{ state.current_week if state else "—" }}</span>
     <span>{{ state.mode|upper if state else "NO LEAGUE" }}</span>
     <span>AAIBL &copy; 2025</span>
+    <span><a href="{{ url_for('terms') }}" style="color:inherit;opacity:0.7;">Terms</a></span>
+    <span><a href="{{ url_for('privacy') }}" style="color:inherit;opacity:0.7;">Privacy</a></span>
   </footer>
 </body>
 </html>

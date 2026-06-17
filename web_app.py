@@ -3,7 +3,7 @@ import io
 import json
 import os
 
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, request, url_for, Response
 
 from league import web_queries as q
 from league.chatgpt_bridge import (
@@ -489,6 +489,36 @@ def contact():
         return {"state": q.get_state(conn)}
     data = with_conn(load)
     return render_template("contact.html", **(data or {"state": None}), active="contact")
+
+
+@app.route("/terms")
+def terms():
+    def load(conn):
+        return {"state": q.get_state(conn)}
+    data = with_conn(load)
+    return render_template("terms.html", **(data or {"state": None}), active="terms")
+
+
+@app.route("/privacy")
+def privacy():
+    def load(conn):
+        return {"state": q.get_state(conn)}
+    data = with_conn(load)
+    return render_template("privacy.html", **(data or {"state": None}), active="privacy")
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    base_url = request.url_root.rstrip("/")
+    xml = render_template("sitemap.xml", base_url=base_url)
+    return Response(xml, mimetype="application/xml")
+
+
+@app.route("/robots.txt")
+def robots():
+    base_url = request.url_root.rstrip("/")
+    content = f"User-agent: *\nAllow: /\nSitemap: {base_url}/sitemap.xml\n"
+    return Response(content, mimetype="text/plain")
 
 
 @app.route("/commissioner")

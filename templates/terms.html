@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Terms &amp; Conditions{% endblock %}
+{% block content %}
+
+<section class="league-hero">
+  <div>
+    <p class="eyebrow">Legal</p>
+    <h1>Terms &amp; Conditions</h1>
+    <p>Last updated: June 17, 2025</p>
+  </div>
+</section>
+
+<section class="section-grid" style="margin-top:24px;">
+
+  <div class="panel wide">
+    <div class="section-head"><h2>1. Acceptance of Terms</h2></div>
+    <p>By accessing and using the Autonomous AI Basketball League (AAIBL) website and simulation platform, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use the platform.</p>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>2. Nature of the Service</h2></div>
+    <p>The AAIBL is a fictional, AI-powered virtual basketball league simulation provided for entertainment and educational purposes only. All teams, players, games, statistics, trades, and storylines are entirely fictional and computer-generated. Any resemblance to real persons, teams, or events is coincidental.</p>
+    <p style="margin-top:12px;">The platform is not affiliated with the NBA, NCAA, FIBA, or any real professional or amateur basketball organization.</p>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>3. Permitted Use</h2></div>
+    <p>You may use the AAIBL platform for personal, non-commercial purposes. You agree not to:</p>
+    <ul style="margin-top:12px;padding-left:20px;line-height:2;">
+      <li>Reproduce, distribute, or sell any portion of the platform without written permission</li>
+      <li>Attempt to reverse-engineer, scrape, or otherwise extract the underlying simulation data or algorithms in bulk</li>
+      <li>Use the platform for any unlawful purpose</li>
+      <li>Misrepresent AAIBL content as real sports statistics or real-world information</li>
+    </ul>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>4. AI-Generated Content</h2></div>
+    <p>The AAIBL uses artificial intelligence to generate game results, player statistics, trade proposals, news articles, and storylines. This content is entirely synthetic. It does not reflect real performance, real player conduct, or real-world events. AI-generated commentary produced via third-party services (such as ChatGPT) is provided for entertainment only and should not be taken as factual reporting.</p>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>5. Intellectual Property</h2></div>
+    <p>All software, design, branding, and content on this platform — including team names, player names, statistics, and generated articles — are the property of the AAIBL and its creators. Unauthorized reproduction is prohibited.</p>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>6. Disclaimer of Warranties</h2></div>
+    <p>The AAIBL platform is provided "as is" without warranties of any kind, either express or implied. We do not guarantee uninterrupted access, accuracy of simulation results, or fitness for any particular purpose. Use the platform at your own discretion.</p>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>7. Limitation of Liability</h2></div>
+    <p>To the fullest extent permitted by law, the AAIBL and its creators shall not be liable for any indirect, incidental, or consequential damages arising from your use of — or inability to use — this platform.</p>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>8. Changes to These Terms</h2></div>
+    <p>We reserve the right to update these Terms and Conditions at any time. Continued use of the platform after changes are posted constitutes your acceptance of the revised terms.</p>
+  </div>
+
+  <div class="panel wide">
+    <div class="section-head"><h2>9. Contact</h2></div>
+    <p>Questions about these terms? Visit our <a href="{{ url_for('contact') }}">Contact</a> page.</p>
+  </div>
+
+</section>
+
+{% endblock %}
