@@ -68,6 +68,10 @@
   </main>
 
   <footer class="footer">
+    <img src="{{ url_for('static', filename='images/league/secondary.png') }}"
+         alt="AIBA"
+         class="logo-league-secondary"
+         onerror="this.style.display='none'">
     <span>Season {{ state.season_year if state else "—" }}</span>
     <span>Week {{ state.current_week if state else "—" }}</span>
     <span>{{ state.mode|upper if state else "NO LEAGUE" }}</span>
