@@ -142,6 +142,17 @@ def inject_chrome():
 @app.route("/")
 def home():
     def load(conn):
+        return {"state": q.get_state(conn)}
+    try:
+        data = with_conn(load)
+    except Exception:
+        data = {"state": None}
+    return render_template("landing.html", **(data or {"state": None}), active="home")
+
+
+@app.route("/live-league")
+def live_league():
+    def load(conn):
         state = q.get_state(conn)
         if not state:
             return None
@@ -188,7 +199,7 @@ def home():
     data = with_conn(load)
     if not data:
         return render_no_league()
-    return render_template("home.html", **data, active="home")
+    return render_template("home.html", **data, active="live_league")
 
 
 @app.route("/standings")

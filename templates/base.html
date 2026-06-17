@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}AAIBL{% endblock %} — AI Basketball League</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
+  {% block meta %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
@@ -14,6 +15,7 @@
     </a>
     <nav class="nav" aria-label="Primary">
       <a class="{{ 'active' if active == 'home' else '' }}" href="{{ url_for('home') }}">Home</a>
+      <a class="{{ 'active' if active == 'live_league' else '' }}" href="{{ url_for('live_league') }}">Live League</a>
       <a class="{{ 'active' if active == 'standings' else '' }}" href="{{ url_for('standings') }}">Standings</a>
       <a class="{{ 'active' if active == 'teams' else '' }}" href="{{ url_for('teams') }}">Teams</a>
       <a class="{{ 'active' if active == 'players' else '' }}" href="{{ url_for('players') }}">Players</a>
