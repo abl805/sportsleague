@@ -3,6 +3,9 @@ import io
 import json
 import os
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import functools
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for, Response
