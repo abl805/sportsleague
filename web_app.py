@@ -3,7 +3,9 @@ import io
 import json
 import os
 
-from flask import Flask, flash, redirect, render_template, request, url_for, Response
+import functools
+
+from flask import Flask, flash, redirect, render_template, request, session, url_for, Response
 
 from league import web_queries as q
 from league.chatgpt_bridge import (
@@ -27,6 +29,36 @@ from run_week import run_week
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("AIBA_SECRET_KEY", "aaibl-local-dev-console")
+
+COMMISSIONER_PASSWORD = os.environ.get("COMMISSIONER_PASSWORD", "")
+
+
+def require_commissioner(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get("is_commissioner"):
+            return redirect(url_for("commissioner_login", next=request.path))
+        return f(*args, **kwargs)
+    return wrapper
+
+
+@app.route("/commissioner/login", methods=["GET", "POST"])
+def commissioner_login():
+    if request.method == "POST":
+        pw = request.form.get("password", "")
+        if COMMISSIONER_PASSWORD and pw == COMMISSIONER_PASSWORD:
+            session["is_commissioner"] = True
+            dest = request.form.get("next") or url_for("commissioner")
+            return redirect(dest)
+        flash("Incorrect password.", "error")
+    return render_template("commissioner_login.html",
+                           next=request.args.get("next", url_for("commissioner")))
+
+
+@app.route("/commissioner/logout")
+def commissioner_logout():
+    session.pop("is_commissioner", None)
+    return redirect(url_for("home"))
 
 
 def _extract_list(raw, wrapper_key, item_keys):
@@ -539,6 +571,7 @@ def robots():
 
 
 @app.route("/commissioner")
+@require_commissioner
 def commissioner():
     data = commissioner_data()
     if not data:
@@ -547,6 +580,7 @@ def commissioner():
 
 
 @app.post("/commissioner/action")
+@require_commissioner
 def commissioner_action():
     action = request.form.get("action")
 
@@ -609,6 +643,7 @@ def veto_trade_action(trade_id, reason):
 
 
 @app.post("/commissioner/articles/add")
+@require_commissioner
 def commissioner_articles_add():
     raw = request.form.get("articles_json", "").strip()
     if not raw:
@@ -667,6 +702,7 @@ def commissioner_articles_add():
 
 
 @app.post("/commissioner/influences/add")
+@require_commissioner
 def commissioner_influences_add():
     raw = request.form.get("influences_json", "").strip()
     if not raw:
@@ -837,6 +873,7 @@ def interviews():
 
 
 @app.route("/commissioner/interview/<int:interview_id>/submit", methods=["POST"])
+@require_commissioner
 def interview_submit(interview_id):
     response_text = (request.form.get("response") or "").strip()
     if not response_text:
