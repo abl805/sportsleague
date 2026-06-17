@@ -3,28 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}AAIBL{% endblock %} — AI Basketball League</title>
+  <title>{% block title %}AIBA{% endblock %} — AI Basketball Association</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='site.css') }}">
   {% block meta %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="{{ url_for('home') }}">
-      <span class="brand-mark">AAIBL</span>
-      <span class="brand-copy">Basketball League</span>
+      <span class="brand-mark">AIBA</span>
+      <span class="brand-copy">Basketball Association</span>
     </a>
     <nav class="nav" aria-label="Primary">
       <a class="{{ 'active' if active == 'home' else '' }}" href="{{ url_for('home') }}">Home</a>
       <a class="{{ 'active' if active == 'live_league' else '' }}" href="{{ url_for('live_league') }}">Live League</a>
-      <a class="{{ 'active' if active == 'standings' else '' }}" href="{{ url_for('standings') }}">Standings</a>
-      <a class="{{ 'active' if active == 'teams' else '' }}" href="{{ url_for('teams') }}">Teams</a>
-      <a class="{{ 'active' if active == 'players' else '' }}" href="{{ url_for('players') }}">Players</a>
-      <a class="{{ 'active' if active == 'scores' else '' }}" href="{{ url_for('scores') }}">Scores</a>
-      <a class="{{ 'active' if active == 'leaders' else '' }}" href="{{ url_for('leaders') }}">Leaders</a>
+      <div class="nav-group">
+        <a class="{{ 'active' if active in ('standings','scores','leaders') else '' }}" href="{{ url_for('standings') }}">Stats</a>
+        <div class="nav-dropdown">
+          <a class="{{ 'active' if active == 'standings' else '' }}" href="{{ url_for('standings') }}">Standings</a>
+          <a class="{{ 'active' if active == 'scores' else '' }}" href="{{ url_for('scores') }}">Scores</a>
+          <a class="{{ 'active' if active == 'leaders' else '' }}" href="{{ url_for('leaders') }}">Leaders</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a class="{{ 'active' if active in ('teams','players') else '' }}" href="{{ url_for('teams') }}">Teams</a>
+        <div class="nav-dropdown">
+          <a class="{{ 'active' if active == 'teams' else '' }}" href="{{ url_for('teams') }}">All Teams</a>
+          <a class="{{ 'active' if active == 'players' else '' }}" href="{{ url_for('players') }}">Players</a>
+        </div>
+      </div>
       <a class="{{ 'active' if active == 'news' else '' }}" href="{{ url_for('news') }}">News</a>
       <a class="commissioner-link {{ 'active' if active == 'commissioner' else '' }}" href="{{ url_for('commissioner') }}">Commissioner</a>
-      <a class="{{ 'active' if active == 'about' else '' }}" href="{{ url_for('about') }}">About</a>
-      <a class="{{ 'active' if active == 'contact' else '' }}" href="{{ url_for('contact') }}">Contact</a>
+      <div class="nav-group">
+        <a class="{{ 'active' if active in ('about','contact') else '' }}" href="{{ url_for('about') }}">About</a>
+        <div class="nav-dropdown">
+          <a class="{{ 'active' if active == 'about' else '' }}" href="{{ url_for('about') }}">About</a>
+          <a class="{{ 'active' if active == 'contact' else '' }}" href="{{ url_for('contact') }}">Contact</a>
+        </div>
+      </div>
     </nav>
   </header>
 
@@ -52,7 +67,7 @@
     <span>Season {{ state.season_year if state else "—" }}</span>
     <span>Week {{ state.current_week if state else "—" }}</span>
     <span>{{ state.mode|upper if state else "NO LEAGUE" }}</span>
-    <span>AAIBL &copy; 2025</span>
+    <span>AIBA &copy; 2025</span>
     <span><a href="{{ url_for('terms') }}" style="color:inherit;opacity:0.7;">Terms</a></span>
     <span><a href="{{ url_for('privacy') }}" style="color:inherit;opacity:0.7;">Privacy</a></span>
   </footer>

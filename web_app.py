@@ -23,7 +23,7 @@ from run_week import run_week
 
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("AAIBL_SECRET_KEY", "aaibl-local-dev-console")
+app.secret_key = os.environ.get("AIBA_SECRET_KEY", "aaibl-local-dev-console")
 
 
 def _extract_list(raw, wrapper_key, item_keys):
@@ -826,5 +826,5 @@ def commissioner_influences_add():
 
 
 if __name__ == "__main__":
-    debug = os.environ.get("AAIBL_DEBUG") == "1"
+    debug = os.environ.get("AIBA_DEBUG") == "1"
     app.run(debug=debug, use_reloader=debug)

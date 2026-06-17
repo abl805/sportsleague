@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "partials.html" import standings_table, leader_table, game_card, storyline_list %}
-{% block title %}AAIBL Home{% endblock %}
+{% block title %}AIBA Home{% endblock %}
 
 {% macro playoff_series_card(series, pending_label) %}
   {% if series %}
@@ -230,7 +230,7 @@
       <div class="story-list">
         {% for art in latest_articles %}
           <article class="story-item article-item">
-            <div class="story-meta">Week {{ art.week }} / AAIBL / League News</div>
+            <div class="story-meta">Week {{ art.week }} / AIBA / League News</div>
             <h3>{{ art.headline }}</h3>
             <p>{{ art.body | truncate(160) }}</p>
           </article>

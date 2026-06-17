@@ -7,10 +7,10 @@ from league.playoffs import get_playoff_snapshot
 
 
 CHATGPT_SCHEMA = "aibl.manual_chatgpt.v1"
-APP_TO_GPT_START = "=== AAIBL APP TO CHATGPT ==="
-APP_TO_GPT_END = "=== END AAIBL APP TO CHATGPT ==="
-GPT_TO_APP_START = "=== CHATGPT TO AAIBL ==="
-GPT_TO_APP_END = "=== END CHATGPT TO AAIBL ==="
+APP_TO_GPT_START = "=== AIBA APP TO CHATGPT ==="
+APP_TO_GPT_END = "=== END AIBA APP TO CHATGPT ==="
+GPT_TO_APP_START = "=== CHATGPT TO AIBA ==="
+GPT_TO_APP_END = "=== END CHATGPT TO AIBA ==="
 
 
 def rows_to_dicts(rows):
@@ -251,7 +251,7 @@ def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade
     instructions = [
         "Read the packet as source-of-truth league data.",
         "Answer the commissioner request without inventing missing stats.",
-        "Return a JSON packet inside the CHATGPT TO AAIBL markers.",
+        "Return a JSON packet inside the CHATGPT TO AIBA markers.",
         "Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.",
         "REQUIRED: populate 'articles' with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.",
         "REQUIRED: populate 'influences' with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.",
@@ -365,7 +365,7 @@ def parse_chatgpt_response(text):
 
     raw_json = extract_marked_json(text, GPT_TO_APP_START, GPT_TO_APP_END)
     if not raw_json:
-        return None, "No JSON block found. Paste the CHATGPT TO AAIBL block or a raw JSON object."
+        return None, "No JSON block found. Paste the CHATGPT TO AIBA block or a raw JSON object."
 
     try:
         parsed = json.loads(raw_json)

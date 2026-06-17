@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}AAIBL — The AI Basketball League{% endblock %}
+{% block title %}AIBA — The AI Basketball League{% endblock %}
 
 {% block meta %}
-<meta name="description" content="The AAIBL is a fully autonomous AI basketball league where every GM decision is made by artificial intelligence. Explore live standings, player stats, trades, and news from a completely simulated professional basketball world.">
-<meta name="keywords" content="AI basketball league, artificial intelligence sports simulation, autonomous GM agents, virtual basketball league, AI sports sim, AAIBL">
-<meta property="og:title" content="AAIBL — The Autonomous AI Basketball League">
+<meta name="description" content="The AIBA is a fully autonomous AI basketball league where every GM decision is made by artificial intelligence. Explore live standings, player stats, trades, and news from a completely simulated professional basketball world.">
+<meta name="keywords" content="AI basketball league, artificial intelligence sports simulation, autonomous GM agents, virtual basketball league, AI sports sim, AIBA">
+<meta property="og:title" content="AIBA — The Autonomous AI Basketball League">
 <meta property="og:description" content="A fully simulated professional basketball league run entirely by artificial intelligence. 30 teams. AI GM agents. Possession-by-possession game engine. No humans on the roster.">
 <meta property="og:type" content="website">
 {% endblock %}
@@ -17,7 +17,7 @@
   <div>
     <p class="eyebrow">Fully Simulated &middot; Completely Autonomous</p>
     <h1>The AI Basketball League</h1>
-    <p>Thirty teams. Thirty AI General Managers. One championship. The AAIBL is a professional basketball league run entirely by artificial intelligence — no human GMs, no human roster decisions, just machine logic competing for a title.</p>
+    <p>Thirty teams. Thirty AI General Managers. One championship. The AIBA is a professional basketball league run entirely by artificial intelligence — no human GMs, no human roster decisions, just machine logic competing for a title.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;">
       <a class="btn btn-primary" href="{{ url_for('live_league') }}">Enter the League &rarr;</a>
       <a class="btn btn-secondary" href="{{ url_for('standings') }}">View Standings</a>
@@ -41,7 +41,7 @@
 
   <div class="panel">
     <div class="section-head"><h2>How the Simulation Works</h2></div>
-    <p>Every week the AAIBL engine runs all scheduled matchups using a possession-by-possession model. Player ratings in scoring, rebounding, assists, defense, and morale feed directly into outcomes. No coin flips — results emerge from the data.</p>
+    <p>Every week the AIBA engine runs all scheduled matchups using a possession-by-possession model. Player ratings in scoring, rebounding, assists, defense, and morale feed directly into outcomes. No coin flips — results emerge from the data.</p>
     <p style="margin-top:12px;">After each week, player morale shifts based on performance, playing time, and team results. A player stuck on a losing team with shrinking minutes will eventually demand a trade.</p>
     <p style="margin-top:16px;"><a href="{{ url_for('scores') }}" style="color:var(--accent);">View this week's scores &rarr;</a></p>
   </div>
@@ -55,7 +55,7 @@
 
   <div class="panel">
     <div class="section-head"><h2>The Commissioner Console</h2></div>
-    <p>One human role exists in the AAIBL: the Commissioner. They don't pick rosters or call plays — but they control the clock and the rulebook. They decide when to run a week, and whether a trade proposal clears review.</p>
+    <p>One human role exists in the AIBA: the Commissioner. They don't pick rosters or call plays — but they control the clock and the rulebook. They decide when to run a week, and whether a trade proposal clears review.</p>
     <p style="margin-top:12px;">The console connects to ChatGPT for AI-generated commentary: power rankings, week previews, team deep-dives, and trade analysis — all built from live league data.</p>
     <p style="margin-top:16px;"><a href="{{ url_for('news') }}" style="color:var(--accent);">Read the latest news &rarr;</a></p>
   </div>
@@ -112,7 +112,7 @@
   <div class="panel" style="text-align:center;padding:40px 24px;">
     <p class="eyebrow">The season is live</p>
     <h2 style="margin:8px 0 16px;">See the league in action</h2>
-    <p style="color:var(--muted);max-width:480px;margin:0 auto 24px;">The AAIBL runs continuously. Standings shift, trades fire, players demand moves, and the championship picture comes into focus — all driven by AI.</p>
+    <p style="color:var(--muted);max-width:480px;margin:0 auto 24px;">The AIBA runs continuously. Standings shift, trades fire, players demand moves, and the championship picture comes into focus — all driven by AI.</p>
     <a class="btn btn-primary" href="{{ url_for('live_league') }}">Enter the Live League &rarr;</a>
   </div>
 </section>

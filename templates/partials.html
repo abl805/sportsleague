@@ -84,7 +84,7 @@
   <div class="story-list">
     {% for item in rows %}
       <article class="story-item">
-        <div class="story-meta">Week {{ item.week }} / {{ item.abbreviation or item.team_name or "AAIBL" }} / {{ (item.type or item.event_type)|event_label }}</div>
+        <div class="story-meta">Week {{ item.week }} / {{ item.abbreviation or item.team_name or "AIBA" }} / {{ (item.type or item.event_type)|event_label }}</div>
         <h3>{{ item.primary_name or item.player or (item.event_type|event_label) }}</h3>
         <p>{{ item.detail }}</p>
       </article>
