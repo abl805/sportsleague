@@ -504,6 +504,218 @@ Write {player['first_name']}'s answer in 2-4 sentences. Stay in character as a {
             conn.close()
 
 
+def build_gm_interview_packet(gm_id, trigger_type, playoff_series_id=None, db=None):
+    """
+    Build a ChatGPT prompt for a GM press-conference interview.
+    trigger_type: 'midseason' | 'season_end' | 'playoff_series_win' | 'playoff_series_loss'
+    Returns (interview_id, prompt_text) after inserting a pending row.
+    """
+    close_conn = db is None
+    conn = db if db else get_connection()
+    try:
+        state = conn.execute("SELECT * FROM league_state WHERE id=1").fetchone()
+        if not state:
+            raise RuntimeError("League not found.")
+        week = state["current_week"] - 1
+        season_year = state["season_year"]
+
+        gm = conn.execute("""
+            SELECT gm.id, gm.name, gm.archetype, gm.risk_tolerance,
+                   gm.veteran_loyalty, gm.youth_preference, gm.trade_frequency,
+                   gm.team_id,
+                   t.city || ' ' || t.name AS team_name,
+                   t.abbreviation
+            FROM general_managers gm
+            JOIN teams t ON t.id = gm.team_id
+            WHERE gm.id = ?
+        """, (gm_id,)).fetchone()
+        if not gm:
+            raise ValueError(f"GM {gm_id} not found.")
+
+        record = conn.execute("""
+            SELECT wins, losses FROM standings
+            WHERE team_id = ? AND season_year = ?
+        """, (gm["team_id"], season_year)).fetchone()
+        wins = record["wins"] if record else "?"
+        losses = record["losses"] if record else "?"
+
+        recent_games = rows_to_dicts(conn.execute("""
+            SELECT g.week,
+                   ht.city || ' ' || ht.name AS home_team,
+                   at.city || ' ' || at.name AS away_team,
+                   g.home_score, g.away_score
+            FROM games g
+            JOIN teams ht ON ht.id = g.home_team_id
+            JOIN teams at ON at.id = g.away_team_id
+            WHERE g.season_year = ? AND g.played = 1
+              AND (g.home_team_id = ? OR g.away_team_id = ?)
+            ORDER BY g.week DESC
+            LIMIT 5
+        """, (season_year, gm["team_id"], gm["team_id"])).fetchall())
+
+        roster = rows_to_dicts(conn.execute("""
+            SELECT p.first_name || ' ' || p.last_name AS player,
+                   p.position, p.skill_rating, p.age
+            FROM players p
+            WHERE p.team_id = ? AND COALESCE(p.status, 'active') = 'active'
+            ORDER BY p.skill_rating DESC
+            LIMIT 8
+        """, (gm["team_id"],)).fetchall())
+
+        series_label = None
+        if playoff_series_id:
+            s = conn.execute(
+                "SELECT series_type FROM playoff_series WHERE id = ?",
+                (playoff_series_id,)
+            ).fetchone()
+            if s:
+                series_label = {
+                    "semifinal": "Semifinals",
+                    "finals": "Finals",
+                    "third_place": "Third Place",
+                }.get(s["series_type"], "playoff series")
+
+        if trigger_type == "midseason":
+            question = (
+                f"We're at the halfway point of the season — your team is {wins}-{losses}. "
+                f"How do you honestly assess where things stand right now?"
+            )
+            context_note = "midseason press conference"
+        elif trigger_type == "season_end":
+            question = (
+                f"The regular season just ended at {wins}-{losses}. "
+                f"What's your honest evaluation of this team heading into the playoffs?"
+            )
+            context_note = "end-of-regular-season press conference"
+        elif trigger_type == "playoff_series_win":
+            label = series_label or "playoff series"
+            question = (
+                f"Your team just won the {label}. "
+                f"What does this mean for this organization, and what's next?"
+            )
+            context_note = f"post-{label.lower()}-win press conference"
+        elif trigger_type == "playoff_series_loss":
+            label = series_label or "playoff series"
+            question = (
+                f"Your team's run just ended in the {label}. "
+                f"What went wrong, and what do you take away from this season?"
+            )
+            context_note = f"post-{label.lower()}-elimination press conference"
+        else:
+            question = "Where does this team stand right now?"
+            context_note = "general press conference"
+
+        def _trait_word(val, high_label="aggressive", low_label="cautious"):
+            if val is None:
+                return "balanced"
+            if val >= 0.70:
+                return high_label
+            if val <= 0.35:
+                return low_label
+            return "balanced"
+
+        risk_word = _trait_word(gm["risk_tolerance"], "risk-taking", "conservative")
+        vet_word = _trait_word(gm["veteran_loyalty"], "vet-loyal", "youth-focused")
+        trade_word = _trait_word(gm["trade_frequency"], "trade-active", "roster-stable")
+
+        recent_lines = "\n".join(
+            f"  Week {g['week']}: {g['home_team']} {g['home_score']} — "
+            f"{g['away_score']} {g['away_team']}"
+            for g in recent_games
+        )
+        roster_lines = "\n".join(
+            f"  {p['player']} ({p['position']}, age {p['age']}, rating {p['skill_rating']})"
+            for p in roster
+        )
+
+        packet = f"""=== GM PRESS CONFERENCE INTERVIEW PROMPT ===
+
+GM: {gm['name']}
+TEAM: {gm['team_name']} ({gm['abbreviation']})
+GM ARCHETYPE: {gm['archetype']}
+PERSONALITY: {risk_word}, {vet_word}, {trade_word}
+SEASON RECORD: {wins}-{losses}
+CONTEXT: {context_note}
+
+RECENT GAMES:
+{recent_lines}
+
+TOP ROSTER PLAYERS:
+{roster_lines}
+
+INTERVIEW QUESTION:
+"{question}"
+
+INSTRUCTIONS FOR CHATGPT:
+Write {gm['name']}'s answer in 3-5 sentences. Stay in character as a {gm['archetype']} GM with a {risk_word}, {vet_word} approach. Sound like a real front-office executive in a press conference — measured but revealing. Reference the team's record or recent results naturally. Do NOT be generic or use boilerplate sports clichés. If the team is underperforming, let some frustration or honest reckoning show. If they're winning, project confidence without arrogance. Use first person.
+
+=== END PROMPT ==="""
+
+        row = conn.execute("""
+            INSERT INTO gm_interviews
+                (gm_id, week, season_year, trigger_type, playoff_series_id, question, context_packet)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (gm_id, week, season_year, trigger_type, playoff_series_id, question, packet))
+        interview_id = row.lastrowid
+        conn.commit()
+        return interview_id, packet
+    finally:
+        if close_conn:
+            conn.close()
+
+
+def save_gm_interview_response(interview_id, response_text, db=None):
+    """Store a ChatGPT-generated quote for a GM interview row."""
+    close_conn = db is None
+    conn = db if db else get_connection()
+    try:
+        conn.execute(
+            "UPDATE gm_interviews SET response = ? WHERE id = ?",
+            (response_text.strip(), interview_id),
+        )
+        conn.commit()
+    finally:
+        if close_conn:
+            conn.close()
+
+
+def get_pending_gm_interviews(conn, season_year=None):
+    """Return GM interview rows with no response yet."""
+    params = []
+    where = "WHERE gi.response IS NULL"
+    if season_year:
+        where += " AND gi.season_year = ?"
+        params.append(season_year)
+    return [dict(r) for r in conn.execute(f"""
+        SELECT gi.id, gi.gm_id, gi.week, gi.season_year,
+               gi.trigger_type, gi.question, gi.context_packet, gi.created_at,
+               gm.name AS gm_name,
+               t.city || ' ' || t.name AS team_name
+        FROM gm_interviews gi
+        JOIN general_managers gm ON gm.id = gi.gm_id
+        JOIN teams t ON t.id = gm.team_id
+        {where}
+        ORDER BY gi.id DESC
+    """, params).fetchall()]
+
+
+def get_recent_gm_interviews(conn, season_year, limit=20):
+    """Return filled-in GM interview quotes, newest first."""
+    return [dict(r) for r in conn.execute("""
+        SELECT gi.id, gi.gm_id, gi.week, gi.season_year,
+               gi.trigger_type, gi.question, gi.response, gi.created_at,
+               gm.name AS gm_name, gm.archetype,
+               t.city || ' ' || t.name AS team_name,
+               t.abbreviation
+        FROM gm_interviews gi
+        JOIN general_managers gm ON gm.id = gi.gm_id
+        JOIN teams t ON t.id = gm.team_id
+        WHERE gi.response IS NOT NULL AND gi.season_year = ?
+        ORDER BY gi.id DESC
+        LIMIT ?
+    """, (season_year, limit)).fetchall()]
+
+
 def save_interview_response(interview_id, response_text, db=None):
     """Store a ChatGPT-generated quote for an interview row."""
     close_conn = db is None

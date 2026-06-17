@@ -284,6 +284,19 @@ def create_tables():
             response       TEXT,
             created_at     TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS gm_interviews (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            gm_id             INTEGER NOT NULL REFERENCES general_managers(id),
+            week              INTEGER NOT NULL,
+            season_year       INTEGER NOT NULL,
+            trigger_type      TEXT NOT NULL,
+            playoff_series_id INTEGER REFERENCES playoff_series(id),
+            question          TEXT NOT NULL,
+            context_packet    TEXT NOT NULL,
+            response          TEXT,
+            created_at        TEXT DEFAULT (datetime('now'))
+        );
     """)
     _migrate_existing_schema(conn)
     conn.commit()

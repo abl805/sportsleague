@@ -24,7 +24,7 @@ from league.playoffs import (
     schedule_next_playoff_game,
     record_game_result,
 )
-from league.chatgpt_bridge import build_interview_packet
+from league.chatgpt_bridge import build_interview_packet, build_gm_interview_packet
 
 
 def _process_playoff_results(conn, playoff_game_ids, current_week, season_year):
@@ -480,40 +480,19 @@ def run_week(verbose=None, start_official=None):
     interview_count = 0
     if has_backstories:
         for game in games:
-            all_game_stats = c.execute("""
-                SELECT pgs.player_id,
-                       pgs.points + pgs.rebounds*0.75 + pgs.assists*0.5
-                         + pgs.steals*1.5 + pgs.blocks AS score
-                FROM player_game_stats pgs
-                WHERE pgs.game_id = ?
-                ORDER BY score DESC
-            """, (game["id"],)).fetchall()
-
-            if not all_game_stats:
-                continue
-
-            # Always interview the game MVP
-            candidates = {all_game_stats[0]["player_id"]}
-
-            # Also pick the top scorer from the losing side
-            h_score_row = c.execute(
-                "SELECT home_score, away_score FROM games WHERE id = ?",
-                (game["id"],)
-            ).fetchone()
-            loser_team_id = (
-                game["away_team_id"] if h_score_row["home_score"] > h_score_row["away_score"]
-                else game["home_team_id"]
-            )
-            loser_top = c.execute("""
-                SELECT pgs.player_id
-                FROM player_game_stats pgs
-                JOIN players p ON p.id = pgs.player_id
-                WHERE pgs.game_id = ? AND p.team_id = ?
-                ORDER BY pgs.points DESC
-                LIMIT 1
-            """, (game["id"], loser_team_id)).fetchone()
-            if loser_top:
-                candidates.add(loser_top["player_id"])
+            candidates = set()
+            for team_id in [game["home_team_id"], game["away_team_id"]]:
+                top2 = c.execute("""
+                    SELECT pgs.player_id
+                    FROM player_game_stats pgs
+                    JOIN players p ON p.id = pgs.player_id
+                    WHERE pgs.game_id = ? AND p.team_id = ?
+                    ORDER BY pgs.points + pgs.rebounds*0.75 + pgs.assists*0.5
+                             + pgs.steals*1.5 + pgs.blocks DESC
+                    LIMIT 2
+                """, (game["id"], team_id)).fetchall()
+                for row in top2:
+                    candidates.add(row["player_id"])
 
             for pid in candidates:
                 try:
@@ -525,6 +504,35 @@ def run_week(verbose=None, start_official=None):
     if interview_count:
         print(f"  {interview_count} post-game interview prompt(s) generated.")
         print("  View at /interviews or run: python view_interviews.py\n")
+
+    # ── Midseason GM interviews ────────────────────────────────────────────────
+    gm_count = c.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
+    if phase == "regular_season" and gm_count > 0:
+        midseason_fired = c.execute(
+            "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'midseason'",
+            (season_year,)
+        ).fetchone()[0]
+        if not midseason_fired:
+            total_reg = c.execute(
+                "SELECT COUNT(*) FROM games WHERE season_year = ? AND playoff_series_id IS NULL",
+                (season_year,)
+            ).fetchone()[0]
+            played_reg = c.execute(
+                "SELECT COUNT(*) FROM games WHERE season_year = ? AND playoff_series_id IS NULL AND played = 1",
+                (season_year,)
+            ).fetchone()[0]
+            if total_reg > 0 and played_reg * 2 >= total_reg:
+                gms = c.execute("SELECT id FROM general_managers").fetchall()
+                gm_iv_count = 0
+                for gm in gms:
+                    try:
+                        build_gm_interview_packet(gm["id"], "midseason", db=conn)
+                        gm_iv_count += 1
+                    except Exception:
+                        pass
+                if gm_iv_count:
+                    print(f"  {gm_iv_count} midseason GM interview prompt(s) generated.")
+                    print("  View at /interviews or run: python view_interviews.py\n")
 
     # ── Player morale + actions (runs in both regular season and playoffs) ─────
     if has_personalities:
@@ -540,8 +548,99 @@ def run_week(verbose=None, start_official=None):
     if playoff_game_ids:
         _process_playoff_results_v2(conn, playoff_game_ids, week, season_year)
 
+        # Interviews for any series that just completed this week
+        placeholders = ",".join("?" * len(playoff_game_ids))
+        just_completed = c.execute(f"""
+            SELECT DISTINCT ps.id, ps.winner_id, ps.team_a_id, ps.team_b_id
+            FROM playoff_series ps
+            JOIN games g ON g.playoff_series_id = ps.id
+            WHERE g.id IN ({placeholders})
+              AND ps.season_year = ?
+              AND ps.status = 'complete'
+              AND NOT EXISTS (
+                  SELECT 1 FROM gm_interviews gi
+                  WHERE gi.playoff_series_id = ps.id
+              )
+        """, [*playoff_game_ids, season_year]).fetchall()
+
+        po_player_count = 0
+        po_gm_count = 0
+
+        for series in just_completed:
+            winner_id = series["winner_id"]
+            loser_id = (
+                series["team_b_id"] if series["winner_id"] == series["team_a_id"]
+                else series["team_a_id"]
+            )
+
+            last_game = c.execute("""
+                SELECT id FROM games
+                WHERE playoff_series_id = ? AND played = 1
+                ORDER BY week DESC, id DESC LIMIT 1
+            """, (series["id"],)).fetchone()
+
+            if last_game and has_backstories:
+                for team_id, limit in [(winner_id, 3), (loser_id, 2)]:
+                    top_players = c.execute("""
+                        SELECT pgs.player_id
+                        FROM player_game_stats pgs
+                        JOIN players p ON p.id = pgs.player_id
+                        WHERE pgs.game_id = ? AND p.team_id = ?
+                        ORDER BY pgs.points + pgs.rebounds*0.75 + pgs.assists*0.5
+                                 + pgs.steals*1.5 + pgs.blocks DESC
+                        LIMIT ?
+                    """, (last_game["id"], team_id, limit)).fetchall()
+                    for row in top_players:
+                        try:
+                            build_interview_packet(last_game["id"], row["player_id"], db=conn)
+                            po_player_count += 1
+                        except Exception:
+                            pass
+
+            if gm_count > 0:
+                winner_gm = c.execute(
+                    "SELECT id FROM general_managers WHERE team_id = ?", (winner_id,)
+                ).fetchone()
+                loser_gm = c.execute(
+                    "SELECT id FROM general_managers WHERE team_id = ?", (loser_id,)
+                ).fetchone()
+                for gm_row, trigger in [(winner_gm, "playoff_series_win"),
+                                        (loser_gm, "playoff_series_loss")]:
+                    if gm_row:
+                        try:
+                            build_gm_interview_packet(
+                                gm_row["id"], trigger,
+                                playoff_series_id=series["id"], db=conn
+                            )
+                            po_gm_count += 1
+                        except Exception:
+                            pass
+
+        if po_player_count or po_gm_count:
+            print(f"  Playoff series: {po_player_count} player interview(s) + "
+                  f"{po_gm_count} GM interview(s) generated.")
+            print("  View at /interviews or run: python view_interviews.py\n")
+
     # ── Regular-season end: seed playoffs ─────────────────────────────────────
     if phase == "regular_season" and reg_games_remaining == 0:
+        if gm_count > 0:
+            season_end_fired = c.execute(
+                "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'season_end'",
+                (season_year,)
+            ).fetchone()[0]
+            if not season_end_fired:
+                gms = c.execute("SELECT id FROM general_managers").fetchall()
+                gm_iv_count = 0
+                for gm in gms:
+                    try:
+                        build_gm_interview_packet(gm["id"], "season_end", db=conn)
+                        gm_iv_count += 1
+                    except Exception:
+                        pass
+                if gm_iv_count:
+                    print(f"  {gm_iv_count} end-of-season GM interview prompt(s) generated.")
+                    print("  View at /interviews or run: python view_interviews.py\n")
+
         seed_playoffs(conn, week + 1, season_year)
         conn.execute("UPDATE league_state SET phase = 'playoffs' WHERE id = 1")
         conn.commit()
