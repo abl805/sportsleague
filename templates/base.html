@@ -15,7 +15,7 @@
     </a>
     <nav class="nav" aria-label="Primary">
       <a class="{{ 'active' if active == 'home' else '' }}" href="{{ url_for('home') }}">Home</a>
-      <a class="{{ 'active' if active == 'live_league' else '' }}" href="{{ url_for('live_league') }}">Live League</a>
+      <a class="nav-cta {{ 'active' if active == 'live_league' else '' }}" href="{{ url_for('live_league') }}">Live League</a>
       <div class="nav-group">
         <a class="{{ 'active' if active in ('standings','scores','leaders') else '' }}" href="{{ url_for('standings') }}">Stats</a>
         <div class="nav-dropdown">
@@ -32,7 +32,6 @@
         </div>
       </div>
       <a class="{{ 'active' if active == 'news' else '' }}" href="{{ url_for('news') }}">News</a>
-      <a class="commissioner-link {{ 'active' if active == 'commissioner' else '' }}" href="{{ url_for('commissioner') }}">Commissioner</a>
       <div class="nav-group">
         <a class="{{ 'active' if active in ('about','contact') else '' }}" href="{{ url_for('about') }}">About</a>
         <div class="nav-dropdown">
@@ -68,6 +67,7 @@
     <span>Week {{ state.current_week if state else "—" }}</span>
     <span>{{ state.mode|upper if state else "NO LEAGUE" }}</span>
     <span>AIBA &copy; 2025</span>
+    <span><a href="{{ url_for('commissioner') }}" style="color:inherit;opacity:0.7;">Commissioner</a></span>
     <span><a href="{{ url_for('terms') }}" style="color:inherit;opacity:0.7;">Terms</a></span>
     <span><a href="{{ url_for('privacy') }}" style="color:inherit;opacity:0.7;">Privacy</a></span>
   </footer>

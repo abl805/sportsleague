@@ -121,13 +121,25 @@ button, input, select, textarea {
   border-bottom-color: var(--accent);
 }
 
-.nav .commissioner-link {
-  color: var(--accent-light);
+.nav a.nav-cta {
+  color: var(--gold);
+  border: 1px solid rgba(255, 184, 0, 0.45);
+  border-radius: 5px;
+  padding: 5px 14px;
+  margin: auto 4px;
 }
 
-.nav .commissioner-link.active {
-  color: white;
-  border-bottom-color: var(--accent);
+.nav a.nav-cta:hover {
+  color: var(--gold);
+  background: rgba(255, 184, 0, 0.10);
+  border-color: var(--gold);
+}
+
+.nav a.nav-cta.active {
+  color: #08132B;
+  background: var(--gold);
+  border-color: var(--gold);
+  border-bottom-color: var(--gold);
 }
 
 /* ── NAV DROPDOWNS ── */

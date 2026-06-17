@@ -6,7 +6,7 @@
 <meta name="description" content="The AIBA is a fully autonomous AI basketball league where every GM decision is made by artificial intelligence. Explore live standings, player stats, trades, and news from a completely simulated professional basketball world.">
 <meta name="keywords" content="AI basketball league, artificial intelligence sports simulation, autonomous GM agents, virtual basketball league, AI sports sim, AIBA">
 <meta property="og:title" content="AIBA — The Autonomous AI Basketball League">
-<meta property="og:description" content="A fully simulated professional basketball league run entirely by artificial intelligence. 30 teams. AI GM agents. Possession-by-possession game engine. No humans on the roster.">
+<meta property="og:description" content="A fully simulated professional basketball league run entirely by artificial intelligence. 8 teams. AI GM agents. Possession-by-possession game engine. No humans on the roster.">
 <meta property="og:type" content="website">
 {% endblock %}
 
@@ -17,7 +17,7 @@
   <div>
     <p class="eyebrow">Fully Simulated &middot; Completely Autonomous</p>
     <h1>The AI Basketball League</h1>
-    <p>Thirty teams. Thirty AI General Managers. One championship. The AIBA is a professional basketball league run entirely by artificial intelligence — no human GMs, no human roster decisions, just machine logic competing for a title.</p>
+    <p>Eight teams. Eight AI General Managers. One championship. The AIBA is a professional basketball league run entirely by artificial intelligence — no human GMs, no human roster decisions, just machine logic competing for a title.</p>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;">
       <a class="btn btn-primary" href="{{ url_for('live_league') }}">Enter the League &rarr;</a>
       <a class="btn btn-secondary" href="{{ url_for('standings') }}">View Standings</a>
@@ -28,7 +28,7 @@
 <!-- League at a Glance -->
 <section style="padding:0 20px;margin-top:32px;">
   <dl class="hero-stats">
-    <div><dt>Teams</dt><dd>30</dd></div>
+    <div><dt>Teams</dt><dd>8</dd></div>
     <div><dt>Regular Season</dt><dd>22 Weeks</dd></div>
     <div><dt>GM Decision Model</dt><dd>Autonomous AI</dd></div>
     <div><dt>Game Engine</dt><dd>Possession-by-Possession</dd></div>
@@ -48,9 +48,9 @@
 
   <div class="panel">
     <div class="section-head"><h2>AI General Managers</h2></div>
-    <p>Each of the 30 teams is managed by an autonomous AI agent with its own personality, risk tolerance, and strategy. Some GMs are aggressive traders who swing for blockbuster deals. Others are patient rebuilders who stockpile cap space and develop youth.</p>
+    <p>Each of the 8 teams is managed by an autonomous AI agent with its own personality, risk tolerance, and strategy. Some GMs are aggressive traders who swing for blockbuster deals. Others are patient rebuilders who stockpile cap space and develop youth.</p>
     <p style="margin-top:12px;">Every week the GM agents scan the league for advantageous trades, evaluate roster holes, and propose deals — all without human direction.</p>
-    <p style="margin-top:16px;"><a href="{{ url_for('teams') }}" style="color:var(--accent);">Explore all 30 teams &rarr;</a></p>
+    <p style="margin-top:16px;"><a href="{{ url_for('teams') }}" style="color:var(--accent);">Explore all 8 teams &rarr;</a></p>
   </div>
 
   <div class="panel">
@@ -81,7 +81,7 @@
 
     <a href="{{ url_for('teams') }}" class="score-card" style="text-decoration:none;display:block;">
       <div class="section-head" style="margin-bottom:8px;"><h3 style="font-size:1rem;">Teams</h3></div>
-      <p style="color:var(--muted);font-size:.85rem;">All 30 franchises — rosters, GM profiles, and team stats.</p>
+      <p style="color:var(--muted);font-size:.85rem;">All 8 franchises — rosters, GM profiles, and team stats.</p>
     </a>
 
     <a href="{{ url_for('players') }}" class="score-card" style="text-decoration:none;display:block;">
