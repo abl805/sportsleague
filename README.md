@@ -54,7 +54,7 @@ python seed.py
 | `python run_week.py` | Advance one test week, or one official week after official start |
 | `python run_week.py --start-official` | Start official Year 1 and play Week 1 |
 | `python review_trades.py` | Review only trades autopilot escalated |
-| `python run_offseason.py` | Advance a finished season into the next year |
+| `python run_offseason.py` | Advance one offseason stage after a finished season |
 | `python view_league.py` | View standings, results, and stat leaders |
 | `python view_drama.py` | View morale, chemistry, and player events |
 | `python web_app.py` | Open the primary public league site and commissioner console |
@@ -100,10 +100,10 @@ After the final week, run:
 python run_offseason.py
 ```
 
-The offseason resolves retirement notices, ages players, applies development
-and veteran regression, decrements contracts, handles extension requests,
-moves unsigned players into free agency, fills rosters with free agents and
-rookies, creates new standings/schedule rows, and advances the league year.
+Each run advances one stage: retirements, player development/regression,
+contracts, rookie draft, free agency, roster finalization, then schedule
+release. The final stage creates new standings/schedule rows and advances the
+league year.
 
 ## Project Layout
 

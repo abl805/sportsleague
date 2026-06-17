@@ -3,6 +3,7 @@ import json
 import re
 
 from league.database import get_connection
+from league.playoffs import get_playoff_snapshot
 
 
 CHATGPT_SCHEMA = "aibl.manual_chatgpt.v1"
@@ -28,6 +29,7 @@ def hash_text(text):
 
 
 def league_snapshot_context(conn, season_year):
+    state = conn.execute("SELECT * FROM league_state WHERE id = 1").fetchone()
     standings = rows_to_dicts(conn.execute("""
         SELECT t.city || ' ' || t.name AS team,
                t.abbreviation,
@@ -78,11 +80,17 @@ def league_snapshot_context(conn, season_year):
         "SELECT COUNT(*) FROM pending_trades WHERE status = 'pending'"
     ).fetchone()[0]
 
+    phase = state["phase"] if state and "phase" in state.keys() else "regular_season"
+    playoffs = None
+    if phase in ("playoffs", "complete"):
+        playoffs = get_playoff_snapshot(conn, season_year)
+
     return {
         "standings": standings,
         "stat_leaders": leaders,
         "recent_games": recent_games,
         "pending_trade_count": pending_trade_count,
+        "playoffs": playoffs,
     }
 
 
@@ -240,6 +248,21 @@ def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade
 
     conn.close()
 
+    instructions = [
+        "Read the packet as source-of-truth league data.",
+        "Answer the commissioner request without inventing missing stats.",
+        "Return a JSON packet inside the CHATGPT TO AAIBL markers.",
+        "Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.",
+        "REQUIRED: populate 'articles' with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.",
+        "REQUIRED: populate 'influences' with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.",
+    ]
+    if isinstance(context, dict) and context.get("playoffs"):
+        instructions.extend([
+            "For playoff requests, lead with bracket stakes: series score, elimination pressure, next scheduled game, and who can advance or clinch.",
+            "When writing playoff articles, include the series name (Semifinals, Finals, or Third Place) and current best-of-3 status.",
+            "Third-place series is a real postseason result, not an exhibition.",
+        ])
+
     payload = {
         "schema": CHATGPT_SCHEMA,
         "direction": "app_to_chatgpt",
@@ -249,14 +272,7 @@ def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade
             "season_year": packet_season,
             "current_week": packet_week,
         },
-        "instructions_for_chatgpt": [
-            "Read the packet as source-of-truth league data.",
-            "Answer the commissioner request without inventing missing stats.",
-            "Return a JSON packet inside the CHATGPT TO AAIBL markers.",
-            "Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.",
-            "REQUIRED: populate 'articles' with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.",
-            "REQUIRED: populate 'influences' with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.",
-        ],
+        "instructions_for_chatgpt": instructions,
         "response_contract": {
             "schema": CHATGPT_SCHEMA,
             "direction": "chatgpt_to_app",

@@ -3,16 +3,16 @@
 {% block content %}
 
 {# ── NEXT ACTION BANNER ─────────────────────────────────────── #}
-{% if state.mode == 'offseason' %}
+{% if state.phase == 'offseason' %}
   <div class="next-action offseason">
     <div>
-      <p class="na-label">Offseason Mode</p>
-      <h2>The regular season is over.</h2>
-      <p>Run the offseason to process contracts, update rosters, and prepare for next season.</p>
+      <p class="na-label">Offseason Mode &mdash; {{ offseason_stage_label }}</p>
+      <h2>Advance the next offseason stage.</h2>
+      <p>Move through retirements, development, contracts, the rookie draft, free agency, roster finalization, and schedule release one step at a time.</p>
     </div>
     <form method="post" action="{{ url_for('commissioner_action') }}">
       <input type="hidden" name="action" value="run_offseason">
-      <button type="submit" class="cta-big">Run Offseason &rarr;</button>
+      <button type="submit" class="cta-big">Run {{ offseason_stage_label }} &rarr;</button>
     </form>
   </div>
 
@@ -36,12 +36,12 @@
   <div class="next-action ready">
     <div>
       <p class="na-label">Season {{ state.season_year }} &mdash; Complete</p>
-      <h2>The season is over.</h2>
-      <p>The playoffs have concluded. Run the offseason to process contracts, update rosters, and set up next season.</p>
+      <h2>The offseason is ready.</h2>
+      <p>The playoffs have concluded. Start with retirements, then move through each offseason stage one at a time.</p>
     </div>
     <form method="post" action="{{ url_for('commissioner_action') }}">
       <input type="hidden" name="action" value="run_offseason">
-      <button type="submit" class="cta-big">Run Offseason &rarr;</button>
+      <button type="submit" class="cta-big">Start Retirements &rarr;</button>
     </form>
   </div>
 
@@ -115,7 +115,7 @@
       </form>
       <form method="post" action="{{ url_for('commissioner_action') }}">
         <input type="hidden" name="action" value="run_offseason">
-        <button type="submit" class="secondary">Run Offseason</button>
+        <button type="submit" class="secondary">Advance Offseason</button>
       </form>
     </div>
   </div>
@@ -160,6 +160,30 @@
     {% endfor %}
   </div>
 </section>
+
+{% if state.phase == 'offseason' or offseason_events %}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head">
+      <h2>Offseason Timeline</h2>
+      {% if state.phase == 'offseason' %}
+        <span style="color:var(--gold);font-size:0.78rem;font-weight:800;">Next: {{ offseason_stage_label }}</span>
+      {% endif %}
+    </div>
+    <div class="log-list">
+      {% for event in offseason_events %}
+        <article>
+          <div class="story-meta">{{ event.from_season }} &rarr; {{ event.to_season }} / {{ event.stage|event_label }}</div>
+          <strong>{{ event.headline }}</strong>
+          <p>{{ event.detail }}</p>
+        </article>
+      {% else %}
+        <p class="empty">No offseason stages have run yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
 
 {# ── CHATGPT PACKETS ─────────────────────────────────────────── #}
 <section style="margin-top:16px;">
@@ -208,6 +232,17 @@
         <p class="empty">Run Week 1 first.</p>
       {% endif %}
     </div>
+
+    {# Playoff packets #}
+    {% for pp in auto_playoff_packets %}
+    <div class="packet-card accent-gold">
+      <p class="pc-type">Playoffs</p>
+      <h3>{{ pp.label }}</h3>
+      <p class="pc-prompt">&ldquo;Use the live bracket, series scores, recent results, and upcoming games to create postseason news and influences.&rdquo;</p>
+      <textarea class="copy-box pc-box" readonly id="pkt-playoff-{{ loop.index }}">{{ pp.packet }}</textarea>
+      <button type="button" class="btn-copy secondary" data-target="pkt-playoff-{{ loop.index }}">Copy &rarr; ChatGPT</button>
+    </div>
+    {% endfor %}
 
     {# Team Report #}
     {% if auto_team_packets %}

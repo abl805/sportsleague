@@ -1,108 +1,175 @@
 {% extends "base.html" %}
 {% from "partials.html" import standings_table, leader_table, game_card, storyline_list %}
 {% block title %}AAIBL Home{% endblock %}
+
+{% macro playoff_series_card(series, pending_label) %}
+  {% if series %}
+    <article class="playoff-series-card {{ 'complete' if series.status == 'complete' else 'active' }}">
+      <div class="playoff-series-topline">
+        <span>{{ series.label }}</span>
+        <strong>{{ series.status_text }}</strong>
+      </div>
+      <div class="playoff-team-row {{ 'winner' if series.winner_id == series.team_a_id else '' }}">
+        <span class="playoff-seed">#{{ series.seed_a }}</span>
+        <span class="playoff-team-name">{{ series.name_a }}</span>
+        <strong>{{ series.team_a_wins }}</strong>
+      </div>
+      <div class="playoff-team-row {{ 'winner' if series.winner_id == series.team_b_id else '' }}">
+        <span class="playoff-seed">#{{ series.seed_b }}</span>
+        <span class="playoff-team-name">{{ series.name_b }}</span>
+        <strong>{{ series.team_b_wins }}</strong>
+      </div>
+      {% if series.next_game %}
+        <a class="playoff-game-link" href="{{ url_for('game_page', game_id=series.next_game.id) }}">
+          Week {{ series.next_game.week }}: {{ series.next_game.away_abbr }} at {{ series.next_game.home_abbr }}
+        </a>
+      {% elif series.last_game %}
+        <a class="playoff-game-link muted" href="{{ url_for('game_page', game_id=series.last_game.id) }}">
+          Last game: Week {{ series.last_game.week }}
+        </a>
+      {% endif %}
+    </article>
+  {% else %}
+    <article class="playoff-series-card pending">
+      <div class="playoff-series-topline">
+        <span>{{ pending_label }}</span>
+        <strong>Pending</strong>
+      </div>
+      <div class="playoff-team-row"><span class="playoff-seed">#</span><span class="playoff-team-name">TBD</span><strong>-</strong></div>
+      <div class="playoff-team-row"><span class="playoff-seed">#</span><span class="playoff-team-name">TBD</span><strong>-</strong></div>
+    </article>
+  {% endif %}
+{% endmacro %}
+
+{% macro offseason_stage_item(stage) %}
+  <div class="offseason-step {{ stage.status }}">
+    <span></span>
+    <strong>{{ stage.label }}</strong>
+  </div>
+{% endmacro %}
+
 {% block content %}
 
-{# ── PLAYOFF BRACKET (shown when playoffs are active or complete) ── #}
-{% if phase in ('playoffs', 'complete') and bracket %}
-{% set semis = bracket | selectattr('round', 'equalto', 1) | list %}
-{% set finals = bracket | selectattr('round', 'equalto', 2) | list %}
-{% set champion = finals[0] if finals and finals[0].status == 'complete' else None %}
-<section class="playoff-hero">
-  <div class="playoff-hero-header">
-    <div>
-      <p class="eyebrow">{{ state.season_year }} Season</p>
-      <h1>Playoffs</h1>
-      <p>
-        {% if phase == 'complete' %}Season complete.{% else %}Week {{ state.current_week }} — run each week as usual to advance.{% endif %}
-      </p>
-    </div>
-    <span class="playoff-phase-tag">
-      {% if phase == 'complete' %}Season Complete
-      {% elif finals %}Finals
-      {% else %}Semifinals{% endif %}
-    </span>
+{% if phase == 'offseason' %}
+<section class="offseason-hero">
+  <div class="offseason-hero-copy">
+    <p class="eyebrow">{{ state.season_year }} offseason</p>
+    <h1>The offseason is on the clock.</h1>
+    <p>Front offices are reshaping the league one stage at a time. Next up: {{ offseason_stage_label }}.</p>
   </div>
 
-  <div class="bracket {% if champion %}with-champion{% endif %}">
+  <div class="offseason-war-room">
+    <div class="offseason-current">
+      <span>Current stage</span>
+      <strong>{{ offseason_stage_label }}</strong>
+      <p>Advance from the Commissioner Console when the league office is ready.</p>
+    </div>
+    <div class="offseason-timeline">
+      {% for stage in offseason_stages %}
+        {{ offseason_stage_item(stage) }}
+      {% endfor %}
+    </div>
+    <div class="offseason-log">
+      <span>Recent movement</span>
+      {% for event in offseason_events[:3] %}
+        <article>
+          <strong>{{ event.stage|event_label }}</strong>
+          <p>{{ event.detail }}</p>
+        </article>
+      {% else %}
+        <p>No offseason stages have run yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
 
-    {# — SEMIFINALS — #}
-    <div class="bracket-col">
-      <p class="bracket-round-label">Semifinals</p>
-      {% for s in semis %}
-        <div class="bracket-matchup {% if s.status == 'complete' %}complete{% else %}active{% endif %}">
-          <div class="bracket-team {% if s.winner_id == s.team_a_id %}winner{% endif %}">
-            <span class="bracket-seed">#{{ s.seed_a }}</span>
-            <span class="bracket-name">{{ s.name_a }}</span>
-            <span class="bracket-wins">{{ s.team_a_wins }}</span>
-          </div>
-          <div class="bracket-team {% if s.winner_id == s.team_b_id %}winner{% endif %}">
-            <span class="bracket-seed">#{{ s.seed_b }}</span>
-            <span class="bracket-name">{{ s.name_b }}</span>
-            <span class="bracket-wins">{{ s.team_b_wins }}</span>
-          </div>
-          <div class="bracket-series-status">
-            {% if s.status == 'complete' %}{{ s.winner_name }} advances{% else %}Best of 3{% endif %}
-          </div>
-        </div>
+{% elif phase in ('playoffs', 'complete') and playoff %}
+<section class="playoff-stage">
+  <div class="playoff-stage-header">
+    <div>
+      <p class="eyebrow">{{ state.season_year }} postseason</p>
+      <h1>The bracket is live.</h1>
+      <p>
+        {% if phase == 'complete' %}
+          The title and third place have both been decided.
+        {% else %}
+          Week {{ state.current_week }} is ready. Run the playoffs like any other week.
+        {% endif %}
+      </p>
+    </div>
+    <div class="playoff-stage-status">
+      <span>{{ playoff.phase_label }}</span>
+      {% if playoff.champion %}
+        <strong>{{ playoff.champion.winner_name }}</strong>
+      {% else %}
+        <strong>{{ playoff.active_series|length }} active</strong>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="playoff-board">
+    <div class="playoff-round">
+      <p class="playoff-round-label">Semifinals</p>
+      {% for series in playoff.semifinals %}
+        {{ playoff_series_card(series, "Semifinals") }}
       {% endfor %}
     </div>
 
-    {# — CONNECTOR — #}
-    <div class="bracket-connector">&#9658;</div>
+    <div class="playoff-flow" aria-hidden="true"></div>
 
-    {# — FINALS — #}
-    <div class="bracket-col bracket-col-finals">
-      <p class="bracket-round-label">Finals</p>
-      {% if finals %}
-        {% set f = finals[0] %}
-        <div class="bracket-matchup {% if f.status == 'complete' %}complete{% else %}active{% endif %}">
-          <div class="bracket-team {% if f.winner_id == f.team_a_id %}winner{% endif %}">
-            <span class="bracket-seed">#{{ f.seed_a }}</span>
-            <span class="bracket-name">{{ f.name_a }}</span>
-            <span class="bracket-wins">{{ f.team_a_wins }}</span>
-          </div>
-          <div class="bracket-team {% if f.winner_id == f.team_b_id %}winner{% endif %}">
-            <span class="bracket-seed">#{{ f.seed_b }}</span>
-            <span class="bracket-name">{{ f.name_b }}</span>
-            <span class="bracket-wins">{{ f.team_b_wins }}</span>
-          </div>
-          <div class="bracket-series-status">
-            {% if f.status == 'complete' %}{{ f.winner_name }} wins{% else %}Best of 3{% endif %}
-          </div>
-        </div>
-      {% else %}
-        <div class="bracket-matchup tbd">
-          <div class="bracket-team">
-            <span class="bracket-seed"></span>
-            <span class="bracket-name">TBD</span>
-            <span class="bracket-wins"></span>
-          </div>
-          <div class="bracket-team">
-            <span class="bracket-seed"></span>
-            <span class="bracket-name">TBD</span>
-            <span class="bracket-wins"></span>
-          </div>
-          <div class="bracket-series-status">Finals — pending</div>
+    <div class="playoff-round playoff-round-featured">
+      <p class="playoff-round-label">Finals</p>
+      {{ playoff_series_card(playoff.finals[0] if playoff.finals else None, "Finals") }}
+      {% if playoff.champion %}
+        <div class="playoff-trophy">
+          <span>Champion</span>
+          <strong>{{ playoff.champion.winner_name }}</strong>
         </div>
       {% endif %}
     </div>
 
-    {# — CHAMPION — #}
-    {% if champion %}
-    <div class="bracket-connector">&#9658;</div>
-    <div class="bracket-champion">
-      <p class="bracket-champion-label">Champion</p>
-      <p class="bracket-champion-name">{{ champion.winner_name }}</p>
-      <p class="bracket-champion-year">{{ state.season_year }}</p>
+    <div class="playoff-round">
+      <p class="playoff-round-label">Third Place</p>
+      {{ playoff_series_card(playoff.third_place[0] if playoff.third_place else None, "Third Place") }}
+      {% if playoff.third_place_winner %}
+        <div class="playoff-medal">
+          <span>Third place</span>
+          <strong>{{ playoff.third_place_winner.winner_name }}</strong>
+        </div>
+      {% endif %}
     </div>
-    {% endif %}
+  </div>
 
+  <div class="playoff-live-grid">
+    <div>
+      <div class="section-head">
+        <h2>Next Playoff Week</h2>
+      </div>
+      <div class="score-grid">
+        {% for game in playoff.upcoming_games %}
+          {{ game_card(game) }}
+        {% else %}
+          <p class="empty">No playoff games are currently scheduled.</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="section-head">
+        <h2>Recent Playoff Results</h2>
+      </div>
+      <div class="score-grid">
+        {% for game in playoff.recent_results %}
+          {{ game_card(game) }}
+        {% else %}
+          <p class="empty">The first playoff results will appear here.</p>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 </section>
-{% endif %}
 
-<section class="league-hero">
+{% else %}
+<section class="league-hero season-hero">
   <div>
     <p class="eyebrow">Season {{ state.season_year }} / Week {{ state.current_week }}</p>
     <h1>The league office is open.</h1>
@@ -112,8 +179,16 @@
     <div><span>Games Played</span><strong>{{ games_played }}</strong></div>
     <div><span>Season Weeks</span><strong>{{ max_week }}</strong></div>
     <div><span>Mode</span><strong>{{ state.mode|upper }}</strong></div>
+    {% if latest_results %}
+      {% set result = latest_results[0] %}
+      <div class="season-latest">
+        <span>Latest Final</span>
+        <strong>{{ result.home_abbr }} {{ result.home_score }} / {{ result.away_abbr }} {{ result.away_score }}</strong>
+      </div>
+    {% endif %}
   </div>
 </section>
+{% endif %}
 
 <section class="section-grid">
   <div class="panel wide">

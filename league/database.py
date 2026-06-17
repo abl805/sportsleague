@@ -95,6 +95,8 @@ def create_tables():
             season_year  INTEGER DEFAULT 2026,
             mode         TEXT DEFAULT 'test',
             official_started INTEGER DEFAULT 0,
+            offseason_stage TEXT,
+            offseason_from_season INTEGER,
             last_updated TEXT
         );
 
@@ -190,6 +192,7 @@ def create_tables():
             id           INTEGER PRIMARY KEY,
             season_year  INTEGER NOT NULL,
             round        INTEGER NOT NULL,
+            series_type   TEXT DEFAULT 'semifinal',
             seed_a       INTEGER NOT NULL,
             seed_b       INTEGER NOT NULL,
             team_a_id    INTEGER NOT NULL REFERENCES teams(id),
@@ -250,6 +253,16 @@ def create_tables():
             magnitude    REAL NOT NULL DEFAULT 0.15,
             reason       TEXT,
             created_at   TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS offseason_events (
+            id          INTEGER PRIMARY KEY,
+            from_season INTEGER NOT NULL,
+            to_season   INTEGER NOT NULL,
+            stage       TEXT NOT NULL,
+            headline    TEXT NOT NULL,
+            detail      TEXT,
+            created_at  TEXT DEFAULT (datetime('now'))
         );
     """)
     _migrate_existing_schema(conn)
@@ -315,6 +328,10 @@ def _migrate_existing_schema(conn):
         conn.execute(
             "ALTER TABLE league_state ADD COLUMN official_started INTEGER DEFAULT 0"
         )
+    if "offseason_stage" not in columns:
+        conn.execute("ALTER TABLE league_state ADD COLUMN offseason_stage TEXT")
+    if "offseason_from_season" not in columns:
+        conn.execute("ALTER TABLE league_state ADD COLUMN offseason_from_season INTEGER")
     conn.execute(
         "UPDATE league_state SET mode = COALESCE(mode, 'test'), "
         "official_started = COALESCE(official_started, 0)"
@@ -326,6 +343,24 @@ def _migrate_existing_schema(conn):
     }
     if "playoff_series_id" not in games_columns3:
         conn.execute("ALTER TABLE games ADD COLUMN playoff_series_id INTEGER")
+
+    playoff_columns = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(playoff_series)").fetchall()
+    }
+    if "series_type" not in playoff_columns:
+        conn.execute("ALTER TABLE playoff_series ADD COLUMN series_type TEXT")
+    conn.execute("""
+        UPDATE playoff_series
+        SET series_type = COALESCE(
+            series_type,
+            CASE
+                WHEN round = 1 THEN 'semifinal'
+                WHEN round = 2 THEN 'finals'
+                ELSE 'semifinal'
+            END
+        )
+    """)
 
     ls_columns = {
         row["name"]

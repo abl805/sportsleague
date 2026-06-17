@@ -1,10 +1,11 @@
 """
 Offseason engine.
 
-Advances a completed season into the next one: retirements, aging,
-development/regression, contracts, free-agent signings, rookie creation,
-standings, schedule, and league clock.
+Advances a completed season into the next one in commissioner-controlled
+stages: retirements, development/regression, contracts, free-agent signings,
+rookie creation, standings, schedule, and league clock.
 """
+import json
 import os
 import random
 import sys
@@ -26,6 +27,26 @@ from seed import (
 
 
 ROSTER_SIZE = len(POSITIONS_PER_TEAM)
+
+OFFSEASON_STAGES = [
+    "retirements",
+    "development",
+    "contracts",
+    "draft",
+    "free_agency",
+    "roster_finalization",
+    "finalize",
+]
+
+OFFSEASON_STAGE_LABELS = {
+    "retirements": "Retirements",
+    "development": "Player Development",
+    "contracts": "Contracts",
+    "draft": "Rookie Draft",
+    "free_agency": "Free Agency",
+    "roster_finalization": "Roster Finalization",
+    "finalize": "Schedule Release",
+}
 
 
 def _market_salary(skill):
@@ -346,16 +367,8 @@ def _sign_player(conn, player, team_id, next_year):
     return _player_label(player)
 
 
-def _fill_rosters(conn, next_year, salary_cap):
+def _sign_free_agents_to_roster_holes(conn, next_year, salary_cap):
     signed = []
-    rookies = []
-    archetype_counts = {
-        row["archetype"]: row["n"]
-        for row in conn.execute(
-            "SELECT archetype, COUNT(*) AS n FROM player_personalities GROUP BY archetype"
-        ).fetchall()
-    }
-
     teams = conn.execute("SELECT id FROM teams ORDER BY id").fetchall()
     for team in teams:
         team_id = team["id"]
@@ -382,8 +395,48 @@ def _fill_rosters(conn, next_year, salary_cap):
             if candidate and _market_salary(candidate["skill_rating"]) <= max(cap_space, 1_500_000):
                 signed.append(_sign_player(conn, dict(candidate), team_id, next_year))
             else:
-                rookies.append(_create_rookie(conn, team_id, position, next_year, archetype_counts))
+                break
 
+    return signed
+
+
+def _draft_rookies_to_fill_rosters(conn, next_year, max_per_team=None):
+    rookies = []
+    archetype_counts = {
+        row["archetype"]: row["n"]
+        for row in conn.execute(
+            "SELECT archetype, COUNT(*) AS n FROM player_personalities GROUP BY archetype"
+        ).fetchall()
+    }
+
+    teams = conn.execute("SELECT id FROM teams ORDER BY id").fetchall()
+    for team in teams:
+        team_id = team["id"]
+        team_rookies = 0
+        while True:
+            roster = [
+                dict(row)
+                for row in conn.execute(
+                    "SELECT * FROM players "
+                    "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+                    (team_id,),
+                ).fetchall()
+            ]
+            if len(roster) >= ROSTER_SIZE:
+                break
+            if max_per_team is not None and team_rookies >= max_per_team:
+                break
+
+            position = _desired_position(roster)
+            rookies.append(_create_rookie(conn, team_id, position, next_year, archetype_counts))
+            team_rookies += 1
+
+    return rookies
+
+
+def _fill_rosters(conn, next_year, salary_cap):
+    signed = _sign_free_agents_to_roster_holes(conn, next_year, salary_cap)
+    rookies = _draft_rookies_to_fill_rosters(conn, next_year)
     return signed, rookies
 
 
@@ -406,14 +459,85 @@ def _create_next_season(conn, next_year):
     return total_weeks, len(schedule)
 
 
-def advance_offseason(conn, verbose=True):
-    c = conn.cursor()
-    state = c.execute("SELECT * FROM league_state WHERE id = 1").fetchone()
-    if not state:
-        raise RuntimeError("League not found. Run seed.py first.")
+def _next_stage(stage):
+    idx = OFFSEASON_STAGES.index(stage)
+    if idx + 1 >= len(OFFSEASON_STAGES):
+        return None
+    return OFFSEASON_STAGES[idx + 1]
 
+
+def _stage_label(stage):
+    return OFFSEASON_STAGE_LABELS.get(stage, stage.replace("_", " ").title())
+
+
+def _names_preview(names, limit=8):
+    if not names:
+        return "None."
+    preview = ", ".join(names[:limit])
+    remaining = len(names) - limit
+    if remaining > 0:
+        preview += f", and {remaining} more"
+    return preview + "."
+
+
+def _record_offseason_event(conn, from_season, to_season, stage, headline, detail):
+    conn.execute(
+        "INSERT INTO offseason_events (from_season, to_season, stage, headline, detail) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (from_season, to_season, stage, headline, detail),
+    )
+
+
+def _format_stage_summary(summary):
+    stage = summary["stage"]
+    if stage == "retirements":
+        return f"{len(summary['retired'])} retired: {_names_preview(summary['retired'])}"
+    if stage == "development":
+        return (
+            f"{summary['improved']} player(s) improved; "
+            f"{summary['regressed']} player(s) regressed."
+        )
+    if stage == "contracts":
+        return (
+            f"{len(summary['extended'])} extension(s); "
+            f"{len(summary['free_agents'])} player(s) entered free agency. "
+            f"Extensions: {_names_preview(summary['extended'])} "
+            f"Free agents: {_names_preview(summary['free_agents'])}"
+        )
+    if stage == "free_agency":
+        return f"{len(summary['signed'])} free agent(s) signed: {_names_preview(summary['signed'])}"
+    if stage == "draft":
+        return f"{len(summary['rookies'])} rookie(s) added: {_names_preview(summary['rookies'])}"
+    if stage == "finalize":
+        return (
+            f"Season {summary['to_season']} schedule created: "
+            f"{summary['weeks']} weeks, {summary['games']} games."
+        )
+    if stage == "roster_finalization":
+        return (
+            f"Lineups finalized with {len(summary['rookies'])} late rookie addition(s). "
+            f"{_names_preview(summary['rookies'])}"
+        )
+    return "Offseason stage completed."
+
+
+def _ensure_offseason_started(conn, state):
     season_year = state["season_year"]
-    remaining = c.execute(
+    phase = state["phase"] if "phase" in state.keys() else "regular_season"
+    stage = state["offseason_stage"] if "offseason_stage" in state.keys() else None
+    from_season = (
+        state["offseason_from_season"]
+        if "offseason_from_season" in state.keys() and state["offseason_from_season"]
+        else season_year
+    )
+
+    if phase == "offseason":
+        return from_season, stage or OFFSEASON_STAGES[0]
+
+    if phase != "complete":
+        raise RuntimeError("The offseason can only begin after the season is complete.")
+
+    remaining = conn.execute(
         "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
         (season_year,),
     ).fetchone()[0]
@@ -422,6 +546,22 @@ def advance_offseason(conn, verbose=True):
             f"Season {season_year} is not complete yet; {remaining} game(s) remain."
         )
 
+    conn.execute(
+        "UPDATE league_state "
+        "SET phase = 'offseason', offseason_stage = ?, offseason_from_season = ?, "
+        "last_updated = datetime('now') WHERE id = 1",
+        (OFFSEASON_STAGES[0], season_year),
+    )
+    return season_year, OFFSEASON_STAGES[0]
+
+
+def advance_offseason_step(conn, verbose=True):
+    c = conn.cursor()
+    state = c.execute("SELECT * FROM league_state WHERE id = 1").fetchone()
+    if not state:
+        raise RuntimeError("League not found. Run seed.py first.")
+
+    season_year, stage = _ensure_offseason_started(conn, state)
     next_year = season_year + 1
     existing = c.execute(
         "SELECT COUNT(*) FROM games WHERE season_year = ?",
@@ -431,66 +571,105 @@ def advance_offseason(conn, verbose=True):
         raise RuntimeError(f"Season {next_year} already exists.")
 
     salary_cap = _load_salary_cap()
-
-    retired = _resolve_retirements(conn, season_year)
-    improved, regressed = _age_and_develop_players(conn)
-    extended, free_agents = _process_contracts(conn, season_year, next_year, salary_cap)
-    signed, rookies = _fill_rosters(conn, next_year, salary_cap)
-
-    c.execute(
-        "UPDATE pending_trades SET status = 'expired', "
-        "rejection_reason = 'Expired before offseason rollover.' "
-        "WHERE season_year = ? AND status = 'pending'",
-        (season_year,),
-    )
-    c.execute(
-        "UPDATE player_events SET status = 'resolved' "
-        "WHERE season_year <= ? AND status = 'active'",
-        (season_year,),
-    )
-
-    total_weeks, games = _create_next_season(conn, next_year)
-    c.execute(
-        "UPDATE league_state "
-        "SET current_week = 1, season_year = ?, last_updated = datetime('now') "
-        "WHERE id = 1",
-        (next_year,),
-    )
-    conn.commit()
-
     summary = {
         "from_season": season_year,
         "to_season": next_year,
-        "retired": retired,
-        "improved": improved,
-        "regressed": regressed,
-        "extended": extended,
-        "free_agents": free_agents,
-        "signed": signed,
-        "rookies": rookies,
-        "weeks": total_weeks,
-        "games": games,
+        "stage": stage,
+        "stage_label": _stage_label(stage),
     }
 
+    if stage == "retirements":
+        summary["retired"] = _resolve_retirements(conn, season_year)
+    elif stage == "development":
+        improved, regressed = _age_and_develop_players(conn)
+        summary["improved"] = improved
+        summary["regressed"] = regressed
+    elif stage == "contracts":
+        extended, free_agents = _process_contracts(conn, season_year, next_year, salary_cap)
+        summary["extended"] = extended
+        summary["free_agents"] = free_agents
+    elif stage == "draft":
+        summary["rookies"] = _draft_rookies_to_fill_rosters(conn, next_year, max_per_team=1)
+    elif stage == "free_agency":
+        summary["signed"] = _sign_free_agents_to_roster_holes(conn, next_year, salary_cap)
+    elif stage == "roster_finalization":
+        summary["rookies"] = _draft_rookies_to_fill_rosters(conn, next_year)
+    elif stage == "finalize":
+        c.execute(
+            "UPDATE pending_trades SET status = 'expired', "
+            "rejection_reason = 'Expired before offseason rollover.' "
+            "WHERE season_year = ? AND status = 'pending'",
+            (season_year,),
+        )
+        c.execute(
+            "UPDATE player_events SET status = 'resolved' "
+            "WHERE season_year <= ? AND status = 'active'",
+            (season_year,),
+        )
+        total_weeks, games = _create_next_season(conn, next_year)
+        summary["weeks"] = total_weeks
+        summary["games"] = games
+    else:
+        raise RuntimeError(f"Unknown offseason stage: {stage}")
+
+    detail = _format_stage_summary(summary)
+    summary["detail"] = detail
+    next_stage = _next_stage(stage)
+    summary["next_stage"] = next_stage
+    summary["next_stage_label"] = _stage_label(next_stage) if next_stage else None
+
+    _record_offseason_event(
+        conn,
+        season_year,
+        next_year,
+        stage,
+        f"{_stage_label(stage)} complete",
+        detail,
+    )
+
+    if next_stage:
+        c.execute(
+            "UPDATE league_state "
+            "SET phase = 'offseason', offseason_stage = ?, offseason_from_season = ?, "
+            "last_updated = datetime('now') WHERE id = 1",
+            (next_stage, season_year),
+        )
+    else:
+        c.execute(
+            "UPDATE league_state "
+            "SET current_week = 1, season_year = ?, phase = 'regular_season', "
+            "offseason_stage = NULL, offseason_from_season = NULL, "
+            "last_updated = datetime('now') WHERE id = 1",
+            (next_year,),
+        )
+    conn.commit()
+
     if verbose:
-        print_offseason_summary(summary)
+        print_offseason_step_summary(summary)
     return summary
 
 
-def print_offseason_summary(summary):
+def advance_offseason(conn, verbose=True):
+    return advance_offseason_step(conn, verbose=verbose)
+
+
+def print_offseason_step_summary(summary):
     print(f"\n{'=' * 58}")
-    print(f"  OFFSEASON: {summary['from_season']} -> {summary['to_season']}")
+    print(
+        f"  OFFSEASON: {summary['from_season']} -> {summary['to_season']}  "
+        f"--  {summary['stage_label']}"
+    )
     print(f"{'=' * 58}\n")
-    print(f"  Retired players       : {len(summary['retired'])}")
-    print(f"  Skill improvements    : {summary['improved']}")
-    print(f"  Skill regressions     : {summary['regressed']}")
-    print(f"  Extensions signed     : {len(summary['extended'])}")
-    print(f"  Entered free agency   : {len(summary['free_agents'])}")
-    print(f"  Free agents signed    : {len(summary['signed'])}")
-    print(f"  Rookies added         : {len(summary['rookies'])}")
-    print(f"  New schedule          : {summary['weeks']} weeks, {summary['games']} games")
-    print()
-    print(f"Season {summary['to_season']} is ready. Run  python run_week.py  for Week 1.\n")
+    print(f"  {summary['detail']}\n")
+    if summary["next_stage"]:
+        print(f"Next offseason stage: {summary['next_stage_label']}")
+        print("Run  python run_offseason.py  to advance one more stage.\n")
+    else:
+        print(f"Season {summary['to_season']} is ready. Run  python run_week.py  for Week 1.\n")
+
+
+def print_offseason_summary(summary):
+    print_offseason_step_summary(summary)
 
 
 def advance_offseason_from_default_db(verbose=True):

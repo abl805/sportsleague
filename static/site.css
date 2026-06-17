@@ -1207,3 +1207,478 @@ tr.mvp-row td { background: rgba(255, 184, 0, 0.05); }
     height: 72px;
   }
 }
+
+/* Live postseason board */
+.playoff-stage {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 16px;
+  padding: clamp(24px, 4vw, 48px);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(255, 184, 0, 0.10), rgba(0, 229, 255, 0.03) 48%, rgba(8, 19, 43, 0.98)),
+    var(--surface);
+  box-shadow: 0 0 52px rgba(255, 184, 0, 0.12), var(--shadow);
+}
+
+.playoff-stage::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(255, 184, 0, 0.16);
+  pointer-events: none;
+}
+
+.playoff-stage-header,
+.playoff-board,
+.playoff-live-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.playoff-stage-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, auto);
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 28px;
+}
+
+.playoff-stage-header h1 {
+  color: var(--gold);
+  font-size: clamp(2.6rem, 6vw, 6rem);
+}
+
+.playoff-stage-header p {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: var(--text);
+  font-size: 1.02rem;
+}
+
+.playoff-stage-status {
+  padding: 16px;
+  border: 1px solid rgba(255, 184, 0, 0.38);
+  border-radius: 8px;
+  background: rgba(2, 10, 24, 0.55);
+  text-align: right;
+}
+
+.playoff-stage-status span,
+.playoff-round-label,
+.playoff-series-topline span,
+.playoff-trophy span,
+.playoff-medal span {
+  display: block;
+  color: var(--accent);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.playoff-stage-status strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--gold);
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.playoff-board {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 42px minmax(260px, 1.05fr) minmax(260px, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.playoff-round {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.playoff-round-featured .playoff-series-card {
+  border-color: var(--gold);
+}
+
+.playoff-flow {
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.28);
+}
+
+.playoff-series-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  background: rgba(13, 28, 58, 0.92);
+}
+
+.playoff-series-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.10);
+}
+
+.playoff-series-card.complete {
+  border-color: rgba(255, 184, 0, 0.52);
+}
+
+.playoff-series-card.pending {
+  opacity: 0.58;
+}
+
+.playoff-series-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(2, 10, 24, 0.38);
+}
+
+.playoff-series-topline strong {
+  color: var(--gold-light);
+  font-size: 0.7rem;
+  line-height: 1.35;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.playoff-team-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 32px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.playoff-team-row.winner {
+  background: rgba(255, 184, 0, 0.08);
+}
+
+.playoff-seed {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.playoff-team-name {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playoff-team-row strong {
+  color: var(--gold);
+  font-size: 1.45rem;
+  line-height: 1;
+  text-align: right;
+}
+
+.playoff-game-link {
+  display: block;
+  padding: 8px 12px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.playoff-game-link:hover {
+  color: var(--accent-light);
+}
+
+.playoff-game-link.muted {
+  color: var(--muted);
+}
+
+.playoff-trophy,
+.playoff-medal {
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(2, 10, 24, 0.45);
+}
+
+.playoff-trophy {
+  border: 1px solid var(--gold);
+}
+
+.playoff-medal {
+  border: 1px solid var(--border-bright);
+}
+
+.playoff-trophy strong,
+.playoff-medal strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--gold);
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.playoff-live-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+@media (max-width: 960px) {
+  .playoff-stage-header,
+  .playoff-board,
+  .playoff-live-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .playoff-stage-status {
+    text-align: left;
+  }
+
+  .playoff-flow {
+    width: 2px;
+    height: 32px;
+    justify-self: center;
+    background: linear-gradient(180deg, var(--accent), var(--gold));
+  }
+}
+
+/* Phase-specific homepage heroes */
+.season-hero {
+  border-color: rgba(0, 229, 255, 0.34);
+  background:
+    linear-gradient(115deg, rgba(0, 120, 255, 0.16), rgba(8, 19, 43, 0.96) 42%, rgba(2, 10, 24, 0.98)),
+    var(--surface);
+}
+
+.season-hero::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-top: 1px solid rgba(0, 229, 255, 0.22);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.10);
+  pointer-events: none;
+}
+
+.season-hero .hero-board {
+  min-width: min(360px, 100%);
+}
+
+.season-hero .hero-board div {
+  background: rgba(13, 28, 58, 0.88);
+}
+
+.season-latest strong {
+  font-size: 1rem;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.offseason-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.35fr);
+  gap: clamp(22px, 4vw, 44px);
+  align-items: stretch;
+  min-height: 360px;
+  margin-bottom: 16px;
+  padding: clamp(28px, 5vw, 58px);
+  border: 1px solid var(--silver);
+  border-radius: 10px;
+  background:
+    linear-gradient(135deg, rgba(192, 192, 192, 0.12), rgba(0, 229, 255, 0.05) 38%, rgba(2, 10, 24, 0.98)),
+    var(--surface);
+  box-shadow: 0 0 42px rgba(192, 192, 192, 0.08), var(--shadow);
+}
+
+.offseason-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(192, 192, 192, 0.035) 0 1px, transparent 1px 92px),
+    repeating-linear-gradient(0deg, rgba(0, 229, 255, 0.028) 0 1px, transparent 1px 70px);
+  pointer-events: none;
+}
+
+.offseason-hero-copy,
+.offseason-war-room {
+  position: relative;
+  z-index: 1;
+}
+
+.offseason-hero h1 {
+  color: var(--silver);
+  font-size: clamp(2.4rem, 5.6vw, 5.4rem);
+}
+
+.offseason-hero-copy p:not(.eyebrow) {
+  max-width: 620px;
+  margin: 14px 0 0;
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.offseason-war-room {
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(220px, 1fr);
+  gap: 14px;
+  align-content: start;
+}
+
+.offseason-current,
+.offseason-log {
+  border: 1px solid rgba(192, 192, 192, 0.28);
+  border-radius: 8px;
+  background: rgba(2, 10, 24, 0.54);
+}
+
+.offseason-current {
+  padding: 18px;
+}
+
+.offseason-current span,
+.offseason-log > span {
+  display: block;
+  color: var(--accent);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.offseason-current strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--silver);
+  font-size: 1.65rem;
+  line-height: 1.05;
+}
+
+.offseason-current p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.offseason-timeline {
+  display: grid;
+  gap: 8px;
+  grid-row: span 2;
+}
+
+.offseason-step {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(13, 28, 58, 0.70);
+}
+
+.offseason-step span {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+}
+
+.offseason-step strong {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.offseason-step.complete {
+  border-color: rgba(192, 192, 192, 0.35);
+}
+
+.offseason-step.complete span {
+  background: var(--silver);
+  border-color: var(--silver);
+}
+
+.offseason-step.complete strong {
+  color: var(--silver);
+}
+
+.offseason-step.current {
+  border-color: var(--gold);
+  background: rgba(255, 184, 0, 0.08);
+}
+
+.offseason-step.current span {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 14px var(--gold-glow);
+}
+
+.offseason-step.current strong {
+  color: var(--gold);
+}
+
+.offseason-log {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.offseason-log article {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.offseason-log article:first-of-type {
+  margin-top: 2px;
+}
+
+.offseason-log strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.offseason-log p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 960px) {
+  .offseason-hero,
+  .offseason-war-room {
+    grid-template-columns: 1fr;
+  }
+
+  .offseason-war-room {
+    gap: 12px;
+  }
+
+  .offseason-timeline {
+    grid-row: auto;
+  }
+
+  .offseason-step strong {
+    white-space: normal;
+  }
+}

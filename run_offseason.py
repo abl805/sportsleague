@@ -1,5 +1,5 @@
 """
-Advance a completed season through the offseason and create next year's schedule.
+Advance a completed season by one offseason stage.
 
 Usage:
     python run_offseason.py

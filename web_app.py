@@ -12,9 +12,13 @@ from league.chatgpt_bridge import (
     response_template,
 )
 from league.database import create_tables, get_connection
-from league.offseason import advance_offseason_from_default_db
+from league.offseason import (
+    OFFSEASON_STAGE_LABELS,
+    OFFSEASON_STAGES,
+    advance_offseason_from_default_db,
+)
 from league.trade_engine import execute_trade, invalidate_trade, validate_trade, veto_trade
-from league.playoffs import get_bracket
+from league.playoffs import get_bracket, get_playoff_snapshot
 from run_week import run_week
 
 
@@ -144,15 +148,39 @@ def home():
         season = state["season_year"]
         phase = state.get("phase", "regular_season")
         bracket = get_bracket(conn, season) if phase in ("playoffs", "complete") else []
+        playoff = get_playoff_snapshot(conn, season) if phase in ("playoffs", "complete") else None
+        latest_results = q.latest_results(conn, season, limit=6)
+        offseason_events = q.offseason_events(conn, limit=len(OFFSEASON_STAGES)) if phase == "offseason" else []
+        offseason_stage = state.get("offseason_stage") or "retirements"
+        completed_offseason_stages = {event["stage"] for event in offseason_events}
+        offseason_stages = [
+            {
+                "key": stage_key,
+                "label": OFFSEASON_STAGE_LABELS.get(stage_key, stage_key.replace("_", " ").title()),
+                "status": (
+                    "current" if stage_key == offseason_stage
+                    else "complete" if stage_key in completed_offseason_stages
+                    else "upcoming"
+                ),
+            }
+            for stage_key in OFFSEASON_STAGES
+        ]
         return {
             "state": state,
             "phase": phase,
             "bracket": bracket,
+            "playoff": playoff,
+            "offseason_stage_label": OFFSEASON_STAGE_LABELS.get(
+                offseason_stage,
+                offseason_stage.replace("_", " ").title(),
+            ),
+            "offseason_stages": offseason_stages,
+            "offseason_events": offseason_events,
             "games_played": q.get_games_played(conn, season),
             "max_week": q.get_max_week(conn, season),
             "standings": q.standings(conn, season, limit=6),
             "leaders": q.stat_leaders(conn, season, limit=6),
-            "latest_results": q.latest_results(conn, season, limit=6),
+            "latest_results": latest_results,
             "latest_articles": q.recent_articles(conn, season, limit=3),
             "storylines": q.public_storylines(conn, season, limit=6),
         }
@@ -337,6 +365,7 @@ def commissioner_data():
             "max_week": q.get_max_week(conn, season),
             "pending_trades": q.pending_trades(conn),
             "logs": q.commissioner_logs(conn),
+            "offseason_events": q.offseason_events(conn),
             "team_options": q.teams_index(conn, season),
             "trade_options": q.trade_options(conn),
         }
@@ -348,6 +377,12 @@ def commissioner_data():
     state = data["state"]
     season = state["season_year"]
     week = state["current_week"]
+    phase = state.get("phase", "regular_season")
+    offseason_stage = state.get("offseason_stage") or "retirements"
+    data["offseason_stage_label"] = OFFSEASON_STAGE_LABELS.get(
+        offseason_stage,
+        offseason_stage.replace("_", " ").title(),
+    )
 
     def try_packet(context_type, prompt, **kwargs):
         try:
@@ -373,6 +408,32 @@ def commissioner_data():
         f"the standings? Which players are must-watches? What storylines could shift "
         f"in the coming week?"
     )
+    data["auto_playoff_packets"] = []
+    if phase in ("playoffs", "complete"):
+        playoff_requests = [
+            (
+                "Playoff Week Recap",
+                f"Season {season}, Playoff Week {week}: Write a postseason recap from the live bracket data. "
+                "Focus on series scores, clinches, pressure, standout players, and what changed in the bracket."
+            ),
+            (
+                "Series Preview",
+                f"Season {season}: Preview the next scheduled playoff games. Explain the stakes for every active "
+                "Finals, third-place, or semifinal series and identify must-watch players."
+            ),
+            (
+                "Elimination Storylines",
+                f"Season {season}: Find the biggest elimination-game or clinching-game storylines in the playoff "
+                "bracket. Create news hooks and suggested influences based only on the included data."
+            ),
+        ]
+        for label, prompt in playoff_requests:
+            pkt = try_packet("League snapshot", prompt)
+            if pkt:
+                data["auto_playoff_packets"].append({
+                    "label": label,
+                    "packet": pkt,
+                })
 
     auto_team_packets = []
     for team in data["team_options"]:

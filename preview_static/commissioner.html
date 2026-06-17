@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Commissioner Console</title>
+  <title>Commissioner Console — AI Basketball League</title>
   <link rel="stylesheet" href="../static/site.css">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="index.html">
-      <span class="brand-mark">AIBL</span>
+      <span class="brand-mark">AAIBL</span>
       <span class="brand-copy">Basketball League</span>
     </a>
     <nav class="nav" aria-label="Primary">
@@ -19,8 +19,10 @@
       <a class="" href="players.html">Players</a>
       <a class="" href="scores.html">Scores</a>
       <a class="" href="leaders.html">Leaders</a>
-      <a class="" href="storylines.html">Storylines</a>
+      <a class="" href="news.html">News</a>
       <a class="commissioner-link active" href="commissioner.html">Commissioner</a>
+      <a class="" href="/about">About</a>
+      <a class="" href="/contact">Contact</a>
     </nav>
   </header>
 
@@ -30,120 +32,1379 @@
 
   <main>
     
-<section class="commissioner-hero">
+
+
+
+  <div class="next-action ready">
+    <div>
+      <p class="na-label">Season 2027 &mdash; Week 1 Complete</p>
+      <h2>Ready to simulate Week 2.</h2>
+      <p>Running a week simulates all games, updates player morale, and lets GM agents propose new trades.</p>
+    </div>
+    <form method="post" action="/commissioner/action">
+      <input type="hidden" name="action" value="run_week">
+      <button type="submit" class="cta-big">Run Week 2 &rarr;</button>
+    </form>
+  </div>
+
+
+
+<section class="commissioner-hero" style="margin-top:16px;">
   <div>
     <p class="eyebrow">Behind the scenes</p>
     <h1>Commissioner Console</h1>
-    <p>Run the league, review exceptions, and prepare structured copy/paste packets.</p>
+    <p>Run the league, review trades, and send structured packets to ChatGPT for AI commentary.</p>
   </div>
   <dl class="hero-stats">
-    <div><dt>Season</dt><dd>2026</dd></div>
+    <div><dt>Season</dt><dd>2027</dd></div>
     <div><dt>Week</dt><dd>1</dd></div>
-    <div><dt>Games</dt><dd>0</dd></div>
+    <div><dt>Games</dt><dd>4</dd></div>
   </dl>
 </section>
 
+
 <section class="section-grid">
   <div class="panel">
-    <div class="section-head"><h2>League Operations</h2></div>
+    <div class="section-head"><h2>All League Operations</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 16px;">Use these any time — or just follow the Next Action banner above.</p>
     <div class="action-stack">
       <form method="post" action="/commissioner/action">
         <input type="hidden" name="action" value="run_week">
-        <button type="submit">Run Next Week</button>
+        <button type="submit">Simulate Next Week</button>
       </form>
       <form method="post" action="/commissioner/action">
         <input type="hidden" name="action" value="start_official">
-        <button type="submit">Start Official Week 1</button>
+        <button type="submit" class="secondary">Start Official Week 1</button>
       </form>
       <form method="post" action="/commissioner/action">
         <input type="hidden" name="action" value="run_offseason">
-        <button type="submit">Run Offseason</button>
+        <button type="submit" class="secondary">Advance Offseason</button>
       </form>
     </div>
   </div>
 
   <div class="panel wide">
-    <div class="section-head"><h2>Pending Trades</h2></div>
+    <div class="section-head">
+      <h2>Pending Trades</h2>
+      
+    </div>
     
-      <p class="empty">No pending trades need review.</p>
+      <p class="empty">No pending trades — you're clear to simulate the next week.</p>
     
   </div>
 </section>
 
-<section class="section-grid">
-  <div class="panel wide">
-    <div class="section-head"><h2>Manual ChatGPT Exchange</h2></div>
-    <form method="post" action="/commissioner/packet" class="packet-form">
-      <label>Context
-        <select name="context_type">
-          
-            <option value="League snapshot" >League snapshot</option>
-          
-            <option value="Team report" >Team report</option>
-          
-            <option value="Pending trade review" >Pending trade review</option>
-          
-            <option value="Commissioner note" >Commissioner note</option>
-          
-        </select>
-      </label>
-      <label>Team
-        <select name="team_id">
-          <option value="">None</option>
-          
-            <option value="2" >Appleton Papermakers</option>
-          
-            <option value="5" >Chattanooga Rapids</option>
-          
-            <option value="6" >Flagstaff Nightfall</option>
-          
-            <option value="4" >Laredo Vivos</option>
-          
-            <option value="7" >Mankato Polar</option>
-          
-            <option value="8" >Payson Peaks</option>
-          
-            <option value="3" >Pocatello Lava</option>
-          
-            <option value="1" >Santa Maria Vaqueros</option>
-          
-        </select>
-      </label>
-      <label>Pending Trade
-        <select name="trade_id">
-          <option value="">None</option>
-          
-        </select>
-      </label>
-      <label class="full-field">Commissioner Request
-        <textarea name="commissioner_request" rows="4">Summarize the league state, identify the strongest storylines, and suggest what I should watch next.</textarea>
-      </label>
-      <label class="full-field">Paste ChatGPT Response
-        <textarea name="pasted_response" rows="5"></textarea>
-      </label>
-      <button type="submit" name="build_packet" value="1">Build Packet / Parse Response</button>
-    </form>
-    
-    
-    
+
+
+
+<section style="margin-top:16px;">
+  <div class="section-head">
+    <h2>ChatGPT Packets</h2>
+    <span style="color:var(--muted);font-size:0.78rem;">All auto-built &mdash; copy any card and paste into ChatGPT</span>
   </div>
 
+  <div class="packet-cards">
+
+    
+    <div class="packet-card accent-orange">
+      <p class="pc-type">League Snapshot</p>
+      <h3>What's happening in the league?</h3>
+      <p class="pc-prompt">&ldquo;Summarize standings, top performers, biggest upsets, and which storylines are heating up.&rdquo;</p>
+      
+        <textarea class="copy-box pc-box" readonly id="pkt-snapshot">=== AAIBL APP TO CHATGPT ===
+{
+  &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+  &#34;direction&#34;: &#34;app_to_chatgpt&#34;,
+  &#34;context_type&#34;: &#34;League snapshot&#34;,
+  &#34;commissioner_request&#34;: &#34;Season 2027, Week 1: Summarize the league \u2014 standings story, top performers, biggest upsets or surprises, and which storylines are heating up right now.&#34;,
+  &#34;league_state&#34;: {
+    &#34;season_year&#34;: 2027,
+    &#34;current_week&#34;: 1
+  },
+  &#34;instructions_for_chatgpt&#34;: [
+    &#34;Read the packet as source-of-truth league data.&#34;,
+    &#34;Answer the commissioner request without inventing missing stats.&#34;,
+    &#34;Return a JSON packet inside the CHATGPT TO AAIBL markers.&#34;,
+    &#34;Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.&#34;,
+    &#34;REQUIRED: populate &#39;articles&#39; with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.&#34;,
+    &#34;REQUIRED: populate &#39;influences&#39; with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.&#34;
+  ],
+  &#34;response_contract&#34;: {
+    &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+    &#34;direction&#34;: &#34;chatgpt_to_app&#34;,
+    &#34;response_type&#34;: &#34;League snapshot&#34;,
+    &#34;summary&#34;: &#34;One short paragraph.&#34;,
+    &#34;recommendations&#34;: [
+      &#34;Recommendation strings.&#34;
+    ],
+    &#34;suggested_actions&#34;: [
+      &#34;Action strings the commissioner may take manually.&#34;
+    ],
+    &#34;questions&#34;: [
+      &#34;Optional clarification questions.&#34;
+    ],
+    &#34;notes_for_commissioner&#34;: [
+      &#34;Optional caveats or narrative hooks.&#34;
+    ],
+    &#34;articles&#34;: [
+      {
+        &#34;headline&#34;: &#34;FILL IN \u2014 real headline based on the data&#34;,
+        &#34;body&#34;: &#34;FILL IN \u2014 2 to 4 sentences of narrative using real names and scores.&#34;,
+        &#34;week&#34;: 1,
+        &#34;team_tags&#34;: [
+          &#34;USE REAL ABBREVIATIONS FROM CONTEXT&#34;
+        ],
+        &#34;player_tags&#34;: [
+          &#34;Use Real Full Name From Context&#34;
+        ]
+      }
+    ],
+    &#34;influences&#34;: [
+      {
+        &#34;player&#34;: &#34;Full Name of a standout or struggling player&#34;,
+        &#34;streak&#34;: &#34;hot or cold&#34;,
+        &#34;morale&#34;: 6,
+        &#34;work_ethic_boost&#34;: 0.1,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;team&#34;: &#34;REAL ABBR&#34;,
+        &#34;momentum&#34;: &#34;hot or cold&#34;,
+        &#34;locker_room_boost&#34;: 5,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;gm&#34;: &#34;REAL ABBR&#34;,
+        &#34;trade_urgency&#34;: &#34;high or low&#34;,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      }
+    ]
+  },
+  &#34;context&#34;: {
+    &#34;standings&#34;: [],
+    &#34;stat_leaders&#34;: [
+      {
+        &#34;player&#34;: &#34;Lorenzo Perez&#34;,
+        &#34;team&#34;: &#34;SMA&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 29.0,
+        &#34;rpg&#34;: 6.0,
+        &#34;apg&#34;: 2.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Marcus Martin&#34;,
+        &#34;team&#34;: &#34;FLG&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 27.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 8.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Tyler Hernandez&#34;,
+        &#34;team&#34;: &#34;CHA&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 27.0,
+        &#34;rpg&#34;: 8.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Chris Lopez&#34;,
+        &#34;team&#34;: &#34;MNK&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 26.0,
+        &#34;rpg&#34;: 10.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Kevin White&#34;,
+        &#34;team&#34;: &#34;CHA&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 9.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Anthony Carter&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 6.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Jaren Evans&#34;,
+        &#34;team&#34;: &#34;APL&#34;,
+        &#34;position&#34;: &#34;SG&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 3.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Cameron Evans&#34;,
+        &#34;team&#34;: &#34;PAY&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 7.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Scottie Perez&#34;,
+        &#34;team&#34;: &#34;MNK&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 10.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Jaren Jackson&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 12.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Hernandez&#34;,
+        &#34;team&#34;: &#34;POC&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 8.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Paolo Perez&#34;,
+        &#34;team&#34;: &#34;APL&#34;,
+        &#34;position&#34;: &#34;SF&#34;,
+        &#34;ppg&#34;: 23.0,
+        &#34;rpg&#34;: 4.0,
+        &#34;apg&#34;: 2.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Young&#34;,
+        &#34;team&#34;: &#34;PAY&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 21.0,
+        &#34;rpg&#34;: 8.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Luka Mitchell&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 21.0,
+        &#34;rpg&#34;: 7.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Allen&#34;,
+        &#34;team&#34;: &#34;SMA&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 18.0,
+        &#34;rpg&#34;: 11.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      }
+    ],
+    &#34;recent_games&#34;: [
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Chattanooga Rapids&#34;,
+        &#34;away_team&#34;: &#34;Flagstaff Nightfall&#34;,
+        &#34;home_score&#34;: 116,
+        &#34;away_score&#34;: 101
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Laredo Vivos&#34;,
+        &#34;away_team&#34;: &#34;Mankato Polar&#34;,
+        &#34;home_score&#34;: 127,
+        &#34;away_score&#34;: 120
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Pocatello Lava&#34;,
+        &#34;away_team&#34;: &#34;Payson Peaks&#34;,
+        &#34;home_score&#34;: 102,
+        &#34;away_score&#34;: 101
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Santa Maria Vaqueros&#34;,
+        &#34;away_team&#34;: &#34;Appleton Papermakers&#34;,
+        &#34;home_score&#34;: 113,
+        &#34;away_score&#34;: 109
+      }
+    ],
+    &#34;pending_trade_count&#34;: 0,
+    &#34;playoffs&#34;: null
+  }
+}
+=== END AAIBL APP TO CHATGPT ===</textarea>
+        <button type="button" class="btn-copy secondary" data-target="pkt-snapshot">Copy &rarr; ChatGPT</button>
+      
+    </div>
+
+    
+    <div class="packet-card accent-gold">
+      <p class="pc-type">Power Rankings</p>
+      <h3>Who's the best team right now?</h3>
+      <p class="pc-prompt">&ldquo;Rank all teams 1 to last. One-sentence scouting report each &mdash; record, best player, outlook.&rdquo;</p>
+      
+        <textarea class="copy-box pc-box" readonly id="pkt-rankings">=== AAIBL APP TO CHATGPT ===
+{
+  &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+  &#34;direction&#34;: &#34;app_to_chatgpt&#34;,
+  &#34;context_type&#34;: &#34;League snapshot&#34;,
+  &#34;commissioner_request&#34;: &#34;Season 2027, Week 1: Rank all teams from 1 (strongest) to last (weakest). For each team write one sentence covering their record, best player, and current outlook. Bold the #1 team.&#34;,
+  &#34;league_state&#34;: {
+    &#34;season_year&#34;: 2027,
+    &#34;current_week&#34;: 1
+  },
+  &#34;instructions_for_chatgpt&#34;: [
+    &#34;Read the packet as source-of-truth league data.&#34;,
+    &#34;Answer the commissioner request without inventing missing stats.&#34;,
+    &#34;Return a JSON packet inside the CHATGPT TO AAIBL markers.&#34;,
+    &#34;Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.&#34;,
+    &#34;REQUIRED: populate &#39;articles&#39; with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.&#34;,
+    &#34;REQUIRED: populate &#39;influences&#39; with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.&#34;
+  ],
+  &#34;response_contract&#34;: {
+    &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+    &#34;direction&#34;: &#34;chatgpt_to_app&#34;,
+    &#34;response_type&#34;: &#34;League snapshot&#34;,
+    &#34;summary&#34;: &#34;One short paragraph.&#34;,
+    &#34;recommendations&#34;: [
+      &#34;Recommendation strings.&#34;
+    ],
+    &#34;suggested_actions&#34;: [
+      &#34;Action strings the commissioner may take manually.&#34;
+    ],
+    &#34;questions&#34;: [
+      &#34;Optional clarification questions.&#34;
+    ],
+    &#34;notes_for_commissioner&#34;: [
+      &#34;Optional caveats or narrative hooks.&#34;
+    ],
+    &#34;articles&#34;: [
+      {
+        &#34;headline&#34;: &#34;FILL IN \u2014 real headline based on the data&#34;,
+        &#34;body&#34;: &#34;FILL IN \u2014 2 to 4 sentences of narrative using real names and scores.&#34;,
+        &#34;week&#34;: 1,
+        &#34;team_tags&#34;: [
+          &#34;USE REAL ABBREVIATIONS FROM CONTEXT&#34;
+        ],
+        &#34;player_tags&#34;: [
+          &#34;Use Real Full Name From Context&#34;
+        ]
+      }
+    ],
+    &#34;influences&#34;: [
+      {
+        &#34;player&#34;: &#34;Full Name of a standout or struggling player&#34;,
+        &#34;streak&#34;: &#34;hot or cold&#34;,
+        &#34;morale&#34;: 6,
+        &#34;work_ethic_boost&#34;: 0.1,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;team&#34;: &#34;REAL ABBR&#34;,
+        &#34;momentum&#34;: &#34;hot or cold&#34;,
+        &#34;locker_room_boost&#34;: 5,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;gm&#34;: &#34;REAL ABBR&#34;,
+        &#34;trade_urgency&#34;: &#34;high or low&#34;,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      }
+    ]
+  },
+  &#34;context&#34;: {
+    &#34;standings&#34;: [],
+    &#34;stat_leaders&#34;: [
+      {
+        &#34;player&#34;: &#34;Lorenzo Perez&#34;,
+        &#34;team&#34;: &#34;SMA&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 29.0,
+        &#34;rpg&#34;: 6.0,
+        &#34;apg&#34;: 2.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Marcus Martin&#34;,
+        &#34;team&#34;: &#34;FLG&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 27.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 8.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Tyler Hernandez&#34;,
+        &#34;team&#34;: &#34;CHA&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 27.0,
+        &#34;rpg&#34;: 8.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Chris Lopez&#34;,
+        &#34;team&#34;: &#34;MNK&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 26.0,
+        &#34;rpg&#34;: 10.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Kevin White&#34;,
+        &#34;team&#34;: &#34;CHA&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 9.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Anthony Carter&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 6.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Jaren Evans&#34;,
+        &#34;team&#34;: &#34;APL&#34;,
+        &#34;position&#34;: &#34;SG&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 3.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Cameron Evans&#34;,
+        &#34;team&#34;: &#34;PAY&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 7.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Scottie Perez&#34;,
+        &#34;team&#34;: &#34;MNK&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 10.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Jaren Jackson&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 12.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Hernandez&#34;,
+        &#34;team&#34;: &#34;POC&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 8.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Paolo Perez&#34;,
+        &#34;team&#34;: &#34;APL&#34;,
+        &#34;position&#34;: &#34;SF&#34;,
+        &#34;ppg&#34;: 23.0,
+        &#34;rpg&#34;: 4.0,
+        &#34;apg&#34;: 2.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Young&#34;,
+        &#34;team&#34;: &#34;PAY&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 21.0,
+        &#34;rpg&#34;: 8.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Luka Mitchell&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 21.0,
+        &#34;rpg&#34;: 7.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Allen&#34;,
+        &#34;team&#34;: &#34;SMA&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 18.0,
+        &#34;rpg&#34;: 11.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      }
+    ],
+    &#34;recent_games&#34;: [
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Chattanooga Rapids&#34;,
+        &#34;away_team&#34;: &#34;Flagstaff Nightfall&#34;,
+        &#34;home_score&#34;: 116,
+        &#34;away_score&#34;: 101
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Laredo Vivos&#34;,
+        &#34;away_team&#34;: &#34;Mankato Polar&#34;,
+        &#34;home_score&#34;: 127,
+        &#34;away_score&#34;: 120
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Pocatello Lava&#34;,
+        &#34;away_team&#34;: &#34;Payson Peaks&#34;,
+        &#34;home_score&#34;: 102,
+        &#34;away_score&#34;: 101
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Santa Maria Vaqueros&#34;,
+        &#34;away_team&#34;: &#34;Appleton Papermakers&#34;,
+        &#34;home_score&#34;: 113,
+        &#34;away_score&#34;: 109
+      }
+    ],
+    &#34;pending_trade_count&#34;: 0,
+    &#34;playoffs&#34;: null
+  }
+}
+=== END AAIBL APP TO CHATGPT ===</textarea>
+        <button type="button" class="btn-copy secondary" data-target="pkt-rankings">Copy &rarr; ChatGPT</button>
+      
+    </div>
+
+    
+    <div class="packet-card accent-blue">
+      <p class="pc-type">Week 2 Preview</p>
+      <h3>What's at stake next week?</h3>
+      <p class="pc-prompt">&ldquo;Preview next week &mdash; key matchups, must-watch players, storylines that could shift the standings.&rdquo;</p>
+      
+        <textarea class="copy-box pc-box" readonly id="pkt-preview">=== AAIBL APP TO CHATGPT ===
+{
+  &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+  &#34;direction&#34;: &#34;app_to_chatgpt&#34;,
+  &#34;context_type&#34;: &#34;League snapshot&#34;,
+  &#34;commissioner_request&#34;: &#34;Season 2027: Preview Week 2. Which matchups matter most for the standings? Which players are must-watches? What storylines could shift in the coming week?&#34;,
+  &#34;league_state&#34;: {
+    &#34;season_year&#34;: 2027,
+    &#34;current_week&#34;: 1
+  },
+  &#34;instructions_for_chatgpt&#34;: [
+    &#34;Read the packet as source-of-truth league data.&#34;,
+    &#34;Answer the commissioner request without inventing missing stats.&#34;,
+    &#34;Return a JSON packet inside the CHATGPT TO AAIBL markers.&#34;,
+    &#34;Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.&#34;,
+    &#34;REQUIRED: populate &#39;articles&#39; with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.&#34;,
+    &#34;REQUIRED: populate &#39;influences&#39; with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.&#34;
+  ],
+  &#34;response_contract&#34;: {
+    &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+    &#34;direction&#34;: &#34;chatgpt_to_app&#34;,
+    &#34;response_type&#34;: &#34;League snapshot&#34;,
+    &#34;summary&#34;: &#34;One short paragraph.&#34;,
+    &#34;recommendations&#34;: [
+      &#34;Recommendation strings.&#34;
+    ],
+    &#34;suggested_actions&#34;: [
+      &#34;Action strings the commissioner may take manually.&#34;
+    ],
+    &#34;questions&#34;: [
+      &#34;Optional clarification questions.&#34;
+    ],
+    &#34;notes_for_commissioner&#34;: [
+      &#34;Optional caveats or narrative hooks.&#34;
+    ],
+    &#34;articles&#34;: [
+      {
+        &#34;headline&#34;: &#34;FILL IN \u2014 real headline based on the data&#34;,
+        &#34;body&#34;: &#34;FILL IN \u2014 2 to 4 sentences of narrative using real names and scores.&#34;,
+        &#34;week&#34;: 1,
+        &#34;team_tags&#34;: [
+          &#34;USE REAL ABBREVIATIONS FROM CONTEXT&#34;
+        ],
+        &#34;player_tags&#34;: [
+          &#34;Use Real Full Name From Context&#34;
+        ]
+      }
+    ],
+    &#34;influences&#34;: [
+      {
+        &#34;player&#34;: &#34;Full Name of a standout or struggling player&#34;,
+        &#34;streak&#34;: &#34;hot or cold&#34;,
+        &#34;morale&#34;: 6,
+        &#34;work_ethic_boost&#34;: 0.1,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;team&#34;: &#34;REAL ABBR&#34;,
+        &#34;momentum&#34;: &#34;hot or cold&#34;,
+        &#34;locker_room_boost&#34;: 5,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;gm&#34;: &#34;REAL ABBR&#34;,
+        &#34;trade_urgency&#34;: &#34;high or low&#34;,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      }
+    ]
+  },
+  &#34;context&#34;: {
+    &#34;standings&#34;: [],
+    &#34;stat_leaders&#34;: [
+      {
+        &#34;player&#34;: &#34;Lorenzo Perez&#34;,
+        &#34;team&#34;: &#34;SMA&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 29.0,
+        &#34;rpg&#34;: 6.0,
+        &#34;apg&#34;: 2.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Marcus Martin&#34;,
+        &#34;team&#34;: &#34;FLG&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 27.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 8.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Tyler Hernandez&#34;,
+        &#34;team&#34;: &#34;CHA&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 27.0,
+        &#34;rpg&#34;: 8.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Chris Lopez&#34;,
+        &#34;team&#34;: &#34;MNK&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 26.0,
+        &#34;rpg&#34;: 10.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Kevin White&#34;,
+        &#34;team&#34;: &#34;CHA&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 9.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Anthony Carter&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 6.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Jaren Evans&#34;,
+        &#34;team&#34;: &#34;APL&#34;,
+        &#34;position&#34;: &#34;SG&#34;,
+        &#34;ppg&#34;: 25.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 3.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Cameron Evans&#34;,
+        &#34;team&#34;: &#34;PAY&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 7.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Scottie Perez&#34;,
+        &#34;team&#34;: &#34;MNK&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 2.0,
+        &#34;apg&#34;: 10.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Jaren Jackson&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 12.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Hernandez&#34;,
+        &#34;team&#34;: &#34;POC&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;ppg&#34;: 24.0,
+        &#34;rpg&#34;: 1.0,
+        &#34;apg&#34;: 8.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Paolo Perez&#34;,
+        &#34;team&#34;: &#34;APL&#34;,
+        &#34;position&#34;: &#34;SF&#34;,
+        &#34;ppg&#34;: 23.0,
+        &#34;rpg&#34;: 4.0,
+        &#34;apg&#34;: 2.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Young&#34;,
+        &#34;team&#34;: &#34;PAY&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 21.0,
+        &#34;rpg&#34;: 8.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Luka Mitchell&#34;,
+        &#34;team&#34;: &#34;LAR&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 21.0,
+        &#34;rpg&#34;: 7.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      },
+      {
+        &#34;player&#34;: &#34;Giannis Allen&#34;,
+        &#34;team&#34;: &#34;SMA&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;ppg&#34;: 18.0,
+        &#34;rpg&#34;: 11.0,
+        &#34;apg&#34;: 1.0,
+        &#34;games_played&#34;: 1
+      }
+    ],
+    &#34;recent_games&#34;: [
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Chattanooga Rapids&#34;,
+        &#34;away_team&#34;: &#34;Flagstaff Nightfall&#34;,
+        &#34;home_score&#34;: 116,
+        &#34;away_score&#34;: 101
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Laredo Vivos&#34;,
+        &#34;away_team&#34;: &#34;Mankato Polar&#34;,
+        &#34;home_score&#34;: 127,
+        &#34;away_score&#34;: 120
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Pocatello Lava&#34;,
+        &#34;away_team&#34;: &#34;Payson Peaks&#34;,
+        &#34;home_score&#34;: 102,
+        &#34;away_score&#34;: 101
+      },
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Santa Maria Vaqueros&#34;,
+        &#34;away_team&#34;: &#34;Appleton Papermakers&#34;,
+        &#34;home_score&#34;: 113,
+        &#34;away_score&#34;: 109
+      }
+    ],
+    &#34;pending_trade_count&#34;: 0,
+    &#34;playoffs&#34;: null
+  }
+}
+=== END AAIBL APP TO CHATGPT ===</textarea>
+        <button type="button" class="btn-copy secondary" data-target="pkt-preview">Copy &rarr; ChatGPT</button>
+      
+    </div>
+
+    
+    
+
+    
+    
+    <div class="packet-card accent-green">
+      <p class="pc-type">Team Report</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <h3 style="margin:0;">Deep dive on one team</h3>
+        <select id="team-packet-select" onchange="switchTeamPacket()" style="width:auto;min-width:160px;padding:5px 8px;font-size:0.8rem;">
+          
+            <option value="0">Appleton Papermakers</option>
+          
+            <option value="1">Chattanooga Rapids</option>
+          
+            <option value="2">Flagstaff Nightfall</option>
+          
+            <option value="3">Laredo Vivos</option>
+          
+            <option value="4">Mankato Polar</option>
+          
+            <option value="5">Payson Peaks</option>
+          
+            <option value="6">Pocatello Lava</option>
+          
+            <option value="7">Santa Maria Vaqueros</option>
+          
+        </select>
+      </div>
+      <p class="pc-prompt">&ldquo;Results, roster health, standout performers, GM tendencies, and what the commissioner should watch.&rdquo;</p>
+      <textarea class="copy-box pc-box" readonly id="pkt-team">=== AAIBL APP TO CHATGPT ===
+{
+  &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+  &#34;direction&#34;: &#34;app_to_chatgpt&#34;,
+  &#34;context_type&#34;: &#34;Team report&#34;,
+  &#34;commissioner_request&#34;: &#34;Write a narrative team report on the Appleton Papermakers: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.&#34;,
+  &#34;league_state&#34;: {
+    &#34;season_year&#34;: 2027,
+    &#34;current_week&#34;: 1
+  },
+  &#34;instructions_for_chatgpt&#34;: [
+    &#34;Read the packet as source-of-truth league data.&#34;,
+    &#34;Answer the commissioner request without inventing missing stats.&#34;,
+    &#34;Return a JSON packet inside the CHATGPT TO AAIBL markers.&#34;,
+    &#34;Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.&#34;,
+    &#34;REQUIRED: populate &#39;articles&#39; with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.&#34;,
+    &#34;REQUIRED: populate &#39;influences&#39; with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.&#34;
+  ],
+  &#34;response_contract&#34;: {
+    &#34;schema&#34;: &#34;aibl.manual_chatgpt.v1&#34;,
+    &#34;direction&#34;: &#34;chatgpt_to_app&#34;,
+    &#34;response_type&#34;: &#34;Team report&#34;,
+    &#34;summary&#34;: &#34;One short paragraph.&#34;,
+    &#34;recommendations&#34;: [
+      &#34;Recommendation strings.&#34;
+    ],
+    &#34;suggested_actions&#34;: [
+      &#34;Action strings the commissioner may take manually.&#34;
+    ],
+    &#34;questions&#34;: [
+      &#34;Optional clarification questions.&#34;
+    ],
+    &#34;notes_for_commissioner&#34;: [
+      &#34;Optional caveats or narrative hooks.&#34;
+    ],
+    &#34;articles&#34;: [
+      {
+        &#34;headline&#34;: &#34;FILL IN \u2014 real headline based on the data&#34;,
+        &#34;body&#34;: &#34;FILL IN \u2014 2 to 4 sentences of narrative using real names and scores.&#34;,
+        &#34;week&#34;: 1,
+        &#34;team_tags&#34;: [
+          &#34;USE REAL ABBREVIATIONS FROM CONTEXT&#34;
+        ],
+        &#34;player_tags&#34;: [
+          &#34;Use Real Full Name From Context&#34;
+        ]
+      }
+    ],
+    &#34;influences&#34;: [
+      {
+        &#34;player&#34;: &#34;Full Name of a standout or struggling player&#34;,
+        &#34;streak&#34;: &#34;hot or cold&#34;,
+        &#34;morale&#34;: 6,
+        &#34;work_ethic_boost&#34;: 0.1,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;team&#34;: &#34;REAL ABBR&#34;,
+        &#34;momentum&#34;: &#34;hot or cold&#34;,
+        &#34;locker_room_boost&#34;: 5,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      },
+      {
+        &#34;gm&#34;: &#34;REAL ABBR&#34;,
+        &#34;trade_urgency&#34;: &#34;high or low&#34;,
+        &#34;duration_weeks&#34;: 2,
+        &#34;reason&#34;: &#34;FILL IN \u2014 one sentence explaining why&#34;
+      }
+    ]
+  },
+  &#34;context&#34;: {
+    &#34;team&#34;: {
+      &#34;id&#34;: 2,
+      &#34;city&#34;: &#34;Appleton&#34;,
+      &#34;name&#34;: &#34;Papermakers&#34;,
+      &#34;abbreviation&#34;: &#34;APL&#34;,
+      &#34;mascot&#34;: &#34;A fox&#34;,
+      &#34;colors&#34;: &#34;Forest green + cream + brown&#34;,
+      &#34;motto&#34;: &#34;Press On&#34;,
+      &#34;arena&#34;: &#34;The Mill&#34;,
+      &#34;team_archetype&#34;: null,
+      &#34;play_style&#34;: &#34;Relentless hustle, second chance points, outwork everyone. Never the most talented team but always the hardest playing.&#34;,
+      &#34;reputation&#34;: null,
+      &#34;rivalry&#34;: null,
+      &#34;signature_trait&#34;: null
+    },
+    &#34;record&#34;: null,
+    &#34;general_manager&#34;: {
+      &#34;name&#34;: &#34;Elliot &#39;Press On&#39; Greer&#34;,
+      &#34;archetype&#34;: &#34;analytics_driven&#34;,
+      &#34;risk_tolerance&#34;: 0.52,
+      &#34;veteran_loyalty&#34;: 0.48,
+      &#34;youth_preference&#34;: 0.56,
+      &#34;trade_frequency&#34;: 0.13
+    },
+    &#34;roster&#34;: [
+      {
+        &#34;id&#34;: 16,
+        &#34;player&#34;: &#34;Jaren Evans&#34;,
+        &#34;position&#34;: &#34;SG&#34;,
+        &#34;age&#34;: 30,
+        &#34;skill_rating&#34;: 96,
+        &#34;salary&#34;: 16855714,
+        &#34;years_remaining&#34;: 1,
+        &#34;salary_millions&#34;: 16.86
+      },
+      {
+        &#34;id&#34;: 18,
+        &#34;player&#34;: &#34;Paolo Perez&#34;,
+        &#34;position&#34;: &#34;SF&#34;,
+        &#34;age&#34;: 26,
+        &#34;skill_rating&#34;: 92,
+        &#34;salary&#34;: 12938164,
+        &#34;years_remaining&#34;: 3,
+        &#34;salary_millions&#34;: 12.94
+      },
+      {
+        &#34;id&#34;: 19,
+        &#34;player&#34;: &#34;Isaiah Mitchell&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;age&#34;: 31,
+        &#34;skill_rating&#34;: 85,
+        &#34;salary&#34;: 12112945,
+        &#34;years_remaining&#34;: 1,
+        &#34;salary_millions&#34;: 12.11
+      },
+      {
+        &#34;id&#34;: 12,
+        &#34;player&#34;: &#34;Joel Lopez&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;age&#34;: 31,
+        &#34;skill_rating&#34;: 78,
+        &#34;salary&#34;: 9460494,
+        &#34;years_remaining&#34;: 4,
+        &#34;salary_millions&#34;: 9.46
+      },
+      {
+        &#34;id&#34;: 15,
+        &#34;player&#34;: &#34;Giannis Walker&#34;,
+        &#34;position&#34;: &#34;PG&#34;,
+        &#34;age&#34;: 32,
+        &#34;skill_rating&#34;: 70,
+        &#34;salary&#34;: 4825546,
+        &#34;years_remaining&#34;: 3,
+        &#34;salary_millions&#34;: 4.83
+      },
+      {
+        &#34;id&#34;: 13,
+        &#34;player&#34;: &#34;Zion Hill&#34;,
+        &#34;position&#34;: &#34;SG&#34;,
+        &#34;age&#34;: 37,
+        &#34;skill_rating&#34;: 66,
+        &#34;salary&#34;: 5220791,
+        &#34;years_remaining&#34;: 3,
+        &#34;salary_millions&#34;: 5.22
+      },
+      {
+        &#34;id&#34;: 11,
+        &#34;player&#34;: &#34;Jaren Walker&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;age&#34;: 29,
+        &#34;skill_rating&#34;: 61,
+        &#34;salary&#34;: 1847175,
+        &#34;years_remaining&#34;: 1,
+        &#34;salary_millions&#34;: 1.85
+      },
+      {
+        &#34;id&#34;: 14,
+        &#34;player&#34;: &#34;Cameron Jackson&#34;,
+        &#34;position&#34;: &#34;PF&#34;,
+        &#34;age&#34;: 34,
+        &#34;skill_rating&#34;: 59,
+        &#34;salary&#34;: 3307318,
+        &#34;years_remaining&#34;: 3,
+        &#34;salary_millions&#34;: 3.31
+      },
+      {
+        &#34;id&#34;: 20,
+        &#34;player&#34;: &#34;Marcus Edwards&#34;,
+        &#34;position&#34;: &#34;C&#34;,
+        &#34;age&#34;: 25,
+        &#34;skill_rating&#34;: 57,
+        &#34;salary&#34;: 1635812,
+        &#34;years_remaining&#34;: 2,
+        &#34;salary_millions&#34;: 1.64
+      },
+      {
+        &#34;id&#34;: 17,
+        &#34;player&#34;: &#34;Tyrese Anderson&#34;,
+        &#34;position&#34;: &#34;SF&#34;,
+        &#34;age&#34;: 23,
+        &#34;skill_rating&#34;: 53,
+        &#34;salary&#34;: 1745991,
+        &#34;years_remaining&#34;: 1,
+        &#34;salary_millions&#34;: 1.75
+      }
+    ],
+    &#34;recent_games&#34;: [
+      {
+        &#34;week&#34;: 1,
+        &#34;home_team&#34;: &#34;Santa Maria Vaqueros&#34;,
+        &#34;away_team&#34;: &#34;Appleton Papermakers&#34;,
+        &#34;home_score&#34;: 113,
+        &#34;away_score&#34;: 109
+      }
+    ]
+  }
+}
+=== END AAIBL APP TO CHATGPT ===</textarea>
+      <button type="button" class="btn-copy secondary" data-target="pkt-team">Copy &rarr; ChatGPT</button>
+    </div>
+    
+
+    
+    
+
+  </div>
+</section>
+
+
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head"><h2>Publish Articles</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 6px;">
+      Paste the ChatGPT response directly — the app finds the JSON automatically.
+      Works with a raw array, a wrapped object, multiple&nbsp;<code>```json```</code>&nbsp;blocks, or the full chat reply.
+    </p>
+    <details style="margin-bottom:14px;">
+      <summary style="cursor:pointer;font-size:0.8rem;color:var(--accent);font-weight:700;">Expected format</summary>
+      <pre style="background:var(--surface-2);padding:10px;border-radius:6px;font-size:0.72rem;overflow-x:auto;margin-top:8px;">{
+  "articles": [
+    {
+      "headline": "Polar Bears Roll Past Rapids in Overtime Thriller",
+      "body": "Full article text here...",
+      "week": 4,
+      "team_tags": ["MAN", "CHA"],
+      "player_tags": ["Marcus Jordan", "Tyler Webb"]
+    }
+  ]
+}</pre>
+    </details>
+    <form method="post" action="/commissioner/articles/add">
+      <textarea name="articles_json" rows="8" placeholder='{"articles": [{"headline": "...", "body": "...", "week": 1, "team_tags": ["ABR"], "player_tags": ["First Last"]}]}'></textarea>
+      <button type="submit" style="margin-top:10px;">Publish to League</button>
+    </form>
+  </div>
+</section>
+
+
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head"><h2>ChatGPT Influences</h2></div>
+    <p style="color:var(--muted);font-size:0.88rem;margin:0 0 6px;">
+      Paste the ChatGPT response directly — the app finds the JSON automatically.
+      Works with a raw array, a wrapped object, multiple&nbsp;<code>```json```</code>&nbsp;blocks, or the full chat reply.
+      Influences expire automatically after the specified number of weeks.
+    </p>
+    <details style="margin-bottom:14px;">
+      <summary style="cursor:pointer;font-size:0.8rem;color:var(--accent);font-weight:700;">Influence types &amp; format</summary>
+      <pre style="background:var(--surface-2);padding:10px;border-radius:6px;font-size:0.72rem;overflow-x:auto;margin-top:8px;">{
+  "influences": [
+    {
+      "player": "Marcus Jordan",
+      "streak": "hot",
+      "morale": 8,
+      "work_ethic_boost": 0.10,
+      "duration_weeks": 2,
+      "reason": "Back-to-back 40-pt games, locked in"
+    },
+    {
+      "player": "Devon Price",
+      "streak": "cold",
+      "morale": -6,
+      "loyalty_drop": 0.08,
+      "duration_weeks": 1,
+      "reason": "Shooting slump, frustrated"
+    },
+    {
+      "team": "MAN",
+      "momentum": "hot",
+      "locker_room_boost": 5,
+      "duration_weeks": 2,
+      "reason": "Three-game win streak, energy is high"
+    },
+    {
+      "gm": "MAN",
+      "trade_urgency": "high",
+      "duration_weeks": 2,
+      "reason": "GM eyeing a deal at the deadline"
+    }
+  ]
+}</pre>
+      <p style="font-size:0.78rem;color:var(--muted);margin:8px 0 0;">
+        <strong>streak:</strong> "hot" (+5 effective skill) or "cold" (−5 effective skill) &bull;
+        <strong>morale:</strong> positive = boost, negative = penalty &bull;
+        <strong>momentum:</strong> "hot" (+6 chemistry) or "cold" (−6 chemistry) &bull;
+        <strong>trade_urgency:</strong> "high" or "low" &bull;
+        All magnitudes are minor by design.
+      </p>
+    </details>
+    <form method="post" action="/commissioner/influences/add">
+      <textarea name="influences_json" rows="8" placeholder='{"influences": [{"player": "First Last", "streak": "hot", "duration_weeks": 2, "reason": "..."}]}'></textarea>
+      <button type="submit" style="margin-top:10px;">Apply Influences</button>
+    </form>
+  </div>
+</section>
+
+
+<section style="margin-top:16px;">
   <div class="panel">
     <div class="section-head"><h2>Recent Internal Logs</h2></div>
     <div class="log-list">
       
-        <p class="empty">No internal logs yet.</p>
+        <article>
+          <div class="story-meta">Player / PAY / Week 1</div>
+          <strong>Kevin Jackson: Extra Training</strong>
+          <p>Extra sessions: skill 67 -&gt; 69</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / PAY / Week 1</div>
+          <strong>Joel Harris: Extra Training</strong>
+          <p>Extra sessions: skill 76 -&gt; 78</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / PAY / Week 1</div>
+          <strong>Jaren Davis: Extra Training</strong>
+          <p>Extra sessions: skill 64 -&gt; 65</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / PAY / Week 1</div>
+          <strong>Zion Anderson: Extra Training</strong>
+          <p>Extra sessions: skill 88 -&gt; 90</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / FLG / Week 1</div>
+          <strong>DeShawn Anderson: Extra Training</strong>
+          <p>Extra sessions: skill 90 -&gt; 91</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / FLG / Week 1</div>
+          <strong>Jaren Baker: Extra Training</strong>
+          <p>Extra sessions: skill 54 -&gt; 56</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / MNK / Week 1</div>
+          <strong>Lorenzo Martin: Extra Training</strong>
+          <p>Extra sessions: skill 55 -&gt; 56</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / CHA / Week 1</div>
+          <strong>James Harris: Extra Training</strong>
+          <p>Extra sessions: skill 65 -&gt; 67</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / CHA / Week 1</div>
+          <strong>Jalen Walker: Extra Training</strong>
+          <p>Extra sessions: skill 58 -&gt; 60</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / CHA / Week 1</div>
+          <strong>Joel White: Extra Training</strong>
+          <p>Extra sessions: skill 80 -&gt; 81</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / LAR / Week 1</div>
+          <strong>Cameron Roberts: Extra Training</strong>
+          <p>Extra sessions: skill 73 -&gt; 74</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / POC / Week 1</div>
+          <strong>Paul King: Retirement</strong>
+          <p>Age 33, morale 26 -- mulling retirement</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / SMA / Week 1</div>
+          <strong>Joel Phillips: Extra Training</strong>
+          <p>Extra sessions: skill 46 -&gt; 47</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / SMA / Week 1</div>
+          <strong>Trevon Garcia: Extra Training</strong>
+          <p>Extra sessions: skill 52 -&gt; 54</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / SMA / Week 1</div>
+          <strong>Chris White: Extra Training</strong>
+          <p>Extra sessions: skill 71 -&gt; 73</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / PAY / Week 0</div>
+          <strong>Draymond Lewis: Free Agent Signed</strong>
+          <p>Signed for 3 years at $6.4M</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / MNK / Week 0</div>
+          <strong>Lorenzo Martin: Free Agent Signed</strong>
+          <p>Signed for 3 years at $6.6M</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / FLG / Week 0</div>
+          <strong>Tyler Phillips: Free Agent Signed</strong>
+          <p>Signed for 3 years at $7.6M</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / CHA / Week 0</div>
+          <strong>Kawhi Scott: Free Agent Signed</strong>
+          <p>Signed for 2 years at $6.8M</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / CHA / Week 0</div>
+          <strong>Jalen Walker: Free Agent Signed</strong>
+          <p>Signed for 3 years at $7.0M</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / POC / Week 0</div>
+          <strong>Scottie Martin: Free Agent Signed</strong>
+          <p>Signed for 3 years at $8.6M</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / PAY / Week 0</div>
+          <strong>Draymond Lewis: Entered Free Agency</strong>
+          <p>Contract expired without extension</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / PAY / Week 0</div>
+          <strong>Jaren Davis: Contract Extension</strong>
+          <p>Extended for 2 years at $7.4M</p>
+        </article>
+      
+        <article>
+          <div class="story-meta">Player / PAY / Week 0</div>
+          <strong>Zion Anderson: Contract Extension</strong>
+          <p>Extended for 3 years at $13.5M</p>
+        </article>
       
     </div>
   </div>
 </section>
 
+<script>
+var _teamPackets = ["=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Appleton Papermakers: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 2,\n      \"city\": \"Appleton\",\n      \"name\": \"Papermakers\",\n      \"abbreviation\": \"APL\",\n      \"mascot\": \"A fox\",\n      \"colors\": \"Forest green + cream + brown\",\n      \"motto\": \"Press On\",\n      \"arena\": \"The Mill\",\n      \"team_archetype\": null,\n      \"play_style\": \"Relentless hustle, second chance points, outwork everyone. Never the most talented team but always the hardest playing.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Elliot \u0027Press On\u0027 Greer\",\n      \"archetype\": \"analytics_driven\",\n      \"risk_tolerance\": 0.52,\n      \"veteran_loyalty\": 0.48,\n      \"youth_preference\": 0.56,\n      \"trade_frequency\": 0.13\n    },\n    \"roster\": [\n      {\n        \"id\": 16,\n        \"player\": \"Jaren Evans\",\n        \"position\": \"SG\",\n        \"age\": 30,\n        \"skill_rating\": 96,\n        \"salary\": 16855714,\n        \"years_remaining\": 1,\n        \"salary_millions\": 16.86\n      },\n      {\n        \"id\": 18,\n        \"player\": \"Paolo Perez\",\n        \"position\": \"SF\",\n        \"age\": 26,\n        \"skill_rating\": 92,\n        \"salary\": 12938164,\n        \"years_remaining\": 3,\n        \"salary_millions\": 12.94\n      },\n      {\n        \"id\": 19,\n        \"player\": \"Isaiah Mitchell\",\n        \"position\": \"PG\",\n        \"age\": 31,\n        \"skill_rating\": 85,\n        \"salary\": 12112945,\n        \"years_remaining\": 1,\n        \"salary_millions\": 12.11\n      },\n      {\n        \"id\": 12,\n        \"player\": \"Joel Lopez\",\n        \"position\": \"PF\",\n        \"age\": 31,\n        \"skill_rating\": 78,\n        \"salary\": 9460494,\n        \"years_remaining\": 4,\n        \"salary_millions\": 9.46\n      },\n      {\n        \"id\": 15,\n        \"player\": \"Giannis Walker\",\n        \"position\": \"PG\",\n        \"age\": 32,\n        \"skill_rating\": 70,\n        \"salary\": 4825546,\n        \"years_remaining\": 3,\n        \"salary_millions\": 4.83\n      },\n      {\n        \"id\": 13,\n        \"player\": \"Zion Hill\",\n        \"position\": \"SG\",\n        \"age\": 37,\n        \"skill_rating\": 66,\n        \"salary\": 5220791,\n        \"years_remaining\": 3,\n        \"salary_millions\": 5.22\n      },\n      {\n        \"id\": 11,\n        \"player\": \"Jaren Walker\",\n        \"position\": \"C\",\n        \"age\": 29,\n        \"skill_rating\": 61,\n        \"salary\": 1847175,\n        \"years_remaining\": 1,\n        \"salary_millions\": 1.85\n      },\n      {\n        \"id\": 14,\n        \"player\": \"Cameron Jackson\",\n        \"position\": \"PF\",\n        \"age\": 34,\n        \"skill_rating\": 59,\n        \"salary\": 3307318,\n        \"years_remaining\": 3,\n        \"salary_millions\": 3.31\n      },\n      {\n        \"id\": 20,\n        \"player\": \"Marcus Edwards\",\n        \"position\": \"C\",\n        \"age\": 25,\n        \"skill_rating\": 57,\n        \"salary\": 1635812,\n        \"years_remaining\": 2,\n        \"salary_millions\": 1.64\n      },\n      {\n        \"id\": 17,\n        \"player\": \"Tyrese Anderson\",\n        \"position\": \"SF\",\n        \"age\": 23,\n        \"skill_rating\": 53,\n        \"salary\": 1745991,\n        \"years_remaining\": 1,\n        \"salary_millions\": 1.75\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Santa Maria Vaqueros\",\n        \"away_team\": \"Appleton Papermakers\",\n        \"home_score\": 113,\n        \"away_score\": 109\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ===", "=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Chattanooga Rapids: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 5,\n      \"city\": \"Chattanooga\",\n      \"name\": \"Rapids\",\n      \"abbreviation\": \"CHA\",\n      \"mascot\": \"A snapping turtle\",\n      \"colors\": \"Teal + navy + white\",\n      \"motto\": \"Don\u0027t Test the Current\",\n      \"arena\": \"Riverbend Arena\",\n      \"team_archetype\": null,\n      \"play_style\": \"Physical, defensive grinders. Slow the game down, make it ugly, wear you out. Nobody likes playing in Riverbend Arena.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Frank \u0027Old School\u0027 Navarro\",\n      \"archetype\": \"loyal_to_veterans\",\n      \"risk_tolerance\": 0.24,\n      \"veteran_loyalty\": 0.86,\n      \"youth_preference\": 0.16,\n      \"trade_frequency\": 0.08\n    },\n    \"roster\": [\n      {\n        \"id\": 47,\n        \"player\": \"Tyler Hernandez\",\n        \"position\": \"C\",\n        \"age\": 26,\n        \"skill_rating\": 96,\n        \"salary\": 16324656,\n        \"years_remaining\": 3,\n        \"salary_millions\": 16.32\n      },\n      {\n        \"id\": 43,\n        \"player\": \"Kevin White\",\n        \"position\": \"PG\",\n        \"age\": 29,\n        \"skill_rating\": 89,\n        \"salary\": 13743233,\n        \"years_remaining\": 3,\n        \"salary_millions\": 13.74\n      },\n      {\n        \"id\": 41,\n        \"player\": \"Joel White\",\n        \"position\": \"PF\",\n        \"age\": 37,\n        \"skill_rating\": 81,\n        \"salary\": 17371719,\n        \"years_remaining\": 1,\n        \"salary_millions\": 17.37\n      },\n      {\n        \"id\": 48,\n        \"player\": \"Kevin Evans\",\n        \"position\": \"SF\",\n        \"age\": 23,\n        \"skill_rating\": 70,\n        \"salary\": 5245804,\n        \"years_remaining\": 2,\n        \"salary_millions\": 5.25\n      },\n      {\n        \"id\": 46,\n        \"player\": \"James Harris\",\n        \"position\": \"PF\",\n        \"age\": 27,\n        \"skill_rating\": 67,\n        \"salary\": 2952879,\n        \"years_remaining\": 2,\n        \"salary_millions\": 2.95\n      },\n      {\n        \"id\": 44,\n        \"player\": \"Jalen Walker\",\n        \"position\": \"SG\",\n        \"age\": 29,\n        \"skill_rating\": 60,\n        \"salary\": 6960000,\n        \"years_remaining\": 3,\n        \"salary_millions\": 6.96\n      },\n      {\n        \"id\": 45,\n        \"player\": \"Scottie Phillips\",\n        \"position\": \"SF\",\n        \"age\": 28,\n        \"skill_rating\": 60,\n        \"salary\": 3404083,\n        \"years_remaining\": 2,\n        \"salary_millions\": 3.4\n      },\n      {\n        \"id\": 68,\n        \"player\": \"Kawhi Scott\",\n        \"position\": \"SG\",\n        \"age\": 21,\n        \"skill_rating\": 57,\n        \"salary\": 6840000,\n        \"years_remaining\": 2,\n        \"salary_millions\": 6.84\n      },\n      {\n        \"id\": 42,\n        \"player\": \"Brandon Williams\",\n        \"position\": \"C\",\n        \"age\": 36,\n        \"skill_rating\": 56,\n        \"salary\": 2051278,\n        \"years_remaining\": 3,\n        \"salary_millions\": 2.05\n      },\n      {\n        \"id\": 50,\n        \"player\": \"Franz Robinson\",\n        \"position\": \"PG\",\n        \"age\": 34,\n        \"skill_rating\": 54,\n        \"salary\": 3825414,\n        \"years_remaining\": 2,\n        \"salary_millions\": 3.83\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Chattanooga Rapids\",\n        \"away_team\": \"Flagstaff Nightfall\",\n        \"home_score\": 116,\n        \"away_score\": 101\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ===", "=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Flagstaff Nightfall: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 6,\n      \"city\": \"Flagstaff\",\n      \"name\": \"Nightfall\",\n      \"abbreviation\": \"FLG\",\n      \"mascot\": \"An elk\",\n      \"colors\": \"Black + pine green + gold\",\n      \"motto\": \"Chase the Sun, Own the Night\",\n      \"arena\": \"The Ponderosa\",\n      \"team_archetype\": null,\n      \"play_style\": \"Precision half-court offense, suffocating man defense. Every possession is calculated. They don\u0027t beat you with athleticism; they beat you with preparation.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Samira \u0027The Algorithm\u0027 Chen\",\n      \"archetype\": \"analytics_driven\",\n      \"risk_tolerance\": 0.5,\n      \"veteran_loyalty\": 0.42,\n      \"youth_preference\": 0.44,\n      \"trade_frequency\": 0.12\n    },\n    \"roster\": [\n      {\n        \"id\": 57,\n        \"player\": \"Marcus Martin\",\n        \"position\": \"PG\",\n        \"age\": 22,\n        \"skill_rating\": 96,\n        \"salary\": 11958721,\n        \"years_remaining\": 1,\n        \"salary_millions\": 11.96\n      },\n      {\n        \"id\": 54,\n        \"player\": \"Miles Lopez\",\n        \"position\": \"C\",\n        \"age\": 32,\n        \"skill_rating\": 94,\n        \"salary\": 16315228,\n        \"years_remaining\": 1,\n        \"salary_millions\": 16.32\n      },\n      {\n        \"id\": 58,\n        \"player\": \"DeShawn Anderson\",\n        \"position\": \"SG\",\n        \"age\": 28,\n        \"skill_rating\": 91,\n        \"salary\": 9545721,\n        \"years_remaining\": 1,\n        \"salary_millions\": 9.55\n      },\n      {\n        \"id\": 51,\n        \"player\": \"Anthony Green\",\n        \"position\": \"PF\",\n        \"age\": 32,\n        \"skill_rating\": 81,\n        \"salary\": 18855409,\n        \"years_remaining\": 2,\n        \"salary_millions\": 18.86\n      },\n      {\n        \"id\": 55,\n        \"player\": \"Tyler Martinez\",\n        \"position\": \"PG\",\n        \"age\": 30,\n        \"skill_rating\": 78,\n        \"salary\": 4064525,\n        \"years_remaining\": 1,\n        \"salary_millions\": 4.06\n      },\n      {\n        \"id\": 59,\n        \"player\": \"Nikola Turner\",\n        \"position\": \"C\",\n        \"age\": 27,\n        \"skill_rating\": 72,\n        \"salary\": 5621271,\n        \"years_remaining\": 2,\n        \"salary_millions\": 5.62\n      },\n      {\n        \"id\": 29,\n        \"player\": \"Tyler Phillips\",\n        \"position\": \"SF\",\n        \"age\": 29,\n        \"skill_rating\": 63,\n        \"salary\": 7560000,\n        \"years_remaining\": 3,\n        \"salary_millions\": 7.56\n      },\n      {\n        \"id\": 60,\n        \"player\": \"Stephen Martinez\",\n        \"position\": \"SG\",\n        \"age\": 28,\n        \"skill_rating\": 59,\n        \"salary\": 1579111,\n        \"years_remaining\": 2,\n        \"salary_millions\": 1.58\n      },\n      {\n        \"id\": 52,\n        \"player\": \"Brandon Perez\",\n        \"position\": \"SF\",\n        \"age\": 25,\n        \"skill_rating\": 58,\n        \"salary\": 8092781,\n        \"years_remaining\": 2,\n        \"salary_millions\": 8.09\n      },\n      {\n        \"id\": 53,\n        \"player\": \"Jaren Baker\",\n        \"position\": \"PF\",\n        \"age\": 29,\n        \"skill_rating\": 56,\n        \"salary\": 657608,\n        \"years_remaining\": 2,\n        \"salary_millions\": 0.66\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Chattanooga Rapids\",\n        \"away_team\": \"Flagstaff Nightfall\",\n        \"home_score\": 116,\n        \"away_score\": 101\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ===", "=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Laredo Vivos: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 4,\n      \"city\": \"Laredo\",\n      \"name\": \"Vivos\",\n      \"abbreviation\": \"LAR\",\n      \"mascot\": \"A roadrunner\",\n      \"colors\": \"Deep purple + gold + white\",\n      \"motto\": \"Siempre Vivos\",\n      \"arena\": \"Rio Grande Arena\",\n      \"team_archetype\": null,\n      \"play_style\": \"Fast, flashy, improvised. Heavy on flair and individual brilliance. Sometimes too chaotic but electric when clicking.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Victor \u0027V-Max\u0027 Castellano\",\n      \"archetype\": \"win_now\",\n      \"risk_tolerance\": 0.74,\n      \"veteran_loyalty\": 0.44,\n      \"youth_preference\": 0.25,\n      \"trade_frequency\": 0.2\n    },\n    \"roster\": [\n      {\n        \"id\": 40,\n        \"player\": \"Anthony Carter\",\n        \"position\": \"PF\",\n        \"age\": 35,\n        \"skill_rating\": 96,\n        \"salary\": 19640494,\n        \"years_remaining\": 3,\n        \"salary_millions\": 19.64\n      },\n      {\n        \"id\": 31,\n        \"player\": \"Jaren Jackson\",\n        \"position\": \"PG\",\n        \"age\": 32,\n        \"skill_rating\": 95,\n        \"salary\": 16467559,\n        \"years_remaining\": 2,\n        \"salary_millions\": 16.47\n      },\n      {\n        \"id\": 39,\n        \"player\": \"Luka Mitchell\",\n        \"position\": \"C\",\n        \"age\": 25,\n        \"skill_rating\": 91,\n        \"salary\": 12949476,\n        \"years_remaining\": 1,\n        \"salary_millions\": 12.95\n      },\n      {\n        \"id\": 38,\n        \"player\": \"Tyrese Lewis\",\n        \"position\": \"PF\",\n        \"age\": 34,\n        \"skill_rating\": 78,\n        \"salary\": 10595330,\n        \"years_remaining\": 2,\n        \"salary_millions\": 10.6\n      },\n      {\n        \"id\": 33,\n        \"player\": \"Cameron Roberts\",\n        \"position\": \"C\",\n        \"age\": 31,\n        \"skill_rating\": 74,\n        \"salary\": 3147881,\n        \"years_remaining\": 3,\n        \"salary_millions\": 3.15\n      },\n      {\n        \"id\": 32,\n        \"player\": \"Luka Wright\",\n        \"position\": \"SF\",\n        \"age\": 30,\n        \"skill_rating\": 70,\n        \"salary\": 2116408,\n        \"years_remaining\": 3,\n        \"salary_millions\": 2.12\n      },\n      {\n        \"id\": 34,\n        \"player\": \"Jaylen Garcia\",\n        \"position\": \"SG\",\n        \"age\": 36,\n        \"skill_rating\": 70,\n        \"salary\": 6315268,\n        \"years_remaining\": 2,\n        \"salary_millions\": 6.32\n      },\n      {\n        \"id\": 35,\n        \"player\": \"Cameron Lopez\",\n        \"position\": \"SF\",\n        \"age\": 25,\n        \"skill_rating\": 63,\n        \"salary\": 3896519,\n        \"years_remaining\": 1,\n        \"salary_millions\": 3.9\n      },\n      {\n        \"id\": 36,\n        \"player\": \"Damian Parker\",\n        \"position\": \"PG\",\n        \"age\": 22,\n        \"skill_rating\": 50,\n        \"salary\": 1064188,\n        \"years_remaining\": 2,\n        \"salary_millions\": 1.06\n      },\n      {\n        \"id\": 37,\n        \"player\": \"Draymond Hill\",\n        \"position\": \"SG\",\n        \"age\": 37,\n        \"skill_rating\": 45,\n        \"salary\": 518140,\n        \"years_remaining\": 2,\n        \"salary_millions\": 0.52\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Laredo Vivos\",\n        \"away_team\": \"Mankato Polar\",\n        \"home_score\": 127,\n        \"away_score\": 120\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ===", "=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Mankato Polar: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 7,\n      \"city\": \"Mankato\",\n      \"name\": \"Polar\",\n      \"abbreviation\": \"MNK\",\n      \"mascot\": \"A bison\",\n      \"colors\": \"Arctic white + charcoal + electric blue\",\n      \"motto\": \"Built for This\",\n      \"arena\": \"Blue Earth Center\",\n      \"team_archetype\": null,\n      \"play_style\": \"Disciplined, systematic, cold-blooded. Excellent in late game situations. Nobody panics, nobody celebrates early.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Nora \u0027Blue Line\u0027 Halvorsen\",\n      \"archetype\": \"analytics_driven\",\n      \"risk_tolerance\": 0.38,\n      \"veteran_loyalty\": 0.62,\n      \"youth_preference\": 0.34,\n      \"trade_frequency\": 0.09\n    },\n    \"roster\": [\n      {\n        \"id\": 63,\n        \"player\": \"Chris Lopez\",\n        \"position\": \"PF\",\n        \"age\": 21,\n        \"skill_rating\": 93,\n        \"salary\": 12063545,\n        \"years_remaining\": 1,\n        \"salary_millions\": 12.06\n      },\n      {\n        \"id\": 66,\n        \"player\": \"Scottie Perez\",\n        \"position\": \"PG\",\n        \"age\": 22,\n        \"skill_rating\": 91,\n        \"salary\": 12763070,\n        \"years_remaining\": 4,\n        \"salary_millions\": 12.76\n      },\n      {\n        \"id\": 62,\n        \"player\": \"Trevon Hernandez\",\n        \"position\": \"PF\",\n        \"age\": 25,\n        \"skill_rating\": 90,\n        \"salary\": 17330174,\n        \"years_remaining\": 2,\n        \"salary_millions\": 17.33\n      },\n      {\n        \"id\": 65,\n        \"player\": \"Cameron Young\",\n        \"position\": \"PG\",\n        \"age\": 34,\n        \"skill_rating\": 88,\n        \"salary\": 5868042,\n        \"years_remaining\": 3,\n        \"salary_millions\": 5.87\n      },\n      {\n        \"id\": 61,\n        \"player\": \"Cade Phillips\",\n        \"position\": \"SF\",\n        \"age\": 30,\n        \"skill_rating\": 86,\n        \"salary\": 18097612,\n        \"years_remaining\": 3,\n        \"salary_millions\": 18.1\n      },\n      {\n        \"id\": 64,\n        \"player\": \"Marcus Garcia\",\n        \"position\": \"SG\",\n        \"age\": 32,\n        \"skill_rating\": 78,\n        \"salary\": 9920758,\n        \"years_remaining\": 4,\n        \"salary_millions\": 9.92\n      },\n      {\n        \"id\": 67,\n        \"player\": \"Nikola Phillips\",\n        \"position\": \"C\",\n        \"age\": 30,\n        \"skill_rating\": 65,\n        \"salary\": 7031976,\n        \"years_remaining\": 3,\n        \"salary_millions\": 7.03\n      },\n      {\n        \"id\": 49,\n        \"player\": \"Lorenzo Martin\",\n        \"position\": \"SG\",\n        \"age\": 26,\n        \"skill_rating\": 56,\n        \"salary\": 6600000,\n        \"years_remaining\": 3,\n        \"salary_millions\": 6.6\n      },\n      {\n        \"id\": 70,\n        \"player\": \"Stephen Phillips\",\n        \"position\": \"C\",\n        \"age\": 21,\n        \"skill_rating\": 54,\n        \"salary\": 873792,\n        \"years_remaining\": 2,\n        \"salary_millions\": 0.87\n      },\n      {\n        \"id\": 69,\n        \"player\": \"Zion Martinez\",\n        \"position\": \"SF\",\n        \"age\": 21,\n        \"skill_rating\": 52,\n        \"salary\": 1183401,\n        \"years_remaining\": 2,\n        \"salary_millions\": 1.18\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Laredo Vivos\",\n        \"away_team\": \"Mankato Polar\",\n        \"home_score\": 127,\n        \"away_score\": 120\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ===", "=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Payson Peaks: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 8,\n      \"city\": \"Payson\",\n      \"name\": \"Peaks\",\n      \"abbreviation\": \"PAY\",\n      \"mascot\": \"A mountain goat\",\n      \"colors\": \"Slate grey + snow white + deep blue\",\n      \"motto\": \"Nothing Stops the Climb\",\n      \"arena\": \"Wasatch Center\",\n      \"team_archetype\": null,\n      \"play_style\": \"Inconsistent, always experimenting, never quite settled on an identity. Flashes of brilliance buried in losing streaks.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Marcus \u0027The Builder\u0027 Reed\",\n      \"archetype\": \"aggressive_rebuilder\",\n      \"risk_tolerance\": 0.82,\n      \"veteran_loyalty\": 0.18,\n      \"youth_preference\": 0.88,\n      \"trade_frequency\": 0.22\n    },\n    \"roster\": [\n      {\n        \"id\": 77,\n        \"player\": \"Cameron Evans\",\n        \"position\": \"C\",\n        \"age\": 20,\n        \"skill_rating\": 96,\n        \"salary\": 12358243,\n        \"years_remaining\": 3,\n        \"salary_millions\": 12.36\n      },\n      {\n        \"id\": 78,\n        \"player\": \"Giannis Young\",\n        \"position\": \"C\",\n        \"age\": 21,\n        \"skill_rating\": 93,\n        \"salary\": 13598758,\n        \"years_remaining\": 1,\n        \"salary_millions\": 13.6\n      },\n      {\n        \"id\": 71,\n        \"player\": \"Zion Anderson\",\n        \"position\": \"PF\",\n        \"age\": 31,\n        \"skill_rating\": 90,\n        \"salary\": 13481530,\n        \"years_remaining\": 3,\n        \"salary_millions\": 13.48\n      },\n      {\n        \"id\": 75,\n        \"player\": \"Malik Garcia\",\n        \"position\": \"SF\",\n        \"age\": 30,\n        \"skill_rating\": 81,\n        \"salary\": 5769570,\n        \"years_remaining\": 2,\n        \"salary_millions\": 5.77\n      },\n      {\n        \"id\": 74,\n        \"player\": \"Joel Harris\",\n        \"position\": \"PG\",\n        \"age\": 37,\n        \"skill_rating\": 78,\n        \"salary\": 5749948,\n        \"years_remaining\": 3,\n        \"salary_millions\": 5.75\n      },\n      {\n        \"id\": 79,\n        \"player\": \"Kevin Jackson\",\n        \"position\": \"SG\",\n        \"age\": 35,\n        \"skill_rating\": 69,\n        \"salary\": 2356418,\n        \"years_remaining\": 1,\n        \"salary_millions\": 2.36\n      },\n      {\n        \"id\": 72,\n        \"player\": \"Jaren Davis\",\n        \"position\": \"PF\",\n        \"age\": 20,\n        \"skill_rating\": 65,\n        \"salary\": 7365943,\n        \"years_remaining\": 2,\n        \"salary_millions\": 7.37\n      },\n      {\n        \"id\": 76,\n        \"player\": \"Draymond Lewis\",\n        \"position\": \"PG\",\n        \"age\": 23,\n        \"skill_rating\": 53,\n        \"salary\": 6360000,\n        \"years_remaining\": 3,\n        \"salary_millions\": 6.36\n      },\n      {\n        \"id\": 73,\n        \"player\": \"Jordan Nelson\",\n        \"position\": \"SG\",\n        \"age\": 31,\n        \"skill_rating\": 50,\n        \"salary\": 1003306,\n        \"years_remaining\": 1,\n        \"salary_millions\": 1.0\n      },\n      {\n        \"id\": 80,\n        \"player\": \"Anthony Davis\",\n        \"position\": \"SF\",\n        \"age\": 26,\n        \"skill_rating\": 49,\n        \"salary\": 520994,\n        \"years_remaining\": 1,\n        \"salary_millions\": 0.52\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Pocatello Lava\",\n        \"away_team\": \"Payson Peaks\",\n        \"home_score\": 102,\n        \"away_score\": 101\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ===", "=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Pocatello Lava: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 3,\n      \"city\": \"Pocatello\",\n      \"name\": \"Lava\",\n      \"abbreviation\": \"POC\",\n      \"mascot\": \"A coyote\",\n      \"colors\": \"Burnt orange + charcoal black + ash grey\",\n      \"motto\": \"Born From Fire\",\n      \"arena\": \"The Crater\",\n      \"team_archetype\": null,\n      \"play_style\": \"Run and gun, high variance, zero filter. They\u0027ll drop 130 on you or lose by 25. Nobody knows which team shows up.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Tessa \u0027Fireline\u0027 Cruz\",\n      \"archetype\": \"wild_card\",\n      \"risk_tolerance\": 0.86,\n      \"veteran_loyalty\": 0.3,\n      \"youth_preference\": 0.64,\n      \"trade_frequency\": 0.24\n    },\n    \"roster\": [\n      {\n        \"id\": 21,\n        \"player\": \"Giannis Hernandez\",\n        \"position\": \"PG\",\n        \"age\": 35,\n        \"skill_rating\": 92,\n        \"salary\": 15694089,\n        \"years_remaining\": 3,\n        \"salary_millions\": 15.69\n      },\n      {\n        \"id\": 25,\n        \"player\": \"Luka Anderson\",\n        \"position\": \"C\",\n        \"age\": 29,\n        \"skill_rating\": 77,\n        \"salary\": 4600881,\n        \"years_remaining\": 1,\n        \"salary_millions\": 4.6\n      },\n      {\n        \"id\": 30,\n        \"player\": \"Cameron Johnson\",\n        \"position\": \"PF\",\n        \"age\": 24,\n        \"skill_rating\": 76,\n        \"salary\": 9782225,\n        \"years_remaining\": 4,\n        \"salary_millions\": 9.78\n      },\n      {\n        \"id\": 56,\n        \"player\": \"Scottie Martin\",\n        \"position\": \"SF\",\n        \"age\": 33,\n        \"skill_rating\": 72,\n        \"salary\": 8640000,\n        \"years_remaining\": 3,\n        \"salary_millions\": 8.64\n      },\n      {\n        \"id\": 28,\n        \"player\": \"Zion King\",\n        \"position\": \"PG\",\n        \"age\": 33,\n        \"skill_rating\": 70,\n        \"salary\": 6932821,\n        \"years_remaining\": 3,\n        \"salary_millions\": 6.93\n      },\n      {\n        \"id\": 22,\n        \"player\": \"Darius Baker\",\n        \"position\": \"SF\",\n        \"age\": 25,\n        \"skill_rating\": 66,\n        \"salary\": 3366786,\n        \"years_remaining\": 1,\n        \"salary_millions\": 3.37\n      },\n      {\n        \"id\": 23,\n        \"player\": \"Luka Robinson\",\n        \"position\": \"PF\",\n        \"age\": 30,\n        \"skill_rating\": 62,\n        \"salary\": 1929442,\n        \"years_remaining\": 1,\n        \"salary_millions\": 1.93\n      },\n      {\n        \"id\": 24,\n        \"player\": \"Tyrese Williams\",\n        \"position\": \"SG\",\n        \"age\": 27,\n        \"skill_rating\": 46,\n        \"salary\": 667017,\n        \"years_remaining\": 2,\n        \"salary_millions\": 0.67\n      },\n      {\n        \"id\": 26,\n        \"player\": \"Evan Mitchell\",\n        \"position\": \"C\",\n        \"age\": 30,\n        \"skill_rating\": 46,\n        \"salary\": 1180932,\n        \"years_remaining\": 1,\n        \"salary_millions\": 1.18\n      },\n      {\n        \"id\": 27,\n        \"player\": \"Paul King\",\n        \"position\": \"SG\",\n        \"age\": 33,\n        \"skill_rating\": 46,\n        \"salary\": 1478463,\n        \"years_remaining\": 1,\n        \"salary_millions\": 1.48\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Pocatello Lava\",\n        \"away_team\": \"Payson Peaks\",\n        \"home_score\": 102,\n        \"away_score\": 101\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ===", "=== AAIBL APP TO CHATGPT ===\n{\n  \"schema\": \"aibl.manual_chatgpt.v1\",\n  \"direction\": \"app_to_chatgpt\",\n  \"context_type\": \"Team report\",\n  \"commissioner_request\": \"Write a narrative team report on the Santa Maria Vaqueros: recent game results, standout and struggling players, GM personality and trade tendencies, and what the commissioner should keep an eye on.\",\n  \"league_state\": {\n    \"season_year\": 2027,\n    \"current_week\": 1\n  },\n  \"instructions_for_chatgpt\": [\n    \"Read the packet as source-of-truth league data.\",\n    \"Answer the commissioner request without inventing missing stats.\",\n    \"Return a JSON packet inside the CHATGPT TO AAIBL markers.\",\n    \"Use short, app-readable strings in summary, recommendations, suggested_actions, questions, and notes_for_commissioner.\",\n    \"REQUIRED: populate \u0027articles\u0027 with 1-3 news stories drawn from the data. Use real team abbreviations and player full names exactly as they appear in the context.\",\n    \"REQUIRED: populate \u0027influences\u0027 with suggested modifiers for standout performers, struggling players, hot/cold teams, and trade-hungry GMs. Use real abbreviations and full names.\"\n  ],\n  \"response_contract\": {\n    \"schema\": \"aibl.manual_chatgpt.v1\",\n    \"direction\": \"chatgpt_to_app\",\n    \"response_type\": \"Team report\",\n    \"summary\": \"One short paragraph.\",\n    \"recommendations\": [\n      \"Recommendation strings.\"\n    ],\n    \"suggested_actions\": [\n      \"Action strings the commissioner may take manually.\"\n    ],\n    \"questions\": [\n      \"Optional clarification questions.\"\n    ],\n    \"notes_for_commissioner\": [\n      \"Optional caveats or narrative hooks.\"\n    ],\n    \"articles\": [\n      {\n        \"headline\": \"FILL IN \\u2014 real headline based on the data\",\n        \"body\": \"FILL IN \\u2014 2 to 4 sentences of narrative using real names and scores.\",\n        \"week\": 1,\n        \"team_tags\": [\n          \"USE REAL ABBREVIATIONS FROM CONTEXT\"\n        ],\n        \"player_tags\": [\n          \"Use Real Full Name From Context\"\n        ]\n      }\n    ],\n    \"influences\": [\n      {\n        \"player\": \"Full Name of a standout or struggling player\",\n        \"streak\": \"hot or cold\",\n        \"morale\": 6,\n        \"work_ethic_boost\": 0.1,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"team\": \"REAL ABBR\",\n        \"momentum\": \"hot or cold\",\n        \"locker_room_boost\": 5,\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      },\n      {\n        \"gm\": \"REAL ABBR\",\n        \"trade_urgency\": \"high or low\",\n        \"duration_weeks\": 2,\n        \"reason\": \"FILL IN \\u2014 one sentence explaining why\"\n      }\n    ]\n  },\n  \"context\": {\n    \"team\": {\n      \"id\": 1,\n      \"city\": \"Santa Maria\",\n      \"name\": \"Vaqueros\",\n      \"abbreviation\": \"SMA\",\n      \"mascot\": \"A stern vaquero, wide-brimmed hat casting a shadow over the eyes\",\n      \"colors\": \"Deep red + black + gold\",\n      \"motto\": \"La Tierra Es Nuestra\",\n      \"arena\": \"Rancho Arena\",\n      \"team_archetype\": null,\n      \"play_style\": \"Methodical half-court, strong in the paint, deliberate. Built to win close games in the fourth quarter.\",\n      \"reputation\": null,\n      \"rivalry\": null,\n      \"signature_trait\": null\n    },\n    \"record\": null,\n    \"general_manager\": {\n      \"name\": \"Rafael \u0027The Closer\u0027 Mendoza\",\n      \"archetype\": \"loyal_to_veterans\",\n      \"risk_tolerance\": 0.35,\n      \"veteran_loyalty\": 0.78,\n      \"youth_preference\": 0.28,\n      \"trade_frequency\": 0.1\n    },\n    \"roster\": [\n      {\n        \"id\": 4,\n        \"player\": \"Lorenzo Perez\",\n        \"position\": \"PF\",\n        \"age\": 25,\n        \"skill_rating\": 88,\n        \"salary\": 10575225,\n        \"years_remaining\": 2,\n        \"salary_millions\": 10.58\n      },\n      {\n        \"id\": 10,\n        \"player\": \"Giannis Allen\",\n        \"position\": \"C\",\n        \"age\": 24,\n        \"skill_rating\": 85,\n        \"salary\": 14627732,\n        \"years_remaining\": 3,\n        \"salary_millions\": 14.63\n      },\n      {\n        \"id\": 6,\n        \"player\": \"Paolo Thompson\",\n        \"position\": \"SG\",\n        \"age\": 27,\n        \"skill_rating\": 83,\n        \"salary\": 9469434,\n        \"years_remaining\": 4,\n        \"salary_millions\": 9.47\n      },\n      {\n        \"id\": 1,\n        \"player\": \"Chris White\",\n        \"position\": \"PF\",\n        \"age\": 29,\n        \"skill_rating\": 73,\n        \"salary\": 8099248,\n        \"years_remaining\": 2,\n        \"salary_millions\": 8.1\n      },\n      {\n        \"id\": 9,\n        \"player\": \"Jalen Davis\",\n        \"position\": \"SF\",\n        \"age\": 32,\n        \"skill_rating\": 59,\n        \"salary\": 2147760,\n        \"years_remaining\": 2,\n        \"salary_millions\": 2.15\n      },\n      {\n        \"id\": 2,\n        \"player\": \"Trevon Garcia\",\n        \"position\": \"C\",\n        \"age\": 34,\n        \"skill_rating\": 54,\n        \"salary\": 1084014,\n        \"years_remaining\": 3,\n        \"salary_millions\": 1.08\n      },\n      {\n        \"id\": 3,\n        \"player\": \"Evan Williams\",\n        \"position\": \"SF\",\n        \"age\": 32,\n        \"skill_rating\": 54,\n        \"salary\": 1559235,\n        \"years_remaining\": 2,\n        \"salary_millions\": 1.56\n      },\n      {\n        \"id\": 7,\n        \"player\": \"Kevin Baker\",\n        \"position\": \"PG\",\n        \"age\": 28,\n        \"skill_rating\": 53,\n        \"salary\": 2233957,\n        \"years_remaining\": 1,\n        \"salary_millions\": 2.23\n      },\n      {\n        \"id\": 5,\n        \"player\": \"Paolo Walker\",\n        \"position\": \"PG\",\n        \"age\": 32,\n        \"skill_rating\": 47,\n        \"salary\": 731443,\n        \"years_remaining\": 2,\n        \"salary_millions\": 0.73\n      },\n      {\n        \"id\": 8,\n        \"player\": \"Joel Phillips\",\n        \"position\": \"SG\",\n        \"age\": 20,\n        \"skill_rating\": 47,\n        \"salary\": 1484322,\n        \"years_remaining\": 3,\n        \"salary_millions\": 1.48\n      }\n    ],\n    \"recent_games\": [\n      {\n        \"week\": 1,\n        \"home_team\": \"Santa Maria Vaqueros\",\n        \"away_team\": \"Appleton Papermakers\",\n        \"home_score\": 113,\n        \"away_score\": 109\n      }\n    ]\n  }\n}\n=== END AAIBL APP TO CHATGPT ==="];
+
+function switchTeamPacket() {
+  var idx = parseInt(document.getElementById('team-packet-select').value, 10);
+  document.getElementById('pkt-team').value = _teamPackets[idx];
+}
+
+document.querySelectorAll('.btn-copy').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var ta = document.getElementById(btn.dataset.target);
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    var orig = btn.textContent;
+    try {
+      navigator.clipboard.writeText(ta.value).then(function() {
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 1800);
+      }).catch(function() {
+        document.execCommand('copy');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 1800);
+      });
+    } catch(e) {
+      document.execCommand('copy');
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = orig; }, 1800);
+    }
+  });
+});
+</script>
+
   </main>
 
   <footer class="footer">
-    <span>Season 2026</span>
+    <span>Season 2027</span>
     <span>Week 1</span>
     <span>TEST</span>
+    <span>AAIBL &copy; 2025</span>
   </footer>
 </body>
 </html>

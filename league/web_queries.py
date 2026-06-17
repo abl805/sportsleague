@@ -625,3 +625,18 @@ def commissioner_logs(conn, limit=24):
     combined = gm_logs + player_logs
     combined.sort(key=lambda row: row.get("created_at") or "", reverse=True)
     return combined[:limit]
+
+
+def offseason_events(conn, limit=12):
+    return dicts(conn.execute("""
+        SELECT id,
+               from_season,
+               to_season,
+               stage,
+               headline,
+               detail,
+               created_at
+        FROM offseason_events
+        ORDER BY id DESC
+        LIMIT ?
+    """, (limit,)).fetchall())

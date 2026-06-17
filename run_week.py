@@ -18,6 +18,8 @@ from league.player_agents import (
 )
 from league.trade_engine import autopilot_review_pending_trades
 from league.playoffs import (
+    create_championship_and_third_place,
+    playoff_finished,
     seed_playoffs,
     schedule_next_playoff_game,
     record_game_result,
@@ -134,6 +136,128 @@ def _process_playoff_results(conn, playoff_game_ids, current_week, season_year):
             )
 
     conn.commit()
+
+
+def _process_playoff_results_v2(conn, playoff_game_ids, current_week, season_year):
+    """
+    Process playoff games when multiple series types can run in the same week.
+    This supports semifinals, Finals, and a parallel third-place series.
+    """
+    if not playoff_game_ids:
+        return
+
+    print(f"\n{'-'*54}")
+    print("  PLAYOFFS  --  BRACKET UPDATE")
+    print(f"{'-'*54}")
+
+    touched_series_ids = set()
+
+    for game_id in playoff_game_ids:
+        series_id, done, winner_id = record_game_result(conn, game_id)
+        touched_series_ids.add(series_id)
+        series = conn.execute("""
+            SELECT ps.seed_a, ps.seed_b,
+                   ps.team_a_wins, ps.team_b_wins,
+                   COALESCE(ps.series_type,
+                       CASE WHEN ps.round = 1 THEN 'semifinal' ELSE 'finals' END
+                   ) AS series_type,
+                   ta.city || ' ' || ta.name AS name_a,
+                   tb.city || ' ' || tb.name AS name_b
+            FROM playoff_series ps
+            JOIN teams ta ON ps.team_a_id = ta.id
+            JOIN teams tb ON ps.team_b_id = tb.id
+            WHERE ps.id = ?
+        """, (series_id,)).fetchone()
+
+        label = {
+            "semifinal": "Semifinals",
+            "finals": "Finals",
+            "third_place": "Third Place",
+        }.get(series["series_type"], "Playoffs")
+
+        print(f"\n  {label}:  #{series['seed_a']} {series['name_a']}  vs  #{series['seed_b']} {series['name_b']}")
+        if done:
+            winner_name = conn.execute(
+                "SELECT city || ' ' || name AS name FROM teams WHERE id = ?",
+                (winner_id,),
+            ).fetchone()["name"]
+            print(
+                f"  >> {winner_name} wins the series "
+                f"({series['team_a_wins']}-{series['team_b_wins']})"
+            )
+        else:
+            print(
+                f"  Series: {series['name_a']} {series['team_a_wins']} - "
+                f"{series['team_b_wins']} {series['name_b']}"
+            )
+
+    conn.commit()
+
+    next_week = current_week + 1
+    if touched_series_ids:
+        placeholders = ",".join("?" for _ in touched_series_ids)
+        active = conn.execute(f"""
+            SELECT id
+            FROM playoff_series
+            WHERE season_year = ?
+              AND status = 'active'
+              AND id IN ({placeholders})
+        """, [season_year, *touched_series_ids]).fetchall()
+    else:
+        active = []
+
+    for row in active:
+        schedule_next_playoff_game(conn, row["id"], next_week, season_year)
+
+    created = create_championship_and_third_place(conn, season_year, next_week)
+    if created:
+        finals = conn.execute("""
+            SELECT ta.city || ' ' || ta.name AS name_a,
+                   tb.city || ' ' || tb.name AS name_b
+            FROM playoff_series ps
+            JOIN teams ta ON ta.id = ps.team_a_id
+            JOIN teams tb ON tb.id = ps.team_b_id
+            WHERE ps.season_year = ? AND ps.series_type = 'finals'
+        """, (season_year,)).fetchone()
+        third = conn.execute("""
+            SELECT ta.city || ' ' || ta.name AS name_a,
+                   tb.city || ' ' || tb.name AS name_b
+            FROM playoff_series ps
+            JOIN teams ta ON ta.id = ps.team_a_id
+            JOIN teams tb ON tb.id = ps.team_b_id
+            WHERE ps.season_year = ? AND ps.series_type = 'third_place'
+        """, (season_year,)).fetchone()
+        print(f"\n  FINALS SET:  {finals['name_a']}  vs  {finals['name_b']}")
+        print(f"  THIRD PLACE SET:  {third['name_a']}  vs  {third['name_b']}")
+        print(f"  Both series begin Week {next_week}.\n")
+
+    if playoff_finished(conn, season_year):
+        finals = conn.execute(
+            "SELECT winner_id FROM playoff_series WHERE season_year = ? AND series_type = 'finals'",
+            (season_year,),
+        ).fetchone()
+        third = conn.execute(
+            "SELECT winner_id FROM playoff_series WHERE season_year = ? AND series_type = 'third_place'",
+            (season_year,),
+        ).fetchone()
+        champion_name = conn.execute(
+            "SELECT city || ' ' || name AS name FROM teams WHERE id = ?",
+            (finals["winner_id"],),
+        ).fetchone()["name"]
+        third_name = conn.execute(
+            "SELECT city || ' ' || name AS name FROM teams WHERE id = ?",
+            (third["winner_id"],),
+        ).fetchone()["name"]
+        print(f"\n  {'*'*50}")
+        print(f"    CHAMPION:  {champion_name}!")
+        print(f"    THIRD PLACE:  {third_name}")
+        print(f"  {'*'*50}\n")
+        conn.execute("UPDATE league_state SET phase = 'complete' WHERE id = 1")
+
+    conn.commit()
+
+
+_process_playoff_results = _process_playoff_results_v2
 
 
 def _active_player_mods(conn, season_year, week):
@@ -360,7 +484,7 @@ def run_week(verbose=None, start_official=None):
 
     # ── Playoff result processing ─────────────────────────────────────────────
     if playoff_game_ids:
-        _process_playoff_results(conn, playoff_game_ids, week, season_year)
+        _process_playoff_results_v2(conn, playoff_game_ids, week, season_year)
 
     # ── Regular-season end: seed playoffs ─────────────────────────────────────
     if phase == "regular_season" and reg_games_remaining == 0:
