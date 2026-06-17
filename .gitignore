@@ -1,7 +1,20 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Database backups
+db/*.backup.db
+
+# Virtual environments
 venv/
 .venv/
-__pycache__/
-*.pyc
-*.pyo
-*.log
-.env
+env/
+
+# OS
+.DS_Store
+Thumbs.db
