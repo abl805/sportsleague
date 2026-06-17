@@ -264,6 +264,26 @@ def create_tables():
             detail      TEXT,
             created_at  TEXT DEFAULT (datetime('now'))
         );
+
+        CREATE TABLE IF NOT EXISTS player_backstories (
+            player_id         INTEGER PRIMARY KEY REFERENCES players(id),
+            college_state     TEXT,
+            hometown_state    TEXT,
+            personality_label TEXT,
+            backstory_blurb   TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS player_interviews (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            game_id        INTEGER REFERENCES games(id),
+            player_id      INTEGER NOT NULL REFERENCES players(id),
+            week           INTEGER NOT NULL,
+            season_year    INTEGER NOT NULL,
+            question       TEXT NOT NULL,
+            context_packet TEXT NOT NULL,
+            response       TEXT,
+            created_at     TEXT DEFAULT (datetime('now'))
+        );
     """)
     _migrate_existing_schema(conn)
     conn.commit()

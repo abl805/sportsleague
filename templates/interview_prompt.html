@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Interview #{{ interview.id }}{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">Post-Game Interview</p>
+  <h1>{{ player_name }}</h1>
+  <p>Week {{ interview.week }}</p>
+</section>
+
+<section class="panel full">
+  <div class="section-head"><h2>Step 1 — Copy this prompt into ChatGPT</h2></div>
+  <p style="color:#555;font-size:0.9em;margin-bottom:1rem;">
+    Select all the text in the box below, paste it into ChatGPT, and press Enter.
+  </p>
+  <textarea
+    id="prompt-box"
+    readonly
+    style="width:100%;min-height:360px;font-family:monospace;font-size:0.82em;
+           background:#f8f8f8;border:1px solid #ddd;padding:1rem;resize:vertical;"
+  >{{ interview.context_packet }}</textarea>
+  <p style="margin-top:0.5rem;">
+    <button
+      onclick="navigator.clipboard.writeText(document.getElementById('prompt-box').value);this.textContent='Copied!';"
+      class="btn"
+    >Copy to Clipboard</button>
+  </p>
+</section>
+
+<section class="panel full">
+  <div class="section-head"><h2>Step 2 — Paste ChatGPT's response here</h2></div>
+  <form method="post" action="{{ url_for('interview_submit', interview_id=interview.id) }}">
+    <p style="color:#555;font-size:0.9em;">
+      Paste only the player's quote (not the full ChatGPT reply). 2–4 sentences.
+    </p>
+    <textarea
+      name="response"
+      rows="6"
+      style="width:100%;font-family:Georgia,serif;font-size:0.95em;
+             border:1px solid #ddd;padding:0.75rem;resize:vertical;"
+      placeholder="Paste the player's quote here…"
+      required
+    ></textarea>
+    <p style="margin-top:0.75rem;">
+      <button type="submit" class="btn">Save Quote</button>
+      <a href="{{ url_for('interviews') }}" style="margin-left:1rem;font-size:0.9em;">← Back to Interviews</a>
+    </p>
+  </form>
+</section>
+{% endblock %}

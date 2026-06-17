@@ -353,11 +353,16 @@ def player_detail(conn, player_id, season_year):
                t.city || ' ' || t.name AS team_name,
                t.abbreviation,
                c.years_remaining,
-               pp.archetype
+               pp.archetype,
+               pb.college_state,
+               pb.hometown_state,
+               pb.personality_label,
+               pb.backstory_blurb
         FROM players p
         JOIN teams t ON t.id = p.team_id
         LEFT JOIN contracts c ON c.player_id = p.id
         LEFT JOIN player_personalities pp ON pp.player_id = p.id
+        LEFT JOIN player_backstories pb ON pb.player_id = p.id
         WHERE p.id = ?
     """, (player_id,)).fetchone())
     if not player:
@@ -404,6 +409,14 @@ def player_detail(conn, player_id, season_year):
         LIMIT 1
     """, (player_id, season_year)).fetchone())
     articles = articles_for_player(conn, player_id, season_year)
+    interviews = dicts(conn.execute("""
+        SELECT pi.id, pi.week, pi.question, pi.response, pi.created_at
+        FROM player_interviews pi
+        WHERE pi.player_id = ? AND pi.season_year = ?
+          AND pi.response IS NOT NULL
+        ORDER BY pi.id DESC
+        LIMIT 10
+    """, (player_id, season_year)).fetchall())
 
     return {
         "player": player,
@@ -412,6 +425,7 @@ def player_detail(conn, player_id, season_year):
         "events": events,
         "morale": morale,
         "articles": articles,
+        "interviews": interviews,
     }
 
 

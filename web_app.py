@@ -10,6 +10,9 @@ from league.chatgpt_bridge import (
     build_chatgpt_packet,
     parse_chatgpt_response,
     response_template,
+    get_pending_interviews,
+    get_recent_interviews,
+    save_interview_response,
 )
 from league.database import create_tables, get_connection
 from league.offseason import (
@@ -823,6 +826,60 @@ def commissioner_influences_add():
     count = with_conn(save)
     flash(f"{count} influence{'s' if count != 1 else ''} applied to the league.", "operation")
     return redirect(url_for("commissioner"))
+
+
+@app.route("/interviews")
+def interviews():
+    def load(conn):
+        state = q.get_state(conn)
+        if not state:
+            return None
+        season_year = state["season_year"]
+        return {
+            "state": state,
+            "pending": get_pending_interviews(conn, season_year=season_year),
+            "completed": get_recent_interviews(conn, season_year, limit=40),
+        }
+
+    data = with_conn(load)
+    if not data:
+        return render_no_league()
+    return render_template("interviews.html", **data, active="interviews")
+
+
+@app.route("/commissioner/interview/<int:interview_id>")
+def interview_prompt(interview_id):
+    def load(conn):
+        row = conn.execute(
+            "SELECT * FROM player_interviews WHERE id = ?", (interview_id,)
+        ).fetchone()
+        if not row:
+            return None
+        player = conn.execute(
+            "SELECT first_name || ' ' || last_name AS name FROM players WHERE id = ?",
+            (row["player_id"],)
+        ).fetchone()
+        return {"interview": dict(row), "player_name": player["name"] if player else "Player"}
+
+    data = with_conn(load)
+    if not data or not data["interview"]:
+        return render_template("not_found.html", title="Interview not found"), 404
+    return render_template("interview_prompt.html", **data, active="interviews")
+
+
+@app.route("/commissioner/interview/<int:interview_id>/submit", methods=["POST"])
+def interview_submit(interview_id):
+    response_text = (request.form.get("response") or "").strip()
+    if not response_text:
+        flash("No response text provided.", "error")
+        return redirect(url_for("interview_prompt", interview_id=interview_id))
+
+    def save(conn):
+        save_interview_response(interview_id, response_text, db=conn)
+
+    with_conn(save)
+    flash("Interview response saved!", "success")
+    return redirect(url_for("interviews"))
 
 
 if __name__ == "__main__":

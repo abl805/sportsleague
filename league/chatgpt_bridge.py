@@ -359,6 +359,221 @@ def extract_marked_json(text, start_marker, end_marker):
     return None
 
 
+def build_interview_packet(game_id, player_id, db=None):
+    """
+    Build a formatted ChatGPT prompt for a post-game player interview.
+    Returns (interview_id, prompt_text) after inserting a pending row.
+    Pass db=conn to reuse an existing connection, or None to open one.
+    """
+    close_conn = db is None
+    conn = db if db else get_connection()
+
+    try:
+        state = conn.execute("SELECT * FROM league_state WHERE id=1").fetchone()
+        if not state:
+            raise RuntimeError("League not found.")
+        week = state["current_week"] - 1  # interviews are for the week just completed
+        season_year = state["season_year"]
+
+        game = conn.execute("""
+            SELECT g.*,
+                   ht.city || ' ' || ht.name AS home_name,
+                   at.city || ' ' || at.name AS away_name,
+                   ht.abbreviation AS home_abbr,
+                   at.abbreviation AS away_abbr
+            FROM games g
+            JOIN teams ht ON ht.id = g.home_team_id
+            JOIN teams at ON at.id = g.away_team_id
+            WHERE g.id = ?
+        """, (game_id,)).fetchone()
+        if not game:
+            raise ValueError(f"Game {game_id} not found.")
+
+        player = conn.execute("""
+            SELECT p.id, p.first_name, p.last_name, p.age, p.position,
+                   p.skill_rating, p.team_id,
+                   t.city || ' ' || t.name AS team_name,
+                   pp.archetype, pp.ego, pp.loyalty, pp.volatility,
+                   pb.college_state, pb.hometown_state,
+                   pb.personality_label, pb.backstory_blurb
+            FROM players p
+            JOIN teams t ON t.id = p.team_id
+            LEFT JOIN player_personalities pp ON pp.player_id = p.id
+            LEFT JOIN player_backstories pb ON pb.player_id = p.id
+            WHERE p.id = ?
+        """, (player_id,)).fetchone()
+        if not player:
+            raise ValueError(f"Player {player_id} not found.")
+
+        stats = conn.execute("""
+            SELECT points, rebounds, assists, steals, blocks
+            FROM player_game_stats
+            WHERE game_id = ? AND player_id = ?
+        """, (game_id, player_id)).fetchone()
+
+        morale_now = conn.execute("""
+            SELECT morale FROM player_morale
+            WHERE player_id = ? AND season_year = ?
+            ORDER BY week DESC LIMIT 1
+        """, (player_id, season_year)).fetchone()
+        morale_prev = conn.execute("""
+            SELECT morale FROM player_morale
+            WHERE player_id = ? AND season_year = ?
+            ORDER BY week DESC LIMIT 1 OFFSET 1
+        """, (player_id, season_year)).fetchone()
+
+        full_name = f"{player['first_name']} {player['last_name']}"
+        is_home = player["team_id"] == game["home_team_id"]
+        player_score = game["home_score"] if is_home else game["away_score"]
+        opp_score = game["away_score"] if is_home else game["home_score"]
+        player_team_name = game["home_name"] if is_home else game["away_name"]
+        opp_name = game["away_name"] if is_home else game["home_name"]
+        won = player_score > opp_score
+        margin = abs(player_score - opp_score)
+
+        morale_val = round(morale_now["morale"]) if morale_now else "?"
+        morale_delta = ""
+        if morale_now and morale_prev:
+            delta = round(morale_now["morale"] - morale_prev["morale"])
+            morale_delta = f" (was {round(morale_prev['morale'])} last week)"
+
+        def _trait_word(val):
+            if val is None:
+                return "moderate"
+            if val >= 0.70:
+                return "high"
+            if val <= 0.35:
+                return "low"
+            return "moderate"
+
+        ego_word = _trait_word(player["ego"])
+        volatility_word = _trait_word(player["volatility"])
+        loyalty_word = _trait_word(player["loyalty"])
+
+        personality_label = player["personality_label"] or "Pro"
+        college_str = player["college_state"] or "college"
+        if college_str == "International":
+            college_str = "overseas"
+        hometown_str = player["hometown_state"] or "his hometown"
+        backstory = player["backstory_blurb"] or ""
+
+        result_str = f"WIN by {margin}" if won else f"LOSS by {margin}"
+        if stats:
+            stat_line = (f"{stats['points']} pts, {stats['rebounds']} reb, "
+                         f"{stats['assists']} ast, {stats['steals']} stl, "
+                         f"{stats['blocks']} blk")
+        else:
+            stat_line = "stats not available"
+
+        question = (
+            f"{'Nice win out there tonight' if won else 'Tough one tonight'}, "
+            f"{player['first_name']} — what's going through your head right now?"
+        )
+
+        packet = f"""=== POST-GAME INTERVIEW PROMPT ===
+
+PLAYER: {full_name}, Age {player['age']}, {player['position']}
+TEAM: {player_team_name}
+BACKGROUND: Grew up in {hometown_str}. Played college ball in {college_str}.
+PERSONALITY TYPE: {personality_label}
+TRAITS: {ego_word} ego, {volatility_word} volatility, {loyalty_word} loyalty
+BACKSTORY: {backstory}
+
+GAME RESULT: {player_team_name} {player_score} — {opp_score} {opp_name} ({result_str})
+{full_name.upper()}'S STAT LINE: {stat_line}
+MORALE: {morale_val}/100{morale_delta}
+
+INTERVIEW QUESTION:
+"{question}"
+
+INSTRUCTIONS FOR CHATGPT:
+Write {player['first_name']}'s answer in 2-4 sentences. Stay in character as a {personality_label}. Sound like a real athlete in a real postgame press conference — not a press release. If they lost badly or underperformed, let that show. If they won big, let them be proud but not generic. Reference the game or the opponent naturally if it fits. Do NOT mention the score directly (players don't usually quote the scoreboard). Use first person.
+
+=== END PROMPT ==="""
+
+        row = conn.execute("""
+            INSERT INTO player_interviews
+                (game_id, player_id, week, season_year, question, context_packet)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (game_id, player_id, week, season_year, question, packet))
+        interview_id = row.lastrowid
+        conn.commit()
+        return interview_id, packet
+    finally:
+        if close_conn:
+            conn.close()
+
+
+def save_interview_response(interview_id, response_text, db=None):
+    """Store a ChatGPT-generated quote for an interview row."""
+    close_conn = db is None
+    conn = db if db else get_connection()
+    try:
+        conn.execute(
+            "UPDATE player_interviews SET response = ? WHERE id = ?",
+            (response_text.strip(), interview_id),
+        )
+        conn.commit()
+    finally:
+        if close_conn:
+            conn.close()
+
+
+def get_pending_interviews(conn, season_year=None, week=None):
+    """Return interview rows with no response yet."""
+    params = []
+    where = "WHERE pi.response IS NULL"
+    if season_year:
+        where += " AND pi.season_year = ?"
+        params.append(season_year)
+    if week:
+        where += " AND pi.week = ?"
+        params.append(week)
+    return [dict(r) for r in conn.execute(f"""
+        SELECT pi.id, pi.game_id, pi.player_id, pi.week, pi.season_year,
+               pi.question, pi.context_packet, pi.created_at,
+               p.first_name || ' ' || p.last_name AS player_name,
+               t.city || ' ' || t.name AS team_name
+        FROM player_interviews pi
+        JOIN players p ON p.id = pi.player_id
+        JOIN teams t ON t.id = p.team_id
+        {where}
+        ORDER BY pi.id DESC
+    """, params).fetchall()]
+
+
+def get_recent_interviews(conn, season_year, limit=20):
+    """Return filled-in interview quotes, newest first."""
+    return [dict(r) for r in conn.execute("""
+        SELECT pi.id, pi.game_id, pi.player_id, pi.week, pi.season_year,
+               pi.question, pi.response, pi.created_at,
+               p.first_name || ' ' || p.last_name AS player_name,
+               pb.personality_label,
+               t.city || ' ' || t.name AS team_name,
+               t.abbreviation
+        FROM player_interviews pi
+        JOIN players p ON p.id = pi.player_id
+        JOIN teams t ON t.id = p.team_id
+        LEFT JOIN player_backstories pb ON pb.player_id = pi.player_id
+        WHERE pi.response IS NOT NULL AND pi.season_year = ?
+        ORDER BY pi.id DESC
+        LIMIT ?
+    """, (season_year, limit)).fetchall()]
+
+
+def interviews_for_player(conn, player_id, season_year, limit=10):
+    """Return filled-in interview quotes for a specific player."""
+    return [dict(r) for r in conn.execute("""
+        SELECT pi.id, pi.game_id, pi.week, pi.question, pi.response,
+               pi.created_at
+        FROM player_interviews pi
+        WHERE pi.player_id = ? AND pi.season_year = ?
+          AND pi.response IS NOT NULL
+        ORDER BY pi.id DESC
+        LIMIT ?
+    """, (player_id, season_year, limit)).fetchall()]
+
+
 def parse_chatgpt_response(text):
     if not text.strip():
         return None, None

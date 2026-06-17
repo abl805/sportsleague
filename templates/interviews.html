@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Interviews{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+  <p class="eyebrow">Post-Game</p>
+  <h1>Player Interviews</h1>
+  <p>Copy a pending prompt into ChatGPT, then paste the response back to bring your players to life.</p>
+</section>
+
+{% if pending %}
+<section class="panel full">
+  <div class="section-head"><h2>Pending Prompts ({{ pending|length }})</h2></div>
+  <p style="color:#555;font-size:0.9em;margin-bottom:1rem;">
+    For each player below, click <strong>View Full Prompt</strong>, copy it into ChatGPT,
+    then come back and paste the response.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Week</th>
+        <th>Player</th>
+        <th>Team</th>
+        <th>Question</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for iv in pending %}
+      <tr>
+        <td>{{ iv.id }}</td>
+        <td>{{ iv.week }}</td>
+        <td><a href="{{ url_for('player_page', player_id=iv.player_id) }}">{{ iv.player_name }}</a></td>
+        <td>{{ iv.team_name }}</td>
+        <td style="font-size:0.85em;color:#555;">{{ iv.question }}</td>
+        <td>
+          <a class="btn btn-sm" href="{{ url_for('interview_prompt', interview_id=iv.id) }}">View Prompt &amp; Submit</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% else %}
+<section class="panel full">
+  <p>No pending interview prompts right now. Run a week to generate new ones.</p>
+</section>
+{% endif %}
+
+{% if completed %}
+<section class="panel full">
+  <div class="section-head"><h2>Completed Interviews</h2></div>
+  <div class="article-list">
+    {% for iv in completed %}
+      <article class="article-item">
+        <div class="story-meta">
+          Week {{ iv.week }} ·
+          <a href="{{ url_for('player_page', player_id=iv.player_id) }}">{{ iv.player_name }}</a>
+          ({{ iv.team_name }})
+          {% if iv.personality_label %} · <em>{{ iv.personality_label }}</em>{% endif %}
+        </div>
+        <p style="font-size:0.85em;color:#777;margin-bottom:4px;">{{ iv.question }}</p>
+        <p style="font-style:italic;">"{{ iv.response }}"</p>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

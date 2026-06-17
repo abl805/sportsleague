@@ -7,7 +7,21 @@
   <div>
     <p class="eyebrow"><a href="{{ url_for('team_page', abbr=detail.player.abbreviation) }}">{{ detail.player.team_name }}</a></p>
     <h1>{{ detail.player.player }}</h1>
-    <p>Age {{ detail.player.age }} / OVR {{ detail.player.skill_rating }} / {{ detail.player.salary|money }} / {{ detail.player.archetype|event_label if detail.player.archetype else "Personality pending" }}</p>
+    <p>Age {{ detail.player.age }} / OVR {{ detail.player.skill_rating }} / {{ detail.player.salary|money }}
+      {% if detail.player.personality_label %}
+        / <strong>{{ detail.player.personality_label }}</strong>
+      {% elif detail.player.archetype %}
+        / {{ detail.player.archetype|event_label }}
+      {% else %}
+        / Personality pending
+      {% endif %}
+    </p>
+    {% if detail.player.college_state or detail.player.hometown_state %}
+    <p class="player-bio-line" style="font-size:0.85em;color:#777;margin-top:2px;">
+      {% if detail.player.hometown_state %}From {{ detail.player.hometown_state }}{% endif %}
+      {% if detail.player.college_state %} · Played college ball in {{ detail.player.college_state }}{% endif %}
+    </p>
+    {% endif %}
   </div>
   <dl class="hero-stats">
     <div><dt>PPG</dt><dd>{{ detail.averages.ppg or 0 }}</dd></div>
@@ -15,6 +29,11 @@
     <div><dt>APG</dt><dd>{{ detail.averages.apg or 0 }}</dd></div>
   </dl>
 </section>
+{% if detail.player.backstory_blurb %}
+<section class="panel" style="margin:0 auto 1.5rem;max-width:860px;padding:1rem 1.5rem;">
+  <p style="font-style:italic;color:#555;margin:0;">{{ detail.player.backstory_blurb }}</p>
+</section>
+{% endif %}
 <section class="section-grid">
   <div class="panel wide">
     <div class="section-head"><h2>Game Log</h2></div>
@@ -48,6 +67,18 @@
           <div class="story-meta">Week {{ art.week }}</div>
           <h3 class="article-headline">{{ art.headline }}</h3>
           <p class="article-body">{{ art.body }}</p>
+        </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if detail.interviews %}
+    <div class="section-head" style="margin-top:1.5rem;"><h2>In Their Own Words</h2></div>
+    <div class="article-list" style="margin-bottom:24px;">
+      {% for iv in detail.interviews %}
+        <article class="article-item">
+          <div class="story-meta">Week {{ iv.week }}</div>
+          <p style="font-size:0.85em;color:#777;margin-bottom:4px;">{{ iv.question }}</p>
+          <p style="font-style:italic;">"{{ iv.response }}"</p>
         </article>
       {% endfor %}
     </div>

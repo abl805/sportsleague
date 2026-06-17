@@ -24,6 +24,7 @@ from league.playoffs import (
     schedule_next_playoff_game,
     record_game_result,
 )
+from league.chatgpt_bridge import build_interview_packet
 
 
 def _process_playoff_results(conn, playoff_game_ids, current_week, season_year):
@@ -471,6 +472,59 @@ def run_week(verbose=None, start_official=None):
         "UPDATE league_state SET current_week = current_week + 1, last_updated = datetime('now') WHERE id = 1"
     )
     conn.commit()
+
+    # ── Post-game interviews ───────────────────────────────────────────────────
+    has_backstories = c.execute(
+        "SELECT COUNT(*) FROM player_backstories"
+    ).fetchone()[0] > 0
+    interview_count = 0
+    if has_backstories:
+        for game in games:
+            all_game_stats = c.execute("""
+                SELECT pgs.player_id,
+                       pgs.points + pgs.rebounds*0.75 + pgs.assists*0.5
+                         + pgs.steals*1.5 + pgs.blocks AS score
+                FROM player_game_stats pgs
+                WHERE pgs.game_id = ?
+                ORDER BY score DESC
+            """, (game["id"],)).fetchall()
+
+            if not all_game_stats:
+                continue
+
+            # Always interview the game MVP
+            candidates = {all_game_stats[0]["player_id"]}
+
+            # Also pick the top scorer from the losing side
+            h_score_row = c.execute(
+                "SELECT home_score, away_score FROM games WHERE id = ?",
+                (game["id"],)
+            ).fetchone()
+            loser_team_id = (
+                game["away_team_id"] if h_score_row["home_score"] > h_score_row["away_score"]
+                else game["home_team_id"]
+            )
+            loser_top = c.execute("""
+                SELECT pgs.player_id
+                FROM player_game_stats pgs
+                JOIN players p ON p.id = pgs.player_id
+                WHERE pgs.game_id = ? AND p.team_id = ?
+                ORDER BY pgs.points DESC
+                LIMIT 1
+            """, (game["id"], loser_team_id)).fetchone()
+            if loser_top:
+                candidates.add(loser_top["player_id"])
+
+            for pid in candidates:
+                try:
+                    build_interview_packet(game["id"], pid, db=conn)
+                    interview_count += 1
+                except Exception:
+                    pass
+
+    if interview_count:
+        print(f"  {interview_count} post-game interview prompt(s) generated.")
+        print("  View at /interviews or run: python view_interviews.py\n")
 
     # ── Player morale + actions (runs in both regular season and playoffs) ─────
     if has_personalities:
