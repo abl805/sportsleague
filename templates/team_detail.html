@@ -3,38 +3,86 @@
 {% block title %}{{ detail.team.city }} {{ detail.team.name }}{% endblock %}
 {% block content %}
 
+{# ── HERO ─────────────────────────────────────────────────────────── #}
 <section class="team-hero">
-  <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
-    <div style="flex-shrink:0;">
-      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/primary.png') }}"
-           alt="{{ detail.team.abbreviation }}"
-           class="logo-primary"
-           style="height:160px;"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
-      <div class="team-abbr xl" style="display:none">{{ detail.team.abbreviation }}</div>
-    </div>
-    <div>
-      <p class="eyebrow" style="display:flex;align-items:center;gap:8px;">
-        <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/citymark.png') }}"
-             alt="" class="logo-citymark" onerror="this.style.display='none'">
-        {{ detail.team.arena or "Arena TBA" }}
+  <div>
+    <p class="eyebrow" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/citymark.png') }}"
+           alt="" class="logo-citymark" onerror="this.style.display='none'">
+      {{ detail.team.arena or "Home Arena TBA" }}
+    </p>
+    <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/wordmark.png') }}"
+         alt="{{ detail.team.city }} {{ detail.team.name }}"
+         class="logo-wordmark"
+         style="margin-bottom:12px;"
+         onerror="this.style.display='none'">
+    <h1>{{ detail.team.city }}</h1>
+    <p style="font-size:1.5rem;font-weight:800;color:var(--muted);margin:4px 0 12px;letter-spacing:0.02em;">
+      {{ detail.team.name }}
+    </p>
+    {% if detail.team.motto %}
+      <p style="color:var(--accent);font-size:0.85rem;font-weight:700;font-style:italic;margin:0 0 20px;letter-spacing:0.04em;">
+        &ldquo;{{ detail.team.motto }}&rdquo;
       </p>
-      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/wordmark.png') }}"
-           alt="{{ detail.team.city }} {{ detail.team.name }}"
-           class="logo-wordmark"
-           onerror="this.style.display='none'">
-      <h1>{{ detail.team.city }} {{ detail.team.name }}</h1>
-      <p>{{ detail.team.play_style or detail.team.motto or "A franchise profile will grow as the league evolves." }}</p>
-    </div>
+    {% endif %}
+    <dl class="hero-stats" style="grid-template-columns:repeat(3,auto);">
+      <div><dt>Record</dt><dd>{{ detail.record.wins if detail.record else 0 }}&ndash;{{ detail.record.losses if detail.record else 0 }}</dd></div>
+      <div><dt>Diff</dt><dd>{{ detail.record.point_diff|diff if detail.record else "&mdash;" }}</dd></div>
+      <div><dt>Chemistry</dt><dd>{{ "%.1f"|format(detail.chemistry.chemistry) if detail.chemistry else "&mdash;" }}</dd></div>
+    </dl>
   </div>
-  <dl class="hero-stats">
-    <div><dt>Record</dt><dd>{{ detail.record.wins if detail.record else 0 }}-{{ detail.record.losses if detail.record else 0 }}</dd></div>
-    <div><dt>Diff</dt><dd>{{ detail.record.point_diff|diff if detail.record else "-" }}</dd></div>
-    <div><dt>Chemistry</dt><dd>{{ "%.1f"|format(detail.chemistry.chemistry) if detail.chemistry else "-" }}</dd></div>
-  </dl>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;flex-shrink:0;">
+    <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/primary.png') }}"
+         alt="{{ detail.team.city }} {{ detail.team.name }}"
+         class="logo-primary"
+         style="height:200px;align-self:flex-start;"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+    <div class="team-abbr xl" style="display:none">{{ detail.team.abbreviation }}</div>
+    <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/secondary.png') }}"
+         alt=""
+         class="logo-secondary"
+         style="height:36px;"
+         onerror="this.style.display='none'">
+  </div>
 </section>
 
-{# ── ROSTER + SEASON STATS ───────────────────────────────────── #}
+{# ── TEAM IDENTITY (LOGO SHOWCASE) ───────────────────────────────── #}
+<div class="panel" style="margin-top:16px;">
+  <div class="section-head">
+    <h2>Team Identity</h2>
+    <span style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);">{{ detail.team.colors }}</span>
+  </div>
+  <div class="logo-showcase">
+    <div class="logo-showcase-item">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/primary.png') }}"
+           alt="Primary" onerror="this.parentElement.style.display='none'">
+      <span class="logo-showcase-label">Primary</span>
+    </div>
+    <div class="logo-showcase-item">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/secondary.png') }}"
+           alt="Secondary" onerror="this.parentElement.style.display='none'">
+      <span class="logo-showcase-label">Secondary</span>
+    </div>
+    <div class="logo-showcase-item">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/tertiary.png') }}"
+           alt="Tertiary" onerror="this.parentElement.style.display='none'">
+      <span class="logo-showcase-label">Tertiary</span>
+    </div>
+    <div class="logo-showcase-item">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/wordmark.png') }}"
+           alt="Wordmark" onerror="this.parentElement.style.display='none'">
+      <span class="logo-showcase-label">Wordmark</span>
+    </div>
+    <div class="logo-showcase-item">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.team.abbreviation ~ '/citymark.png') }}"
+           alt="Citymark" onerror="this.parentElement.style.display='none'">
+      <span class="logo-showcase-label">Citymark</span>
+    </div>
+  </div>
+</div>
+
+{# ── ROSTER + SEASON STATS ───────────────────────────────────────── #}
 <section class="section-grid" style="margin-top:16px;">
   <div class="panel wide">
     <div class="section-head"><h2>Roster</h2></div>
@@ -89,7 +137,7 @@
   </div>
 </section>
 
-{# ── SCHEDULE + GM ───────────────────────────────────────────── #}
+{# ── SCHEDULE + GM ───────────────────────────────────────────────── #}
 <section class="section-grid" style="margin-top:16px;">
   <div class="panel wide">
     <div class="section-head"><h2>Schedule</h2></div>
@@ -163,7 +211,7 @@
   </div>
 </section>
 
-{# ── IN THE NEWS + STORYLINES ─────────────────────────────────── #}
+{# ── IN THE NEWS + STORYLINES ────────────────────────────────────── #}
 {% if detail.articles or detail.events or detail.interviews %}
 <section style="margin-top:16px;">
   {% if detail.interviews %}
@@ -178,7 +226,7 @@
             {% if iv.personality_label %}&middot; <em>{{ iv.personality_label }}</em>{% endif %}
           </div>
           <p style="font-size:0.84em;color:var(--muted);margin-bottom:4px;">{{ iv.question }}</p>
-          <p style="font-style:italic;">"{{ iv.response }}"</p>
+          <p style="font-style:italic;">&ldquo;{{ iv.response }}&rdquo;</p>
         </article>
       {% endfor %}
     </div>
@@ -199,12 +247,85 @@
   </div>
   {% endif %}
   {% if detail.events %}
-  <div class="panel">
+  <div class="panel" style="margin-bottom:16px;">
     <div class="section-head"><h2>Storylines</h2></div>
     {{ storyline_list(detail.events) }}
   </div>
   {% endif %}
 </section>
 {% endif %}
+
+{# ── FAQ ─────────────────────────────────────────────────────────── #}
+<section class="team-faq">
+  <div class="panel">
+    <div class="section-head">
+      <h2>Frequently Asked Questions</h2>
+    </div>
+
+    <details class="faq-item">
+      <summary>Does {{ detail.team.city }} have a professional sports team?</summary>
+      <p class="faq-answer">
+        Yes — the {{ detail.team.city }} {{ detail.team.name }} compete in the AI Basketball Association (AIBA),
+        a fully simulated professional basketball league featuring eight franchises from across the country.
+        The {{ detail.team.name }} represent {{ detail.team.city }} and play their home games at {{ detail.team.arena or "their home arena" }}.
+      </p>
+    </details>
+
+    <details class="faq-item">
+      <summary>Where do the {{ detail.team.city }} {{ detail.team.name }} play their home games?</summary>
+      <p class="faq-answer">
+        The {{ detail.team.name }} play their home games at {{ detail.team.arena or "their home arena" }} in {{ detail.team.city }}.
+      </p>
+    </details>
+
+    <details class="faq-item">
+      <summary>What league are the {{ detail.team.city }} {{ detail.team.name }} in?</summary>
+      <p class="faq-answer">
+        The {{ detail.team.city }} {{ detail.team.name }} are a founding member of the AI Basketball Association (AIBA) —
+        an eight-team professional basketball league powered by AI-driven simulation.
+        Every game, trade, and storyline is generated by artificial intelligence, making each season completely unique.
+      </p>
+    </details>
+
+    {% if detail.team.colors %}
+    <details class="faq-item">
+      <summary>What are the {{ detail.team.city }} {{ detail.team.name }} team colors?</summary>
+      <p class="faq-answer">
+        The {{ detail.team.name }} wear {{ detail.team.colors }}.
+      </p>
+    </details>
+    {% endif %}
+
+    {% if detail.team.play_style %}
+    <details class="faq-item">
+      <summary>How do the {{ detail.team.city }} {{ detail.team.name }} play?</summary>
+      <p class="faq-answer">
+        {{ detail.team.play_style }}
+      </p>
+    </details>
+    {% endif %}
+
+    {% if detail.gm %}
+    <details class="faq-item">
+      <summary>Who is the {{ detail.team.city }} {{ detail.team.name }} general manager?</summary>
+      <p class="faq-answer">
+        The {{ detail.team.name }} are managed by {{ detail.gm.name }},
+        a {{ detail.gm.archetype.replace('_', ' ') }}-style executive.
+        As a simulated GM, {{ detail.gm.name.split()[0] }} makes all roster decisions, trades, and draft picks on behalf of the franchise.
+      </p>
+    </details>
+    {% endif %}
+
+    {% if detail.team.motto %}
+    <details class="faq-item">
+      <summary>What is the {{ detail.team.city }} {{ detail.team.name }} team motto?</summary>
+      <p class="faq-answer">
+        The {{ detail.team.name }} play under the motto: <em>&ldquo;{{ detail.team.motto }}&rdquo;</em>
+      </p>
+    </details>
+    {% endif %}
+
+  </div>
+</section>
 
 {% endblock %}
