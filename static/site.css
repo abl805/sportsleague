@@ -1740,7 +1740,7 @@ tr.mvp-row td { background: rgba(255, 184, 0, 0.05); }
 .logo-league-secondary { height: 28px; width: auto; display: block; }
 
 /* Team logos — sized by role */
-.logo-primary   { height: 120px; width: auto; display: block; }
+.logo-primary   { height: 120px; width: auto; display: block; align-self: flex-start; }
 .logo-secondary { height: 30px;  width: auto; display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .logo-tertiary  { height: 18px;  width: auto; display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .logo-wordmark  { height: 36px;  width: auto; display: block; margin-bottom: 4px; }
