@@ -495,8 +495,9 @@ Write {player['first_name']}'s answer in 2-4 sentences. Stay in character as a {
             INSERT INTO player_interviews
                 (game_id, player_id, week, season_year, question, context_packet)
             VALUES (?, ?, ?, ?, ?, ?)
+            RETURNING id
         """, (game_id, player_id, week, season_year, question, packet))
-        interview_id = row.lastrowid
+        interview_id = row.fetchone()["id"]
         conn.commit()
         return interview_id, packet
     finally:
@@ -655,8 +656,9 @@ Write {gm['name']}'s answer in 3-5 sentences. Stay in character as a {gm['archet
             INSERT INTO gm_interviews
                 (gm_id, week, season_year, trigger_type, playoff_series_id, question, context_packet)
             VALUES (?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
         """, (gm_id, week, season_year, trigger_type, playoff_series_id, question, packet))
-        interview_id = row.lastrowid
+        interview_id = row.fetchone()["id"]
         conn.commit()
         return interview_id, packet
     finally:

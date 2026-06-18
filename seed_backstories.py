@@ -135,9 +135,14 @@ def seed_backstories():
         blurb = _build_blurb(archetype, first_name, hometown_state, college_state)
 
         conn.execute("""
-            INSERT OR REPLACE INTO player_backstories
+            INSERT INTO player_backstories
                 (player_id, college_state, hometown_state, personality_label, backstory_blurb)
             VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT (player_id) DO UPDATE SET
+                college_state = EXCLUDED.college_state,
+                hometown_state = EXCLUDED.hometown_state,
+                personality_label = EXCLUDED.personality_label,
+                backstory_blurb = EXCLUDED.backstory_blurb
         """, (player_id, college_state, hometown_state, personality_label, blurb))
         count += 1
 

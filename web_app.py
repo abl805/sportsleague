@@ -672,10 +672,11 @@ def commissioner_articles_add():
                 continue
             week = int(art.get("week") or current_week)
             cur = conn.execute(
-                "INSERT INTO articles (week, season_year, headline, body) VALUES (?, ?, ?, ?)",
+                "INSERT INTO articles (week, season_year, headline, body) VALUES (?, ?, ?, ?)"
+                " RETURNING id",
                 (week, season_year, headline, body),
             )
-            article_id = cur.lastrowid
+            article_id = cur.fetchone()["id"]
             for abbr in art.get("team_tags") or []:
                 row = conn.execute(
                     "SELECT id FROM teams WHERE UPPER(abbreviation) = UPPER(?)", (abbr,)

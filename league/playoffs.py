@@ -22,8 +22,9 @@ def _insert_series(conn, season_year, round_num, series_type, seed_a, seed_b, te
         INSERT INTO playoff_series
             (season_year, round, series_type, seed_a, seed_b, team_a_id, team_b_id)
         VALUES (?, ?, ?, ?, ?, ?, ?)
+        RETURNING id
     """, (season_year, round_num, series_type, seed_a, seed_b, team_a_id, team_b_id))
-    return cur.lastrowid
+    return cur.fetchone()["id"]
 
 
 def _next_game_for_series(conn, series_id):
@@ -141,8 +142,9 @@ def schedule_next_playoff_game(conn, series_id, next_week, season_year):
         INSERT INTO games
             (home_team_id, away_team_id, week, season_year, playoff_series_id)
         VALUES (?, ?, ?, ?, ?)
+        RETURNING id
     """, (home_id, away_id, next_week, season_year, series_id))
-    return cur.lastrowid
+    return cur.fetchone()["id"]
 
 
 def record_game_result(conn, game_id):

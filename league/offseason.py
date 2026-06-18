@@ -282,13 +282,14 @@ def _create_rookie(conn, team_id, position, next_year, archetype_counts):
     fname = random.choice(FIRST_NAMES)
     lname = random.choice(LAST_NAMES)
 
-    conn.execute(
+    _cur = conn.execute(
         "INSERT INTO players "
         "(team_id, first_name, last_name, age, position, skill_rating, salary, status) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, 'active')",
+        "VALUES (?, ?, ?, ?, ?, ?, ?, 'active')"
+        " RETURNING id",
         (team_id, fname, lname, age, position, skill, salary),
     )
-    pid = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    pid = _cur.fetchone()["id"]
     conn.execute(
         "INSERT INTO contracts (player_id, team_id, salary, years_remaining, season_start) "
         "VALUES (?, ?, ?, ?, ?)",
@@ -352,8 +353,9 @@ def _sign_player(conn, player, team_id, next_year):
         (player["id"], team_id, salary, years, next_year),
     )
     conn.execute(
-        "INSERT OR REPLACE INTO player_morale (player_id, week, season_year, morale) "
-        "VALUES (?, 0, ?, ?)",
+        "INSERT INTO player_morale (player_id, week, season_year, morale) "
+        "VALUES (?, 0, ?, ?) "
+        "ON CONFLICT (player_id, week, season_year) DO UPDATE SET morale = EXCLUDED.morale",
         (player["id"], next_year, max(50.0, get_current_morale(conn, player["id"]) + 6)),
     )
     log_player_memory(
@@ -556,14 +558,13 @@ def _ensure_offseason_started(conn, state):
 
 
 def advance_offseason_step(conn, verbose=True):
-    c = conn.cursor()
-    state = c.execute("SELECT * FROM league_state WHERE id = 1").fetchone()
+    state = conn.execute("SELECT * FROM league_state WHERE id = 1").fetchone()
     if not state:
         raise RuntimeError("League not found. Run seed.py first.")
 
     season_year, stage = _ensure_offseason_started(conn, state)
     next_year = season_year + 1
-    existing = c.execute(
+    existing = conn.execute(
         "SELECT COUNT(*) FROM games WHERE season_year = ?",
         (next_year,),
     ).fetchone()[0]
@@ -595,13 +596,13 @@ def advance_offseason_step(conn, verbose=True):
     elif stage == "roster_finalization":
         summary["rookies"] = _draft_rookies_to_fill_rosters(conn, next_year)
     elif stage == "finalize":
-        c.execute(
+        conn.execute(
             "UPDATE pending_trades SET status = 'expired', "
             "rejection_reason = 'Expired before offseason rollover.' "
             "WHERE season_year = ? AND status = 'pending'",
             (season_year,),
         )
-        c.execute(
+        conn.execute(
             "UPDATE player_events SET status = 'resolved' "
             "WHERE season_year <= ? AND status = 'active'",
             (season_year,),
@@ -628,14 +629,14 @@ def advance_offseason_step(conn, verbose=True):
     )
 
     if next_stage:
-        c.execute(
+        conn.execute(
             "UPDATE league_state "
             "SET phase = 'offseason', offseason_stage = ?, offseason_from_season = ?, "
             "last_updated = datetime('now') WHERE id = 1",
             (next_stage, season_year),
         )
     else:
-        c.execute(
+        conn.execute(
             "UPDATE league_state "
             "SET current_week = 1, season_year = ?, phase = 'regular_season', "
             "offseason_stage = NULL, offseason_from_season = NULL, "

@@ -32,10 +32,9 @@ def validate_trade(conn, trade_id):
     - Neither team exceeds the salary cap after the swap
     - No player involved is already in another pending trade
     """
-    c   = conn.cursor()
     cap = _load_cap()
 
-    trade = c.execute(
+    trade = conn.execute(
         "SELECT * FROM pending_trades WHERE id = ?", (trade_id,)
     ).fetchone()
     if not trade:
@@ -45,10 +44,10 @@ def validate_trade(conn, trade_id):
     if trade["status"] != "pending":
         return False, f"Trade is already '{trade['status']}'."
 
-    prop_gm = c.execute(
+    prop_gm = conn.execute(
         "SELECT * FROM general_managers WHERE id = ?", (trade["proposing_gm_id"],)
     ).fetchone()
-    recv_gm = c.execute(
+    recv_gm = conn.execute(
         "SELECT * FROM general_managers WHERE id = ?", (trade["receiving_gm_id"],)
     ).fetchone()
     if not prop_gm or not recv_gm:
@@ -61,7 +60,7 @@ def validate_trade(conn, trade_id):
     requested_ids = json.loads(trade["requested_player_ids"])
 
     for pid in offered_ids:
-        p = c.execute("SELECT * FROM players WHERE id = ?", (pid,)).fetchone()
+        p = conn.execute("SELECT * FROM players WHERE id = ?", (pid,)).fetchone()
         if not p:
             return False, f"Offered player id={pid} does not exist."
         if (p["status"] or "active") != "active":
@@ -72,7 +71,7 @@ def validate_trade(conn, trade_id):
             )
 
     for pid in requested_ids:
-        p = c.execute("SELECT * FROM players WHERE id = ?", (pid,)).fetchone()
+        p = conn.execute("SELECT * FROM players WHERE id = ?", (pid,)).fetchone()
         if not p:
             return False, f"Requested player id={pid} does not exist."
         if (p["status"] or "active") != "active":
@@ -84,7 +83,7 @@ def validate_trade(conn, trade_id):
 
     # Cap check: compute team totals, then swap
     def team_total(team_id):
-        row = c.execute(
+        row = conn.execute(
             "SELECT SUM(salary) AS s FROM players "
             "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
             (team_id,),
@@ -92,11 +91,11 @@ def validate_trade(conn, trade_id):
         return row["s"] or 0
 
     offered_sal   = sum(
-        c.execute("SELECT salary FROM players WHERE id = ?", (pid,)).fetchone()["salary"]
+        conn.execute("SELECT salary FROM players WHERE id = ?", (pid,)).fetchone()["salary"]
         for pid in offered_ids
     )
     requested_sal = sum(
-        c.execute("SELECT salary FROM players WHERE id = ?", (pid,)).fetchone()["salary"]
+        conn.execute("SELECT salary FROM players WHERE id = ?", (pid,)).fetchone()["salary"]
         for pid in requested_ids
     )
 
@@ -113,7 +112,7 @@ def validate_trade(conn, trade_id):
     # Conflict check: no player already in another pending trade
     # (Use Python set intersection — avoid LIKE substring false-positives)
     all_pids = set(offered_ids + requested_ids)
-    other_pending = c.execute("""
+    other_pending = conn.execute("""
         SELECT id, offered_player_ids, requested_player_ids
         FROM   pending_trades
         WHERE  status = 'pending' AND id != ?
@@ -127,7 +126,7 @@ def validate_trade(conn, trade_id):
         overlap = all_pids & other_pids
         if overlap:
             pid = next(iter(overlap))
-            p = c.execute(
+            p = conn.execute(
                 "SELECT first_name, last_name FROM players WHERE id = ?", (pid,)
             ).fetchone()
             name = f"{p['first_name']} {p['last_name']}" if p else f"player {pid}"
@@ -140,15 +139,14 @@ def execute_trade(conn, trade_id):
     """
     Execute an approved trade: swap players between teams and mark the trade approved.
     """
-    c     = conn.cursor()
-    trade = dict(c.execute(
+    trade = dict(conn.execute(
         "SELECT * FROM pending_trades WHERE id = ?", (trade_id,)
     ).fetchone())
 
-    prop_gm   = dict(c.execute(
+    prop_gm   = dict(conn.execute(
         "SELECT * FROM general_managers WHERE id = ?", (trade["proposing_gm_id"],)
     ).fetchone())
-    recv_gm   = dict(c.execute(
+    recv_gm   = dict(conn.execute(
         "SELECT * FROM general_managers WHERE id = ?", (trade["receiving_gm_id"],)
     ).fetchone())
 
@@ -156,14 +154,14 @@ def execute_trade(conn, trade_id):
     recv_team = recv_gm["team_id"]
 
     for pid in json.loads(trade["offered_player_ids"]):
-        c.execute("UPDATE players   SET team_id = ? WHERE id = ?", (recv_team, pid))
-        c.execute("UPDATE contracts SET team_id = ? WHERE player_id = ?", (recv_team, pid))
+        conn.execute("UPDATE players   SET team_id = ? WHERE id = ?", (recv_team, pid))
+        conn.execute("UPDATE contracts SET team_id = ? WHERE player_id = ?", (recv_team, pid))
 
     for pid in json.loads(trade["requested_player_ids"]):
-        c.execute("UPDATE players   SET team_id = ? WHERE id = ?", (prop_team, pid))
-        c.execute("UPDATE contracts SET team_id = ? WHERE player_id = ?", (prop_team, pid))
+        conn.execute("UPDATE players   SET team_id = ? WHERE id = ?", (prop_team, pid))
+        conn.execute("UPDATE contracts SET team_id = ? WHERE player_id = ?", (prop_team, pid))
 
-    c.execute(
+    conn.execute(
         "UPDATE pending_trades SET status = 'approved' WHERE id = ?", (trade_id,)
     )
     conn.commit()

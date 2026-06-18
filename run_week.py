@@ -98,12 +98,13 @@ def _process_playoff_results(conn, playoff_game_ids, current_week, season_year):
             w1 = r1[0]["winner_id"]
             w2 = r1[1]["winner_id"]
 
-            conn.execute("""
+            _cur = conn.execute("""
                 INSERT INTO playoff_series
                     (season_year, round, seed_a, seed_b, team_a_id, team_b_id)
                 VALUES (?, 2, 1, 2, ?, ?)
+                RETURNING id
             """, (season_year, w1, w2))
-            finals_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+            finals_id = _cur.fetchone()["id"]
 
             # Finals Game 1: #1-bracket winner at home
             conn.execute("""

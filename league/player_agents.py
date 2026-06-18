@@ -258,8 +258,9 @@ def update_all_morale(conn, week, season_year, verbose=False):
         new_morale, delta, summary = compute_morale_update(conn, pid, week, season_year)
 
         conn.execute(
-            "INSERT OR REPLACE INTO player_morale (player_id, week, season_year, morale)"
-            " VALUES (?, ?, ?, ?)",
+            "INSERT INTO player_morale (player_id, week, season_year, morale)"
+            " VALUES (?, ?, ?, ?)"
+            " ON CONFLICT (player_id, week, season_year) DO UPDATE SET morale = EXCLUDED.morale",
             (pid, week, season_year, new_morale),
         )
 
@@ -612,8 +613,9 @@ def compute_team_chemistry(conn, team_id, week, season_year):
     chemistry  = max(25.0, min(96.0, chemistry))
 
     conn.execute(
-        "INSERT OR REPLACE INTO team_chemistry (team_id, week, season_year, chemistry)"
-        " VALUES (?, ?, ?, ?)",
+        "INSERT INTO team_chemistry (team_id, week, season_year, chemistry)"
+        " VALUES (?, ?, ?, ?)"
+        " ON CONFLICT (team_id, week, season_year) DO UPDATE SET chemistry = EXCLUDED.chemistry",
         (team_id, week, season_year, chemistry),
     )
     return chemistry

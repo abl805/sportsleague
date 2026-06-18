@@ -390,37 +390,26 @@ def seed():
 
     create_tables()
     conn = get_connection()
-    c = conn.cursor()
 
     # Wipe existing data (order respects foreign-key constraints)
-    c.executescript("""
-        DELETE FROM player_memory;
-        DELETE FROM player_events;
-        DELETE FROM player_morale;
-        DELETE FROM player_personalities;
-        DELETE FROM team_chemistry;
-        DELETE FROM agent_memory;
-        DELETE FROM pending_trades;
-        DELETE FROM general_managers;
-        DELETE FROM player_game_stats;
-        DELETE FROM games;
-        DELETE FROM playoff_series;
-        DELETE FROM contracts;
-        DELETE FROM standings;
-        DELETE FROM players;
-        DELETE FROM teams;
-        DELETE FROM league_state;
-    """)
+    for _tbl in [
+        "player_memory", "player_events", "player_morale", "player_personalities",
+        "team_chemistry", "agent_memory", "pending_trades", "general_managers",
+        "player_game_stats", "games", "playoff_series", "contracts", "standings",
+        "players", "teams", "league_state",
+    ]:
+        conn.execute(f"DELETE FROM {_tbl}")
 
     # Insert teams
     team_ids = []
     for t in TEAMS:
-        c.execute(
+        row = conn.execute(
             "INSERT INTO teams"
             " (city, name, abbreviation, mascot, colors, logo_description,"
             "  motto, arena, team_archetype, play_style, reputation, rivalry,"
             "  signature_trait)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            " RETURNING id",
             (
                 t["city"],
                 t["name"],
@@ -437,7 +426,7 @@ def seed():
                 t["signature_trait"],
             ),
         )
-        team_ids.append(c.lastrowid)
+        team_ids.append(row.fetchone()["id"])
 
     # Insert players + contracts
     used_names = set()
@@ -456,14 +445,15 @@ def seed():
             skill  = random.randint(42, 94)
             salary = salary_for(skill)
 
-            c.execute(
+            row = conn.execute(
                 "INSERT INTO players (team_id, first_name, last_name, age, position, skill_rating, salary)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                " VALUES (?, ?, ?, ?, ?, ?, ?)"
+                " RETURNING id",
                 (team_id, fname, lname, age, pos, skill, salary),
             )
-            player_id = c.lastrowid
+            player_id = row.fetchone()["id"]
 
-            c.execute(
+            conn.execute(
                 "INSERT INTO contracts (player_id, team_id, salary, years_remaining, season_start)"
                 " VALUES (?, ?, ?, ?, ?)",
                 (player_id, team_id, salary, random.randint(1, 4), LEAGUE_YEAR),
@@ -477,7 +467,7 @@ def seed():
     _player_arch_cfgs = _arch_data.get("player_archetypes", {})
 
     archetype_counts = {}
-    all_player_ids = c.execute("SELECT id, age FROM players").fetchall()
+    all_player_ids = conn.execute("SELECT id, age FROM players").fetchall()
     for row in all_player_ids:
         pid  = row["id"]
         age  = row["age"]
@@ -489,7 +479,7 @@ def seed():
         })
         traits = _generate_traits(base_traits)
 
-        c.execute(
+        conn.execute(
             "INSERT INTO player_personalities"
             " (player_id, archetype, ambition, loyalty, ego, work_ethic, volatility)"
             " VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -499,7 +489,7 @@ def seed():
 
         base_morale = INITIAL_MORALE.get(arch, 70)
         morale      = max(20.0, min(95.0, base_morale + random.gauss(0, 5)))
-        c.execute(
+        conn.execute(
             "INSERT INTO player_morale (player_id, week, season_year, morale)"
             " VALUES (?, 0, ?, ?)",
             (pid, LEAGUE_YEAR, morale),
@@ -509,7 +499,7 @@ def seed():
     abbr_to_id = {t["abbreviation"]: tid for t, tid in zip(TEAMS, team_ids)}
     for gm in GM_DATA:
         tid = abbr_to_id[gm["team_abbr"]]
-        c.execute(
+        conn.execute(
             "INSERT INTO general_managers"
             " (team_id, name, archetype, risk_tolerance, veteran_loyalty,"
             "  youth_preference, trade_frequency)"
@@ -520,7 +510,7 @@ def seed():
 
     # Insert standings rows
     for team_id in team_ids:
-        c.execute(
+        conn.execute(
             "INSERT INTO standings (team_id, season_year) VALUES (?, ?)",
             (team_id, LEAGUE_YEAR),
         )
@@ -528,13 +518,13 @@ def seed():
     # Build and insert schedule
     schedule, total_weeks = build_schedule(team_ids, num_rounds=2)
     for home, away, week in schedule:
-        c.execute(
+        conn.execute(
             "INSERT INTO games (home_team_id, away_team_id, week, season_year) VALUES (?, ?, ?, ?)",
             (home, away, week, LEAGUE_YEAR),
         )
 
     # Initialize league state
-    c.execute(
+    conn.execute(
         "INSERT INTO league_state"
         " (current_week, season_year, mode, official_started, phase, last_updated)"
         " VALUES (1, ?, ?, ?, 'regular_season', datetime('now'))",
