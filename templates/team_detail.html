@@ -2,6 +2,9 @@
 {% from "partials.html" import game_card, storyline_list %}
 {% block title %}{{ detail.team.city }} {{ detail.team.name }}{% endblock %}
 {% block content %}
+{% set state_map = {'APL': 'WI', 'PAY': 'UT', 'MNK': 'MN', 'SMA': 'CA', 'FLG': 'AZ', 'POC': 'ID', 'CHA': 'TN', 'LAR': 'TX'} %}
+{% set team_state = state_map.get(detail.team.abbreviation, '') %}
+{% set city_state = detail.team.city ~ (', ' ~ team_state if team_state else '') %}
 
 {# ── HERO ─────────────────────────────────────────────────────────── #}
 <section class="team-hero">
@@ -263,7 +266,7 @@
     </div>
 
     <details class="faq-item">
-      <summary>Does {{ detail.team.city }} have a professional sports team?</summary>
+      <summary>Does {{ city_state }} have a professional sports team?</summary>
       <p class="faq-answer">
         Yes — the {{ detail.team.city }} {{ detail.team.name }} compete in the AI Basketball Association (AIBA),
         a fully simulated professional basketball league featuring eight franchises from across the country.
@@ -272,14 +275,14 @@
     </details>
 
     <details class="faq-item">
-      <summary>Where do the {{ detail.team.city }} {{ detail.team.name }} play their home games?</summary>
+      <summary>Where do the {{ city_state }} {{ detail.team.name }} play their home games?</summary>
       <p class="faq-answer">
         The {{ detail.team.name }} play their home games at {{ detail.team.arena or "their home arena" }} in {{ detail.team.city }}.
       </p>
     </details>
 
     <details class="faq-item">
-      <summary>What league are the {{ detail.team.city }} {{ detail.team.name }} in?</summary>
+      <summary>What league are the {{ city_state }} {{ detail.team.name }} in?</summary>
       <p class="faq-answer">
         The {{ detail.team.city }} {{ detail.team.name }} are a founding member of the AI Basketball Association (AIBA) —
         an eight-team professional basketball league powered by AI-driven simulation.
@@ -289,7 +292,7 @@
 
     {% if detail.team.colors %}
     <details class="faq-item">
-      <summary>What are the {{ detail.team.city }} {{ detail.team.name }} team colors?</summary>
+      <summary>What are the {{ city_state }} {{ detail.team.name }} team colors?</summary>
       <p class="faq-answer">
         The {{ detail.team.name }} wear {{ detail.team.colors }}.
       </p>
@@ -298,7 +301,7 @@
 
     {% if detail.team.play_style %}
     <details class="faq-item">
-      <summary>How do the {{ detail.team.city }} {{ detail.team.name }} play?</summary>
+      <summary>How do the {{ city_state }} {{ detail.team.name }} play?</summary>
       <p class="faq-answer">
         {{ detail.team.play_style }}
       </p>
@@ -307,7 +310,7 @@
 
     {% if detail.gm %}
     <details class="faq-item">
-      <summary>Who is the {{ detail.team.city }} {{ detail.team.name }} general manager?</summary>
+      <summary>Who is the {{ city_state }} {{ detail.team.name }} general manager?</summary>
       <p class="faq-answer">
         The {{ detail.team.name }} are managed by {{ detail.gm.name }},
         a {{ detail.gm.archetype.replace('_', ' ') }}-style executive.
@@ -318,7 +321,7 @@
 
     {% if detail.team.motto %}
     <details class="faq-item">
-      <summary>What is the {{ detail.team.city }} {{ detail.team.name }} team motto?</summary>
+      <summary>What is the {{ city_state }} {{ detail.team.name }} team motto?</summary>
       <p class="faq-answer">
         The {{ detail.team.name }} play under the motto: <em>&ldquo;{{ detail.team.motto }}&rdquo;</em>
       </p>
