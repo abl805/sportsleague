@@ -112,7 +112,7 @@ def stat_leaders(conn, season_year, limit=10, order_by="ppg"):
         JOIN teams t ON t.id = p.team_id
         WHERE g.season_year = ?
         GROUP BY p.id
-        HAVING games_played >= 1
+        HAVING COUNT(pgs.id) >= 1
         ORDER BY {order_sql}
         LIMIT ?
     """, (season_year, limit)).fetchall())
