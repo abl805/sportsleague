@@ -1,28 +1,30 @@
 import contextlib
+import hashlib
 import io
 import json
 import os
+import secrets
 
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+if load_dotenv:
+    load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 import functools
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for, Response
+from itsdangerous import BadSignature, URLSafeSerializer
 
 from league import web_queries as q
-from league.chatgpt_bridge import (
-    build_chatgpt_packet,
-    parse_chatgpt_response,
-    response_template,
-    get_pending_interviews,
-    get_recent_interviews,
-    save_interview_response,
-)
+from league.chatgpt_bridge import get_recent_interviews, save_interview_response
 from league.database import create_tables, get_connection
+from league.fan_experience import cast_poll_vote, publish_weekly_editorial
 from league.offseason import (
     OFFSEASON_STAGE_LABELS,
     OFFSEASON_STAGES,
+    advance_full_offseason_from_default_db,
     advance_offseason_from_default_db,
 )
 from league.trade_engine import execute_trade, invalidate_trade, validate_trade, veto_trade
@@ -32,6 +34,36 @@ from run_week import run_week
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("AIBA_SECRET_KEY", "aaibl-local-dev-console")
+
+
+def _cookie_serializer():
+    return URLSafeSerializer(app.secret_key, salt="aiba-fan-cookie")
+
+
+def _signed_cookie_value(name):
+    raw = request.cookies.get(name)
+    if not raw:
+        return None
+    try:
+        return _cookie_serializer().loads(raw)
+    except BadSignature:
+        return None
+
+
+def _followed_team_id():
+    value = _signed_cookie_value("aiba_followed_team")
+    try:
+        return int(value) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _fan_voter_hash():
+    token = _signed_cookie_value("aiba_fan_token")
+    if not token:
+        token = secrets.token_urlsafe(24)
+    digest = hashlib.sha256(f"{token}:{app.secret_key}".encode("utf-8")).hexdigest()
+    return token, digest
 
 def _commissioner_password():
     return os.environ.get("COMMISSIONER_PASSWORD", "")
@@ -192,6 +224,8 @@ def home():
 
 @app.route("/live-league")
 def live_league():
+    followed_team_id = _followed_team_id()
+
     def load(conn):
         state = q.get_state(conn)
         if not state:
@@ -201,6 +235,21 @@ def live_league():
         bracket = get_bracket(conn, season) if phase in ("playoffs", "complete") else []
         playoff = get_playoff_snapshot(conn, season) if phase in ("playoffs", "complete") else None
         latest_results = q.latest_results(conn, season, limit=6)
+        forms = q.team_form(conn, season)
+        articles = q.recent_articles(conn, season, limit=5)
+        top_story = articles[0] if articles else None
+        if not top_story and latest_results:
+            explanation = conn.execute(
+                "SELECT factual_recap, standings_impact FROM game_explanations WHERE game_id=?",
+                (latest_results[0]["id"],),
+            ).fetchone()
+            if explanation:
+                top_story = {
+                    "headline": explanation["standings_impact"] or "The latest week changed the league",
+                    "body": explanation["factual_recap"],
+                    "week": latest_results[0]["week"],
+                    "story_role": "lead",
+                }
         offseason_events = q.offseason_events(conn, limit=len(OFFSEASON_STAGES)) if phase == "offseason" else []
         offseason_stage = state.get("offseason_stage") or "retirements"
         completed_offseason_stages = {event["stage"] for event in offseason_events}
@@ -231,8 +280,20 @@ def live_league():
             "max_week": q.get_max_week(conn, season),
             "standings": q.standings(conn, season, limit=6),
             "leaders": q.stat_leaders(conn, season, limit=6),
+            "mvp_ladder": q.mvp_ladder(conn, season, limit=5),
             "latest_results": latest_results,
-            "latest_articles": q.recent_articles(conn, season, limit=3),
+            "latest_articles": articles[:3],
+            "top_story": top_story,
+            "next_featured_game": q.next_featured_game(
+                conn, season, state["current_week"]
+            ),
+            "hot_team": forms[0] if forms else None,
+            "cold_team": forms[-1] if forms else None,
+            "trade_pressure": q.trade_pressure(conn, season),
+            "fan_poll": q.active_poll(conn, season),
+            "followed_team": q.followed_team_feed(
+                conn, followed_team_id, season
+            ),
             "storylines": q.public_storylines(conn, season, limit=6),
         }
 
@@ -261,11 +322,17 @@ def standings():
 
 @app.route("/teams")
 def teams():
+    followed_team_id = _followed_team_id()
+
     def load(conn):
         state = q.get_state(conn)
         if not state:
             return None
-        return {"state": state, "team_rows": q.teams_index(conn, state["season_year"])}
+        return {
+            "state": state,
+            "team_rows": q.teams_index(conn, state["season_year"]),
+            "followed_team_id": followed_team_id,
+        }
 
     data = with_conn(load)
     if not data:
@@ -275,12 +342,18 @@ def teams():
 
 @app.route("/teams/<abbr>")
 def team_page(abbr):
+    followed_team_id = _followed_team_id()
+
     def load(conn):
         state = q.get_state(conn)
         if not state:
             return None
         detail = q.team_detail(conn, abbr, state["season_year"])
-        return {"state": state, "detail": detail}
+        return {
+            "state": state,
+            "detail": detail,
+            "is_followed": bool(detail and detail["team"]["id"] == followed_team_id),
+        }
 
     data = with_conn(load)
     if not data:
@@ -397,12 +470,84 @@ def news():
             "articles": q.recent_articles(conn, season, limit=40),
             "storylines": q.public_storylines(conn, season, limit=40),
             "interviews": get_recent_interviews(conn, season, limit=20),
+            "editorial_quotes": q.recent_editorial_quotes(conn, season, limit=20),
         }
 
     data = with_conn(load)
     if not data:
         return render_no_league()
     return render_template("news.html", **data, active="news")
+
+
+@app.post("/follow-team")
+def follow_team():
+    team_id = request.form.get("team_id", type=int)
+    destination = request.form.get("next") or url_for("live_league")
+
+    def valid(conn):
+        return q.team_by_id(conn, team_id)
+
+    team = with_conn(valid)
+    if not team:
+        flash("That team could not be followed.", "error")
+        return redirect(destination)
+    response = redirect(destination)
+    response.set_cookie(
+        "aiba_followed_team",
+        _cookie_serializer().dumps(str(team_id)),
+        max_age=60 * 60 * 24 * 365 * 3,
+        httponly=True,
+        samesite="Lax",
+    )
+    flash(f"You now follow the {team['team_name']}.", "success")
+    return response
+
+
+@app.post("/unfollow-team")
+def unfollow_team():
+    destination = request.form.get("next") or url_for("teams")
+    response = redirect(destination)
+    response.delete_cookie("aiba_followed_team")
+    flash("Your team follow has been cleared.", "success")
+    return response
+
+
+@app.post("/polls/<int:poll_id>/vote")
+def poll_vote(poll_id):
+    option_id = request.form.get("option_id", type=int)
+    destination = request.form.get("next") or url_for("live_league")
+    token, voter_hash = _fan_voter_hash()
+    try:
+        def save(conn):
+            cast_poll_vote(conn, poll_id, option_id, voter_hash)
+        with_conn(save)
+        flash("Vote counted. The league remains autonomous; this is the fan verdict.", "success")
+    except Exception as exc:
+        flash(str(exc), "error")
+    response = redirect(destination)
+    if not request.cookies.get("aiba_fan_token"):
+        response.set_cookie(
+            "aiba_fan_token",
+            _cookie_serializer().dumps(token),
+            max_age=60 * 60 * 24 * 365 * 3,
+            httponly=True,
+            samesite="Lax",
+        )
+    return response
+
+
+@app.route("/history")
+def history():
+    def load(conn):
+        state = q.get_state(conn)
+        if not state:
+            return None
+        return {"state": state, **q.history_overview(conn)}
+
+    data = with_conn(load)
+    if not data:
+        return render_no_league()
+    return render_template("history.html", **data, active="history")
 
 
 def commissioner_data():
@@ -420,8 +565,9 @@ def commissioner_data():
             "offseason_events": q.offseason_events(conn),
             "team_options": q.teams_index(conn, season),
             "trade_options": q.trade_options(conn),
-            "pending_interviews": get_pending_interviews(conn, season_year=season),
+            "editorial_package": q.current_editorial_package(conn, season),
             "recent_interviews": get_recent_interviews(conn, season, limit=20),
+            "fan_poll": q.active_poll(conn, season),
         }
 
     data = with_conn(load)
@@ -437,6 +583,7 @@ def commissioner_data():
         offseason_stage,
         offseason_stage.replace("_", " ").title(),
     )
+    return data
 
     def try_packet(context_type, prompt, **kwargs):
         try:
@@ -599,6 +746,11 @@ def commissioner_action():
         elif action == "run_offseason":
             output = capture_output(lambda: advance_offseason_from_default_db(verbose=True))
             flash(output or "Offseason completed.", "operation")
+        elif action == "run_full_offseason":
+            output = capture_output(
+                lambda: advance_full_offseason_from_default_db(verbose=True)
+            )
+            flash(output or "The full offseason completed.", "operation")
         elif action == "approve_trade":
             trade_id = request.form.get("trade_id", type=int)
             output = approve_trade(trade_id)
@@ -645,6 +797,29 @@ def veto_trade_action(trade_id, reason):
         return f"Trade #{trade_id} vetoed: {reason}"
     finally:
         conn.close()
+
+
+@app.post("/commissioner/editorial/publish")
+@require_commissioner
+def commissioner_editorial_publish():
+    raw = (request.form.get("editorial_json") or "").strip()
+    if not raw:
+        flash("Paste the weekly ChatGPT response first.", "error")
+        return redirect(url_for("commissioner") + "#editorial")
+    try:
+        def publish(conn):
+            return publish_weekly_editorial(conn, raw)
+        articles, quotes, duplicate = with_conn(publish)
+        if duplicate:
+            flash("That exact weekly package was already published.", "success")
+        else:
+            flash(
+                f"Published {articles} stories and {quotes} character quotes.",
+                "success",
+            )
+    except Exception as exc:
+        flash(str(exc), "error")
+    return redirect(url_for("commissioner") + "#editorial")
 
 
 @app.post("/commissioner/articles/add")

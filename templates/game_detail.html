@@ -1,134 +1,253 @@
 {% extends "base.html" %}
-{% block title %}Game {{ detail.game.id }}{% endblock %}
+{% block title %}{{ detail.game.away_abbr }} at {{ detail.game.home_abbr }}{% endblock %}
 {% block content %}
-
-<section class="game-hero">
-  <div class="game-matchup-logos" style="display:flex;align-items:center;gap:24px;margin-bottom:16px;flex-wrap:wrap;">
-    <div style="text-align:center;">
-      <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.home_abbr ~ '/primary.png') }}"
-           alt="{{ detail.game.home_abbr }}"
-           class="logo-primary"
-           style="height:100px;"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
-      <div class="team-abbr" style="display:none">{{ detail.game.home_abbr }}</div>
-    </div>
-    <span style="font-size:1.1rem;font-weight:900;color:var(--muted);letter-spacing:.1em;">VS</span>
-    <div style="text-align:center;">
+<section class="game-broadcast-hero">
+  <p class="eyebrow">Week {{ detail.game.week }} · {{ detail.game.season_year }} season</p>
+  <div class="matchup-lockup">
+    <div>
       <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.away_abbr ~ '/primary.png') }}"
-           alt="{{ detail.game.away_abbr }}"
-           class="logo-primary"
-           style="height:100px;"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
-      <div class="team-abbr" style="display:none">{{ detail.game.away_abbr }}</div>
+           alt="{{ detail.game.away_name }}" onerror="this.style.display='none'">
+      <span>{{ detail.game.away_name }}</span>
+      <strong>{{ detail.game.away_score if detail.game.played else '—' }}</strong>
+    </div>
+    <i>{{ 'FINAL' if detail.game.played else 'VS' }}</i>
+    <div>
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.home_abbr ~ '/primary.png') }}"
+           alt="{{ detail.game.home_name }}" onerror="this.style.display='none'">
+      <span>{{ detail.game.home_name }}</span>
+      <strong>{{ detail.game.home_score if detail.game.played else '—' }}</strong>
     </div>
   </div>
-  <div>
-    <p class="eyebrow">Week {{ detail.game.week }} &mdash; {{ detail.game.season_year }} Season</p>
-    <h1>{{ detail.game.home_name }} {{ detail.game.home_score or "—" }} &ndash; {{ detail.game.away_score or "—" }} {{ detail.game.away_name }}</h1>
-  </div>
+  {% if detail.game.played and detail.explanation %}
+    <p class="broadcast-deck">{{ detail.explanation.factual_recap }}</p>
+  {% elif detail.broadcast %}
+    <p class="broadcast-deck">{{ detail.broadcast.pregame_storyline }}</p>
+  {% else %}
+    <p class="broadcast-deck">Two team identities meet. The outcome will be written by talent, coaching, chemistry, morale, health, and execution.</p>
+  {% endif %}
 </section>
 
-{# ── LINE SCORE ───────────────────────────────────────────────── #}
-{% if detail.game.q1_home is not none %}
-<section style="margin-top:16px;">
+{% if detail.rivalry %}
+<section class="rivalry-game-strip">
+  <div>
+    <span>{{ detail.rivalry.tier }} rivalry</span>
+    <strong>{{ detail.rivalry.fan_name or (detail.game.away_abbr ~ '–' ~ detail.game.home_abbr) }}</strong>
+    <p>{{ detail.rivalry.meetings }} meetings · {{ detail.rivalry.close_games }} close finishes · {{ detail.rivalry.playoff_meetings }} playoff meetings · {{ detail.rivalry.trade_count }} trades</p>
+  </div>
+  <div>
+    <b>{{ (detail.rivalry.current_intensity * 100)|int }}%</b>
+    <div class="rivalry-meter"><i style="width:{{ (detail.rivalry.current_intensity * 100)|int }}%"></i></div>
+  </div>
+</section>
+{% endif %}
+
+<section class="game-rundown">
+  <article>
+    <span>Win probability</span>
+    {% if detail.explanation %}
+      <strong>{{ (detail.explanation.home_win_probability * 100)|round|int }}% {{ detail.game.home_abbr }}</strong>
+      <p>Pregame model; not a guarantee.</p>
+    {% elif detail.preview %}
+      <strong>{{ (detail.preview.home_win_probability * 100)|round|int }}% {{ detail.game.home_abbr }}</strong>
+      <p>Current projection; availability locks at tipoff.</p>
+    {% else %}
+      <strong>Calculated at tipoff</strong>
+      <p>Availability and chemistry lock with the game.</p>
+    {% endif %}
+  </article>
+  <article>
+    <span>Key matchup</span>
+    <strong>{{ detail.explanation.strategy_matchup if detail.explanation else detail.preview.strategy_matchup if detail.preview else detail.game.away_abbr ~ ' identity vs ' ~ detail.game.home_abbr ~ ' identity' }}</strong>
+  </article>
+  <article>
+    <span>Standings impact</span>
+    <strong>{{ detail.explanation.standings_impact if detail.explanation else 'Waiting for the result' }}</strong>
+  </article>
+</section>
+
+{% if detail.broadcast %}
+<section class="pregame-broadcast panel">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">{{ 'Before tipoff' if detail.game.played else 'Broadcast setup' }}</span>
+      <h2>{{ detail.broadcast.pregame_headline }}</h2>
+    </div>
+  </div>
+  <p class="pregame-lede">{{ detail.broadcast.pregame_storyline }}</p>
+  <div class="pregame-story-grid">
+    {% for card in detail.broadcast.cards %}
+      <article>
+        <span>{{ card.label }}</span>
+        <strong>{{ card.title }}</strong>
+        <p>{{ card.detail }}</p>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if detail.injuries %}
+<section class="availability-strip">
+  <span>Availability</span>
+  {% for injury in detail.injuries %}
+    <strong>{{ injury.abbreviation }} · {{ injury.player_name }} · {{ injury.severity }}</strong>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if detail.rotation_plans %}
+<section class="rotation-grid">
+  {% for plan in detail.rotation_plans %}
+    <article class="panel coach-plan">
+      <div class="section-head">
+        <h2>{{ plan.abbreviation }} rotation</h2>
+        <span>{{ plan.rotation_size }} players</span>
+      </div>
+      <p class="coach-plan-lead">
+        <strong>{{ plan.coach_name or 'Coaching staff' }}</strong>
+        <span>{{ plan.lineup_preference|event_label }}</span>
+      </p>
+      <p>{{ plan.summary }}</p>
+      <div class="coach-plan-lineup">
+        {% for player in plan.starters %}
+          <a href="{{ url_for('player_page', player_id=player.player_id or player.id) }}">
+            <span>{{ player.position }} · {{ player.minutes }} MIN</span>
+            <strong>{{ player.player }}</strong>
+          </a>
+        {% endfor %}
+      </div>
+      {% if plan.reserves %}
+        <small>
+          Bench:
+          {% for player in plan.reserves %}
+            {{ player.player }} ({{ player.minutes }}){% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </small>
+      {% endif %}
+    </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if detail.game.played %}
+<section class="broadcast-grid">
   <div class="panel">
-    <div class="section-head"><h2>Line Score</h2></div>
+    <div class="section-head"><h2>Quarter by quarter</h2></div>
     <div class="table-wrap">
       <table class="linescore">
-        <thead>
-          <tr>
-            <th>Team</th>
-            <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>
-            <th class="total">Total</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Team</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Total</th></tr></thead>
         <tbody>
-          <tr>
-            <td>
-              <span style="display:inline-flex;align-items:center;gap:8px;">
-                <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.home_abbr ~ '/secondary.png') }}"
-                     alt="" class="logo-secondary" onerror="this.style.display='none'">
-                <strong>{{ detail.game.home_abbr }}</strong>
-              </span>
-              <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.home_name }}</span>
-            </td>
-            <td>{{ detail.game.q1_home }}</td>
-            <td>{{ detail.game.q2_home }}</td>
-            <td>{{ detail.game.q3_home }}</td>
-            <td>{{ detail.game.q4_home }}</td>
-            <td class="total">{{ detail.game.home_score }}</td>
-          </tr>
-          <tr>
-            <td>
-              <span style="display:inline-flex;align-items:center;gap:8px;">
-                <img src="{{ url_for('static', filename='images/teams/' ~ detail.game.away_abbr ~ '/secondary.png') }}"
-                     alt="" class="logo-secondary" onerror="this.style.display='none'">
-                <strong>{{ detail.game.away_abbr }}</strong>
-              </span>
-              <span style="color:var(--muted);font-size:0.82rem;">{{ detail.game.away_name }}</span>
-            </td>
-            <td>{{ detail.game.q1_away }}</td>
-            <td>{{ detail.game.q2_away }}</td>
-            <td>{{ detail.game.q3_away }}</td>
-            <td>{{ detail.game.q4_away }}</td>
-            <td class="total">{{ detail.game.away_score }}</td>
-          </tr>
+          <tr><td>{{ detail.game.away_abbr }}</td><td>{{ detail.game.q1_away }}</td><td>{{ detail.game.q2_away }}</td><td>{{ detail.game.q3_away }}</td><td>{{ detail.game.q4_away }}</td><td><strong>{{ detail.game.away_score }}</strong></td></tr>
+          <tr><td>{{ detail.game.home_abbr }}</td><td>{{ detail.game.q1_home }}</td><td>{{ detail.game.q2_home }}</td><td>{{ detail.game.q3_home }}</td><td>{{ detail.game.q4_home }}</td><td><strong>{{ detail.game.home_score }}</strong></td></tr>
         </tbody>
       </table>
     </div>
   </div>
+  <div class="panel turning-point-card">
+    <div class="section-head"><h2>Turning point</h2></div>
+    <strong>{{ detail.explanation.turning_point if detail.explanation else 'The decisive stretch is being reviewed.' }}</strong>
+    {% if detail.explanation %}
+      <p>Decisive quarter: Q{{ detail.explanation.decisive_quarter }}</p>
+    {% endif %}
+  </div>
 </section>
-{% endif %}
 
-{# ── GAME MVP ─────────────────────────────────────────────────── #}
-{% if detail.mvp %}
-<section style="margin-top:16px;">
-  <div class="panel">
-    <div class="section-head">
-      <h2>Game MVP</h2>
-      <span style="color:var(--gold);font-size:0.78rem;font-weight:800;">Best performance this game</span>
-    </div>
-    <div class="mvp-card">
-      <div class="mvp-badge">MVP</div>
-      <div>
-        <p class="mvp-name">
-          <a href="{{ url_for('player_page', player_id=detail.mvp.player_id) }}" style="color:var(--gold);text-decoration:none;">{{ detail.mvp.player }}</a>
-        </p>
-        <p class="mvp-team">{{ detail.mvp.position }} &mdash; {{ detail.mvp.team_name }}</p>
-        <div class="mvp-stats">
-          <div class="mvp-stat"><strong>{{ detail.mvp.points }}</strong><span>PTS</span></div>
-          <div class="mvp-stat"><strong>{{ detail.mvp.rebounds }}</strong><span>REB</span></div>
-          <div class="mvp-stat"><strong>{{ detail.mvp.assists }}</strong><span>AST</span></div>
-          <div class="mvp-stat"><strong>{{ detail.mvp.steals }}</strong><span>STL</span></div>
-          <div class="mvp-stat"><strong>{{ detail.mvp.blocks }}</strong><span>BLK</span></div>
+{% if detail.broadcast and detail.broadcast.quarter_recaps %}
+<section class="panel quarter-story">
+  <div class="section-head"><h2>How the game unfolded</h2></div>
+  <div class="quarter-story-grid">
+    {% for recap in detail.broadcast.quarter_recaps %}
+      <article class="{{ 'decisive' if detail.explanation and recap.quarter == detail.explanation.decisive_quarter else '' }}">
+        <div>
+          <span>Q{{ recap.quarter }}</span>
+          <strong>{{ detail.game.away_abbr }} {{ recap.away_points }} · {{ detail.game.home_abbr }} {{ recap.home_points }}</strong>
         </div>
-      </div>
-    </div>
+        <p>{{ recap.text }}</p>
+        <small>Running score: {{ detail.game.away_abbr }} {{ recap.away_total }} · {{ detail.game.home_abbr }} {{ recap.home_total }}</small>
+      </article>
+    {% endfor %}
   </div>
 </section>
 {% endif %}
 
-{# ── BOX SCORES ───────────────────────────────────────────────── #}
-<section class="section-grid" style="margin-top:16px;">
-  {% for team_name in [detail.game.home_name, detail.game.away_name] %}
+{% if detail.mvp %}
+<section class="player-of-game">
+  <span>Player of the game</span>
+  <a href="{{ url_for('player_page', player_id=detail.mvp.player_id) }}">{{ detail.mvp.player }}</a>
+  <div>
+    <strong>{{ detail.mvp.points }} PTS</strong>
+    <strong>{{ detail.mvp.rebounds }} REB</strong>
+    <strong>{{ detail.mvp.assists }} AST</strong>
+    <strong>{{ detail.mvp.steals }} STL</strong>
+    <strong>{{ detail.mvp.blocks }} BLK</strong>
+  </div>
+</section>
+{% endif %}
+
+{% if detail.explanation %}
+<section class="broadcast-grid">
+  <article class="panel">
+    <div class="section-head"><h2>Why it happened</h2></div>
+    <div class="factor-columns">
+      {% for side, factors in [('Home', detail.explanation.key_factors.home), ('Away', detail.explanation.key_factors.away)] %}
+        <div>
+          <span>{{ side }}</span>
+          {% for factor in factors %}
+            <p><strong>{{ factor.label }}</strong><i class="{{ 'positive' if factor.value > 0 else 'negative' }}">{{ '%+.1f'|format(factor.value) }}</i></p>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel coach-quote">
+    <div class="section-head"><h2>From the sideline</h2></div>
+    {% if detail.quotes %}
+      {% for quote in detail.quotes %}
+        <blockquote>“{{ quote.quote_text }}”</blockquote>
+        <span>— {{ quote.speaker_name }}</span>
+      {% endfor %}
+    {% elif detail.explanation.coach_quote %}
+      <blockquote>“{{ detail.explanation.coach_quote }}”</blockquote>
+      <span>— Winning coach</span>
+    {% else %}
+      <p class="empty">No postgame quote was filed.</p>
+    {% endif %}
+  </article>
+</section>
+{% endif %}
+{% elif not detail.rotation_plans %}
+<section class="panel">
+  <div class="section-head"><h2>Projected starters</h2></div>
+  <div class="starter-grid">
+    {% for player in detail.projected_starters %}
+      <a href="{{ url_for('player_page', player_id=player.id) }}">
+        <span>{{ player.abbreviation }} · {{ player.position }}</span>
+        <strong>{{ player.player }}</strong>
+        <small>OVR {{ player.skill_rating }}</small>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if detail.box %}
+<section class="section-grid">
+  {% for team_name in [detail.game.away_name, detail.game.home_name] %}
     <div class="panel">
       <div class="section-head"><h2>{{ team_name }}</h2></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Player</th><th>Pos</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead>
+          <thead><tr><th>Player</th><th>Pos</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead>
           <tbody>
             {% for row in detail.box if row.team_name == team_name %}
-              <tr{% if detail.mvp and row.player_id == detail.mvp.player_id %} class="mvp-row"{% endif %}>
-                <td><a href="{{ url_for('player_page', player_id=row.player_id) }}">{{ row.player }}</a>{% if detail.mvp and row.player_id == detail.mvp.player_id %} <span class="mvp-pip">MVP</span>{% endif %}</td>
-                <td>{{ row.position }}</td>
-                <td>{{ row.points }}</td>
-                <td>{{ row.rebounds }}</td>
-                <td>{{ row.assists }}</td>
-                <td>{{ row.steals }}</td>
-                <td>{{ row.blocks }}</td>
+              <tr class="{{ 'mvp-row' if detail.mvp and row.player_id == detail.mvp.player_id else '' }}">
+                <td>
+                  <a href="{{ url_for('player_page', player_id=row.player_id) }}">{{ row.player }}</a>
+                  {% if row.started %}<span class="starter-tag">START</span>{% endif %}
+                </td>
+                <td>{{ row.position }}</td><td>{{ row.minutes }}</td><td>{{ row.points }}</td><td>{{ row.rebounds }}</td>
+                <td>{{ row.assists }}</td><td>{{ row.steals }}</td><td>{{ row.blocks }}</td>
               </tr>
-            {% else %}
-              <tr><td colspan="7">No box score recorded.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -136,5 +255,19 @@
     </div>
   {% endfor %}
 </section>
+{% endif %}
 
+{% if detail.next_matchups %}
+<section class="panel" style="margin-top:16px;">
+  <div class="section-head"><h2>What comes next</h2></div>
+  <div class="score-grid">
+    {% for game in detail.next_matchups %}
+      <a class="score-card" href="{{ url_for('game_page', game_id=game.id) }}">
+        <span class="score-week">Week {{ game.week }}</span>
+        <strong>{{ game.away_abbr }} at {{ game.home_abbr }}</strong>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 {% endblock %}

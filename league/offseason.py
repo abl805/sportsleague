@@ -14,6 +14,17 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from league.database import create_tables, get_connection
 from league.player_agents import get_current_morale, log_player_memory
+from league.fan_experience import (
+    backfill_fan_foundations,
+    finalize_due_polls,
+    finalize_season,
+    process_coach_offseason,
+    refresh_hall_of_fame,
+    refresh_league_lore,
+    record_history_event,
+    record_team_change,
+    register_draft_profile,
+)
 from seed import (
     FIRST_NAMES,
     LAST_NAMES,
@@ -94,6 +105,42 @@ def _retire_player(conn, player, season_year, reason):
         (pid,),
     )
     log_player_memory(conn, pid, 0, season_year, "retired", reason)
+    career = conn.execute(
+        """
+        SELECT SUM(pgs.points) AS points
+        FROM player_game_stats pgs
+        JOIN games g ON g.id=pgs.game_id
+        WHERE pgs.player_id=?
+        """,
+        (pid,),
+    ).fetchone()
+    career_points = career["points"] or 0
+    if career_points >= 1500 or player["skill_rating"] >= 90:
+        conn.execute(
+            """
+            INSERT INTO retired_jerseys (team_id, player_id, season_year, reason)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT DO NOTHING
+            """,
+            (
+                player["team_id"],
+                pid,
+                season_year,
+                f"Retired after {career_points} career points with the franchise.",
+            ),
+        )
+    record_history_event(
+        conn,
+        season_year,
+        0,
+        "retirement",
+        f"{_player_label(player)} retires",
+        reason,
+        team_id=player["team_id"],
+        player_id=pid,
+        source_key=f"retirement:{pid}:{season_year}",
+        importance=2,
+    )
 
 
 def _resolve_retirements(conn, season_year):
@@ -126,11 +173,73 @@ def _resolve_retirements(conn, season_year):
     return retired
 
 
+def development_chances(
+    age,
+    morale=70.0,
+    work_ethic=0.5,
+    coach_development=0.5,
+    coach_leadership=0.5,
+):
+    """Bounded improvement/regression odds for one offseason."""
+    if age <= 24:
+        improve = 0.48
+    elif age <= 28:
+        improve = 0.22
+    elif age <= 30:
+        improve = 0.08
+    else:
+        improve = 0.02
+
+    if age >= 35:
+        regress = 0.68
+    elif age >= 32:
+        regress = 0.38
+    elif age >= 30:
+        regress = 0.15
+    else:
+        regress = 0.03
+
+    development_scale = (
+        0.34 if age <= 25
+        else 0.14 if age <= 29
+        else 0.04
+    )
+    improve += (coach_development - 0.5) * development_scale
+    improve += (work_ethic - 0.5) * 0.18
+    improve += max(-0.08, min(0.08, (morale - 60.0) * 0.003))
+
+    veteran_protection = (
+        (coach_development - 0.5) * 0.16
+        + (coach_leadership - 0.5) * 0.10
+        + (work_ethic - 0.5) * 0.08
+    )
+    regress -= veteran_protection
+    regress += max(-0.05, min(0.12, (50.0 - morale) * 0.004))
+    return (
+        max(0.01, min(0.82, improve)),
+        max(0.01, min(0.82, regress)),
+    )
+
+
 def _age_and_develop_players(conn):
-    improved = regressed = 0
+    improved = regressed = coach_impacts = 0
     rows = conn.execute(
-        "SELECT * FROM players WHERE COALESCE(status, 'active') = 'active'"
+        """
+        SELECT p.*, COALESCE(pp.work_ethic, 0.5) AS work_ethic,
+               hc.id AS coach_id, hc.name AS coach_name,
+               COALESCE(hc.development, 0.5) AS coach_development,
+               COALESCE(hc.leadership, 0.5) AS coach_leadership
+        FROM players p
+        LEFT JOIN player_personalities pp ON pp.player_id=p.id
+        LEFT JOIN head_coaches hc
+          ON hc.team_id=p.team_id AND hc.status='active'
+        WHERE COALESCE(p.status, 'active') = 'active'
+        """
     ).fetchall()
+    state = conn.execute(
+        "SELECT season_year FROM league_state WHERE id=1"
+    ).fetchone()
+    development_season = (state["season_year"] if state else 2026) + 1
 
     for row in rows:
         player = dict(row)
@@ -138,20 +247,44 @@ def _age_and_develop_players(conn):
         skill = player["skill_rating"]
         morale = get_current_morale(conn, player["id"])
 
-        delta = 0
-        if age <= 24 and random.random() < 0.55:
-            delta += random.randint(1, 3)
-        elif age <= 28 and random.random() < 0.25:
-            delta += 1
-        elif age >= 34 and random.random() < 0.65:
-            delta -= random.randint(1, 3)
-        elif age >= 31 and random.random() < 0.35:
-            delta -= 1
+        improve_chance, regress_chance = development_chances(
+            age,
+            morale,
+            player["work_ethic"],
+            player["coach_development"],
+            player["coach_leadership"],
+        )
+        baseline_improve, baseline_regress = development_chances(
+            age,
+            morale,
+            player["work_ethic"],
+            0.5,
+            0.5,
+        )
+        improve_roll = random.random()
+        regress_roll = random.random()
+        coach_helped = (
+            improve_chance > baseline_improve
+            and baseline_improve <= improve_roll < improve_chance
+        )
+        coach_protected = (
+            regress_chance < baseline_regress
+            and regress_chance <= regress_roll < baseline_regress
+        )
 
-        if morale >= 75 and age <= 27 and random.random() < 0.20:
-            delta += 1
-        if morale < 35 and age >= 30 and random.random() < 0.20:
-            delta -= 1
+        delta = 0
+        if improve_roll < improve_chance:
+            delta = random.randint(1, 3) if age <= 24 else 1
+            if (
+                age <= 24
+                and player["coach_development"] >= 0.84
+                and player["work_ethic"] >= 0.70
+                and random.random() < 0.16
+            ):
+                delta += 1
+                coach_helped = True
+        elif regress_roll < regress_chance:
+            delta = -random.randint(1, 3) if age >= 35 else -1
 
         new_skill = max(35, min(96, skill + delta))
         conn.execute(
@@ -162,8 +295,34 @@ def _age_and_develop_players(conn):
             improved += 1
         elif delta < 0:
             regressed += 1
+        if player.get("coach_id") and coach_helped and delta > 0:
+            coach_impacts += 1
+            log_player_memory(
+                conn,
+                player["id"],
+                0,
+                development_season,
+                "coach_development",
+                (
+                    f"{player['coach_name']}'s development program helped produce "
+                    f"a {delta}-point offseason improvement."
+                ),
+            )
+        elif player.get("coach_id") and coach_protected and delta >= 0 and age >= 30:
+            coach_impacts += 1
+            log_player_memory(
+                conn,
+                player["id"],
+                0,
+                development_season,
+                "coach_development",
+                (
+                    f"{player['coach_name']}'s staff helped preserve the veteran's "
+                    "rating through the offseason."
+                ),
+            )
 
-    return improved, regressed
+    return improved, regressed, coach_impacts
 
 
 def _extend_contract(conn, player, contract, next_year, salary_cap):
@@ -274,7 +433,14 @@ def _desired_position(team_players):
     return min(counts, key=lambda pos: counts[pos])
 
 
-def _create_rookie(conn, team_id, position, next_year, archetype_counts):
+def _create_rookie(
+    conn,
+    team_id,
+    position,
+    next_year,
+    archetype_counts,
+    pick_number,
+):
     player_arch_cfgs = _load_player_archetypes()
     age = random.randint(19, 22)
     skill = random.randint(45, 74)
@@ -337,10 +503,19 @@ def _create_rookie(conn, team_id, position, next_year, archetype_counts):
         "rookie_signed",
         f"Joined as rookie {position}, skill {skill}",
     )
+    register_draft_profile(
+        conn,
+        pid,
+        team_id,
+        next_year,
+        pick_number,
+        skill,
+    )
     return f"{fname} {lname}"
 
 
 def _sign_player(conn, player, team_id, next_year):
+    old_team_id = player["team_id"]
     salary = max(player["salary"], _market_salary(player["skill_rating"]))
     years = random.randint(1, 3)
     conn.execute(
@@ -365,6 +540,15 @@ def _sign_player(conn, player, team_id, next_year):
         next_year,
         "free_agent_signed",
         f"Signed for {years} years at ${salary / 1_000_000:.1f}M",
+    )
+    record_team_change(
+        conn,
+        player["id"],
+        old_team_id,
+        team_id,
+        next_year,
+        0,
+        "free agency",
     )
     return _player_label(player)
 
@@ -412,6 +596,11 @@ def _draft_rookies_to_fill_rosters(conn, next_year, max_per_team=None):
     }
 
     teams = conn.execute("SELECT id FROM teams ORDER BY id").fetchall()
+    row = conn.execute(
+        "SELECT MAX(pick_number) AS pick_number FROM draft_profiles WHERE draft_year=?",
+        (next_year,),
+    ).fetchone()
+    pick_number = int(row["pick_number"] or 0)
     for team in teams:
         team_id = team["id"]
         team_rookies = 0
@@ -430,7 +619,17 @@ def _draft_rookies_to_fill_rosters(conn, next_year, max_per_team=None):
                 break
 
             position = _desired_position(roster)
-            rookies.append(_create_rookie(conn, team_id, position, next_year, archetype_counts))
+            pick_number += 1
+            rookies.append(
+                _create_rookie(
+                    conn,
+                    team_id,
+                    position,
+                    next_year,
+                    archetype_counts,
+                    pick_number,
+                )
+            )
             team_rookies += 1
 
     return rookies
@@ -450,7 +649,7 @@ def _create_next_season(conn, next_year):
             (team_id, next_year),
         )
 
-    schedule, total_weeks = build_schedule(team_ids, num_rounds=4)
+    schedule, total_weeks = build_schedule(team_ids, num_rounds=2)
     for home, away, week in schedule:
         conn.execute(
             "INSERT INTO games (home_team_id, away_team_id, week, season_year) "
@@ -497,7 +696,8 @@ def _format_stage_summary(summary):
     if stage == "development":
         return (
             f"{summary['improved']} player(s) improved; "
-            f"{summary['regressed']} player(s) regressed."
+            f"{summary['regressed']} player(s) regressed; "
+            f"coaching materially affected {summary['coach_impacts']} outcome(s)."
         )
     if stage == "contracts":
         return (
@@ -580,11 +780,20 @@ def advance_offseason_step(conn, verbose=True):
     }
 
     if stage == "retirements":
+        finalize_due_polls(
+            conn,
+            (state["current_week"] if "current_week" in state.keys() else 999),
+            season_year,
+        )
+        finalize_season(conn, season_year)
+        summary["coach_changes"] = process_coach_offseason(conn, season_year)
         summary["retired"] = _resolve_retirements(conn, season_year)
+        refresh_hall_of_fame(conn, next_year)
     elif stage == "development":
-        improved, regressed = _age_and_develop_players(conn)
+        improved, regressed, coach_impacts = _age_and_develop_players(conn)
         summary["improved"] = improved
         summary["regressed"] = regressed
+        summary["coach_impacts"] = coach_impacts
     elif stage == "contracts":
         extended, free_agents = _process_contracts(conn, season_year, next_year, salary_cap)
         summary["extended"] = extended
@@ -613,6 +822,8 @@ def advance_offseason_step(conn, verbose=True):
     else:
         raise RuntimeError(f"Unknown offseason stage: {stage}")
 
+    backfill_fan_foundations(conn)
+    refresh_league_lore(conn, next_year)
     detail = _format_stage_summary(summary)
     summary["detail"] = detail
     next_stage = _next_stage(stage)
@@ -654,6 +865,22 @@ def advance_offseason(conn, verbose=True):
     return advance_offseason_step(conn, verbose=verbose)
 
 
+def advance_full_offseason(conn, verbose=True):
+    """Run every remaining offseason stage in one commissioner action."""
+    summaries = []
+    while True:
+        state = conn.execute("SELECT phase FROM league_state WHERE id=1").fetchone()
+        if not state:
+            raise RuntimeError("League not found. Run seed.py first.")
+        if state["phase"] == "regular_season" and summaries:
+            break
+        summaries.append(advance_offseason_step(conn, verbose=verbose))
+        state = conn.execute("SELECT phase FROM league_state WHERE id=1").fetchone()
+        if state["phase"] == "regular_season":
+            break
+    return summaries
+
+
 def print_offseason_step_summary(summary):
     print(f"\n{'=' * 58}")
     print(
@@ -678,5 +905,14 @@ def advance_offseason_from_default_db(verbose=True):
     conn = get_connection()
     try:
         return advance_offseason(conn, verbose=verbose)
+    finally:
+        conn.close()
+
+
+def advance_full_offseason_from_default_db(verbose=True):
+    create_tables()
+    conn = get_connection()
+    try:
+        return advance_full_offseason(conn, verbose=verbose)
     finally:
         conn.close()

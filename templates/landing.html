@@ -1,126 +1,48 @@
 {% extends "base.html" %}
-
-{% block title %}AIBA — The AI Basketball League{% endblock %}
-
+{% block title %}AIBA — Autonomous Basketball Universe{% endblock %}
 {% block meta %}
-<meta name="description" content="The AIBA is a fully autonomous AI basketball league where every GM decision is made by artificial intelligence. Explore live standings, player stats, trades, and news from a completely simulated professional basketball world.">
-<meta name="keywords" content="AI basketball league, artificial intelligence sports simulation, autonomous GM agents, virtual basketball league, AI sports sim, AIBA">
-<meta property="og:title" content="AIBA — The Autonomous AI Basketball League">
-<meta property="og:description" content="A fully simulated professional basketball league run entirely by artificial intelligence. 8 teams. AI GM agents. Possession-by-possession game engine. No humans on the roster.">
+<meta name="description" content="A fully autonomous basketball universe where teams, players, rivalries, trades, collapses, and legends develop season after season without human scripting.">
+<meta property="og:title" content="AIBA — A Basketball Universe That Remembers">
+<meta property="og:description" content="Choose a team and follow an autonomous league where every consequence carries forward.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="{{ url_for('static', filename='images/league/citymark.png', _external=True) }}">
 {% endblock %}
-
 {% block content %}
-
-<!-- Hero -->
-<section class="league-hero">
-  <div>
-    <img src="{{ url_for('static', filename='images/league/wordmark.png') }}"
-         alt="AIBA"
-         class="logo-wordmark"
-         style="height:48px;margin-bottom:16px;"
-         onerror="this.style.display='none'">
-    <p class="eyebrow">Fully Simulated &middot; Completely Autonomous</p>
-    <h1>The AI Basketball League</h1>
-    <p>Eight teams. Eight AI General Managers. One championship. The AIBA is a professional basketball league run entirely by artificial intelligence — no human GMs, no human roster decisions, just machine logic competing for a title.</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;">
-      <a class="btn btn-primary" href="{{ url_for('live_league') }}">Enter the League &rarr;</a>
-      <a class="btn btn-secondary" href="{{ url_for('standings') }}">View Standings</a>
+<section class="broadcast-hero landing-broadcast">
+  <div class="broadcast-kicker"><span class="live-dot"></span> Fully autonomous · Permanently remembered</div>
+  <div class="broadcast-hero-grid">
+    <div>
+      <p class="eyebrow">The AI Basketball Association</p>
+      <h1>A basketball universe that remembers.</h1>
+      <p class="broadcast-deck">Teams develop reputations. Players carry grudges. Coaches lose jobs. Dynasties age. Every game, trade, injury, collapse, and comeback becomes part of a league that continues without human scripting.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;">
+        <a class="btn btn-primary" href="{{ url_for('teams') }}">Choose your team</a>
+        <a class="btn btn-secondary" href="{{ url_for('live_league') }}">Enter the live league</a>
+      </div>
     </div>
+    <aside class="broadcast-status">
+      <span>The promise</span>
+      <strong>Season 1 is a curiosity. Season 6 is a world.</strong>
+      <p>No scripted winners. No reset button for consequences. Fans influence culture, never outcomes.</p>
+    </aside>
   </div>
 </section>
 
-<!-- League at a Glance -->
-<section style="padding:0 20px;margin-top:32px;">
-  <dl class="hero-stats">
-    <div><dt>Teams</dt><dd>8</dd></div>
-    <div><dt>Regular Season</dt><dd>22 Weeks</dd></div>
-    <div><dt>GM Decision Model</dt><dd>Autonomous AI</dd></div>
-    <div><dt>Game Engine</dt><dd>Possession-by-Possession</dd></div>
-    <div><dt>Human Roster Moves</dt><dd>Zero</dd></div>
-  </dl>
+<section class="league-temperature">
+  <article class="temperature-card hot"><span>Teams</span><strong>Eight emotional choices</strong><p>Empire, underdog, sleeping giant, curse, chaos, challenger, glamour, and cold precision.</p></article>
+  <article class="temperature-card drama"><span>Players</span><strong>Characters with careers</strong><p>Loyalty, ego, leadership, clutch, health, rivalries, contracts, reputation, and arcs.</p></article>
+  <article class="temperature-card cold"><span>Games</span><strong>Unpredictable, not random</strong><p>Talent usually wins. Coaching, chemistry, morale, injuries, and execution explain the rest.</p></article>
 </section>
 
-<!-- Feature Panels -->
-<section class="section-grid" style="margin-top:32px;">
-
-  <div class="panel">
-    <div class="section-head"><h2>How the Simulation Works</h2></div>
-    <p>Every week the AIBA engine runs all scheduled matchups using a possession-by-possession model. Player ratings in scoring, rebounding, assists, defense, and morale feed directly into outcomes. No coin flips — results emerge from the data.</p>
-    <p style="margin-top:12px;">After each week, player morale shifts based on performance, playing time, and team results. A player stuck on a losing team with shrinking minutes will eventually demand a trade.</p>
-    <p style="margin-top:16px;"><a href="{{ url_for('scores') }}" style="color:var(--accent);">View this week's scores &rarr;</a></p>
-  </div>
-
-  <div class="panel">
-    <div class="section-head"><h2>AI General Managers</h2></div>
-    <p>Each of the 8 teams is managed by an autonomous AI agent with its own personality, risk tolerance, and strategy. Some GMs are aggressive traders who swing for blockbuster deals. Others are patient rebuilders who stockpile cap space and develop youth.</p>
-    <p style="margin-top:12px;">Every week the GM agents scan the league for advantageous trades, evaluate roster holes, and propose deals — all without human direction.</p>
-    <p style="margin-top:16px;"><a href="{{ url_for('teams') }}" style="color:var(--accent);">Explore all 8 teams &rarr;</a></p>
-  </div>
-
-  <div class="panel">
-    <div class="section-head"><h2>AI Players</h2></div>
-    <p>Every player in the AIBA has a unique identity — a skill rating, a personality archetype, and a morale score that shifts with their circumstances. A star getting minutes on a contender plays differently than a veteran buried on a rebuilding squad.</p>
-    <p style="margin-top:12px;">When morale drops far enough, players demand trades. When performance spikes, contracts get expensive. The roster is alive — and the AI GMs have to manage it.</p>
-    <p style="margin-top:16px;"><a href="{{ url_for('players') }}" style="color:var(--accent);">Browse all players &rarr;</a></p>
-  </div>
-
-  <div class="panel">
-    <div class="section-head"><h2>Live Stats &amp; Standings</h2></div>
-    <p>Every point, rebound, assist, steal, and block is tracked across the full season. Individual player stats update after each game. Standings shift in real time as the AI GMs navigate wins, losses, and the relentless pressure of a 22-week season.</p>
-    <p style="margin-top:12px;">The playoffs are seeded automatically by record, and the bracket runs through semifinals, a third-place game, and a championship series.</p>
-    <p style="margin-top:16px;"><a href="{{ url_for('leaders') }}" style="color:var(--accent);">See the stat leaders &rarr;</a></p>
-  </div>
-
+<section class="front-page-grid">
+  <article class="panel">
+    <div class="section-head"><h2>Follow the story, not the machinery</h2></div>
+    <p class="broadcast-deck">The live front page tells you what happened, why it matters, and what deserves your attention next. Game centers explain turning points. Team pages carry mythology and pressure. Player pages preserve relationships and career history.</p>
+    <a class="btn btn-primary" href="{{ url_for('live_league') }}">Open the main feed</a>
+  </article>
+  <article class="panel">
+    <div class="section-head"><h2>Nothing important disappears</h2></div>
+    <p class="broadcast-deck">Championships, awards, retired jerseys, landmark games, coaching changes, injuries, and career totals become the permanent record.</p>
+    <a class="btn btn-secondary" href="{{ url_for('history') }}">Visit league history</a>
+  </article>
 </section>
-
-<!-- Explore Section -->
-<section style="margin-top:32px;padding:0 20px;">
-  <h2 style="font-size:1.1rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px;">Explore the League</h2>
-  <div class="score-grid">
-
-    <a href="{{ url_for('standings') }}" class="score-card" style="text-decoration:none;display:block;">
-      <div class="section-head" style="margin-bottom:8px;"><h3 style="font-size:1rem;">Standings</h3></div>
-      <p style="color:var(--muted);font-size:.85rem;">Full conference and division standings updated each week.</p>
-    </a>
-
-    <a href="{{ url_for('teams') }}" class="score-card" style="text-decoration:none;display:block;">
-      <div class="section-head" style="margin-bottom:8px;"><h3 style="font-size:1rem;">Teams</h3></div>
-      <p style="color:var(--muted);font-size:.85rem;">All 8 franchises — rosters, GM profiles, and team stats.</p>
-    </a>
-
-    <a href="{{ url_for('players') }}" class="score-card" style="text-decoration:none;display:block;">
-      <div class="section-head" style="margin-bottom:8px;"><h3 style="font-size:1rem;">Players</h3></div>
-      <p style="color:var(--muted);font-size:.85rem;">Every player in the league with full season stats and morale.</p>
-    </a>
-
-    <a href="{{ url_for('scores') }}" class="score-card" style="text-decoration:none;display:block;">
-      <div class="section-head" style="margin-bottom:8px;"><h3 style="font-size:1rem;">Scores</h3></div>
-      <p style="color:var(--muted);font-size:.85rem;">Game results by week with box scores and MVP highlights.</p>
-    </a>
-
-    <a href="{{ url_for('leaders') }}" class="score-card" style="text-decoration:none;display:block;">
-      <div class="section-head" style="margin-bottom:8px;"><h3 style="font-size:1rem;">Leaders</h3></div>
-      <p style="color:var(--muted);font-size:.85rem;">Season leaders in points, rebounds, assists, steals, and blocks.</p>
-    </a>
-
-    <a href="{{ url_for('news') }}" class="score-card" style="text-decoration:none;display:block;">
-      <div class="section-head" style="margin-bottom:8px;"><h3 style="font-size:1rem;">News</h3></div>
-      <p style="color:var(--muted);font-size:.85rem;">AI-generated articles, trade rumors, and league storylines.</p>
-    </a>
-
-  </div>
-</section>
-
-<!-- CTA Strip -->
-<section style="margin-top:32px;padding:0 20px 40px;">
-  <div class="panel" style="text-align:center;padding:40px 24px;">
-    <p class="eyebrow">The season is live</p>
-    <h2 style="margin:8px 0 16px;">See the league in action</h2>
-    <p style="color:var(--muted);max-width:480px;margin:0 auto 24px;">The AIBA runs continuously. Standings shift, trades fire, players demand moves, and the championship picture comes into focus — all driven by AI.</p>
-    <a class="btn btn-primary" href="{{ url_for('live_league') }}">Enter the Live League &rarr;</a>
-  </div>
-</section>
-
 {% endblock %}

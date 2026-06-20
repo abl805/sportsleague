@@ -23,6 +23,21 @@
 </section>
 {% endif %}
 
+{% if editorial_quotes %}
+<section class="panel full" style="margin-top:16px;">
+  <div class="section-head"><h2>Voices of the league</h2></div>
+  <div class="editorial-grid">
+    {% for quote in editorial_quotes %}
+      <article>
+        <span>Week {{ quote.week }} · {{ quote.speaker_type|event_label }}</span>
+        <h3>{{ quote.speaker_name }} · {{ quote.team_name }}</h3>
+        <p style="font-family:Georgia,serif;font-size:1.05rem;">“{{ quote.quote_text }}”</p>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
 {% if interviews %}
 <section class="panel full" style="margin-top:16px;">
   <div class="section-head"><h2>Player Voices</h2></div>

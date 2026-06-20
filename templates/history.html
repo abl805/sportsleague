@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block title %}League History{% endblock %}
+{% block content %}
+<section class="page-hero compact history-hero">
+  <p class="eyebrow">Nothing resets</p>
+  <h1>The league remembers.</h1>
+  <p>Championships, collapses, awards, injuries, coaching changes, career totals, and the moments that became permanent.</p>
+</section>
+
+<section class="history-grid">
+  <article class="panel">
+    <div class="section-head"><h2>Champions</h2></div>
+    <div class="champion-list">
+      {% for row in champions %}
+        <div><span>{{ row.season_year }}</span><strong>{{ row.champion or 'Unresolved' }}</strong></div>
+      {% else %}
+        <p class="empty">The first champion has not been crowned.</p>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel">
+    <div class="section-head"><h2>Retired jerseys</h2></div>
+    <div class="compact-story-list">
+      {% for row in retired_jerseys %}
+        <div><strong>{{ row.player }} · {{ row.abbreviation }}</strong><span>{{ row.season_year }}</span><p>{{ row.reason }}</p></div>
+      {% else %}
+        <p class="empty">No jersey has reached the rafters yet.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="lore-section">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">League lore</span>
+      <h2>The stories behind the standings</h2>
+    </div>
+  </div>
+  <div class="lore-grid">
+    <article class="panel lore-panel">
+      <div class="section-head"><h3>Draft verdicts</h3></div>
+      <div class="compact-story-list">
+        {% for pick in draft_classes %}
+          <div>
+            <strong>No. {{ pick.pick_number }} · <a href="{{ url_for('player_page', player_id=pick.player_id) }}">{{ pick.player }}</a></strong>
+            <span>{{ pick.draft_year }} · {{ pick.abbreviation }} · {{ pick.outcome_label|event_label }}</span>
+            <p>{{ pick.outcome_summary }}</p>
+          </div>
+        {% else %}
+          <p class="empty">The first rookie class will be graded after it has time to become a steal, a contributor, or a cautionary tale.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="panel lore-panel">
+      <div class="section-head"><h3>Playoff runs</h3></div>
+      <div class="compact-story-list">
+        {% for run in playoff_runs %}
+          <div class="{{ 'legendary-lore' if run.legendary else '' }}">
+            <strong>{{ run.title }} · {{ run.team }}</strong>
+            <span>{{ run.season_year }} · {{ run.finish_label }} · {{ run.playoff_wins }}-{{ run.playoff_losses }}</span>
+            <p>{{ run.summary }}</p>
+          </div>
+        {% else %}
+          <p class="empty">The first postseason will create the league’s first permanent playoff run.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="panel lore-panel hall-panel">
+      <div class="section-head"><h3>Hall of Fame</h3></div>
+      <div class="compact-story-list">
+        {% for inductee in hall_of_fame %}
+          <div class="legendary-lore">
+            <strong><a href="{{ url_for('player_page', player_id=inductee.player_id) }}">{{ inductee.player }}</a></strong>
+            <span>Class of {{ inductee.induction_year }} · {{ inductee.abbreviation or 'AIBA' }}</span>
+            <p>{{ inductee.summary }}</p>
+          </div>
+        {% else %}
+          <p class="empty">The Hall is open, but no career has reached immortality yet.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="panel lore-panel">
+      <div class="section-head"><h3>Franchise timeline</h3></div>
+      <div class="franchise-timeline">
+        {% for event in franchise_timeline %}
+          <div>
+            <span>{{ event.season_year }}</span>
+            <strong>{{ event.team }}</strong>
+            <small>{{ event.event_type|event_label }}</small>
+            <p>{{ event.detail }}</p>
+          </div>
+        {% else %}
+          <p class="empty">Franchise history begins with the inaugural season.</p>
+        {% endfor %}
+      </div>
+    </article>
+  </div>
+</section>
+
+{% if rivalry_names or fan_labels or poll_results %}
+<section class="history-grid">
+  <article class="panel">
+    <div class="section-head"><h2>Fan-named traditions</h2></div>
+    <div class="compact-story-list">
+      {% for rivalry in rivalry_names %}
+        <div>
+          <strong>{{ rivalry.name }}</strong>
+          <span>{{ rivalry.team_a }} vs {{ rivalry.team_b }} · {{ rivalry.season_year }}</span>
+          <p>{{ rivalry.status|title }} rivalry name</p>
+        </div>
+      {% endfor %}
+      {% for label in fan_labels if label.label_type == 'weekly_effort_award_name' %}
+        <div>
+          <strong>{{ label.label }}</strong>
+          <span>Weekly effort-and-heart award · {{ label.season_year }}</span>
+          <p>{{ label.status|title }} league label</p>
+        </div>
+      {% endfor %}
+      {% if not rivalry_names and not fan_labels %}
+        <p class="empty">Fans have not named a permanent tradition yet.</p>
+      {% endif %}
+    </div>
+  </article>
+  <article class="panel">
+    <div class="section-head"><h2>Recent fan verdicts</h2></div>
+    <div class="compact-story-list">
+      {% for result in poll_results[:12] %}
+        <div>
+          <strong>{{ result.type_label }}: {{ result.result_label }}</strong>
+          <span>{{ result.season_year }} · Week {{ result.week }} · {{ result.votes }} votes</span>
+          <p>{{ result.question }}</p>
+        </div>
+      {% else %}
+        <p class="empty">The first completed ballot will appear here.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endif %}
+
+<section class="panel record-book" style="margin-top:16px;">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">Official AIBA marks</span>
+      <h2>Record book</h2>
+    </div>
+  </div>
+  {% for scope, title in [
+    ('single_game', 'Single-game records'),
+    ('season', 'Single-season records'),
+    ('career', 'Career records')
+  ] %}
+    <div class="record-scope">
+      <h3>{{ title }}</h3>
+      <div class="record-grid">
+        {% for row in record_book if row.scope == scope %}
+          <article>
+            <span>{{ row.stat_key|event_label }}</span>
+            <strong>{{ row.value }}</strong>
+            <a href="{{ url_for('player_page', player_id=row.player_id) }}">{{ row.player }}</a>
+            <small>
+              {{ row.abbreviation }}
+              {% if row.season_year %} · {{ row.season_year }}{% endif %}
+              {% if row.week %} · Week {{ row.week }}{% endif %}
+            </small>
+            {% if row.game_id %}
+              <a class="record-game-link" href="{{ url_for('game_page', game_id=row.game_id) }}">View game</a>
+            {% endif %}
+          </article>
+        {% else %}
+          <p class="empty">This section opens after the first official game.</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</section>
+
+<section class="panel" style="margin-top:16px;">
+  <div class="section-head"><h2>Career leaders</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Player</th><th>Team</th><th>Games</th><th>Points</th><th>Rebounds</th><th>Assists</th></tr></thead>
+      <tbody>
+        {% for row in career_leaders %}
+          <tr>
+            <td><a href="{{ url_for('player_page', player_id=row.id) }}">{{ row.player }}</a></td>
+            <td>{{ row.abbreviation }}</td><td>{{ row.games }}</td><td>{{ row.points }}</td>
+            <td>{{ row.rebounds }}</td><td>{{ row.assists }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">Career totals begin with Week 1.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if record_history %}
+<section class="panel" style="margin-top:16px;">
+  <div class="section-head"><h2>Record lineage</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Record</th><th>Holder</th><th>Mark</th><th>Set</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for row in record_history %}
+          <tr>
+            <td>{{ row.scope_label }} {{ row.stat_key|event_label }}</td>
+            <td><a href="{{ url_for('player_page', player_id=row.player_id) }}">{{ row.player }}</a></td>
+            <td>{{ row.value }}</td>
+            <td>{{ row.season_year }}{% if row.week %}, Week {{ row.week }}{% endif %}</td>
+            <td>{{ 'Current' if row.is_current else 'Superseded' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<section class="history-grid">
+  <article class="panel">
+    <div class="section-head"><h2>Honors</h2></div>
+    <div class="compact-story-list">
+      {% for award in awards %}
+        <div>
+          <strong>{{ award.label }}</strong>
+          <span>{{ award.player or award.team or award.game_label }} · {{ award.season_year }}{% if award.week %} · Week {{ award.week }}{% endif %}</span>
+          <p>{{ award.detail }}</p>
+        </div>
+      {% else %}
+        <p class="empty">Awards will appear as the season develops.</p>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="panel">
+    <div class="section-head"><h2>Coaching tree</h2></div>
+    <div class="compact-story-list">
+      {% for coach in coaches %}
+        <div>
+          <strong>{{ coach.name }} · {{ coach.abbreviation }}</strong>
+          <span>{{ coach.strategy|event_label }} · hired {{ coach.hired_season }}</span>
+          <p>{{ coach.status|title }}{% if coach.fired_season %} after {{ coach.fired_season }}{% endif %}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="panel" style="margin-top:16px;">
+  <div class="section-head"><h2>The permanent record</h2></div>
+  <div class="history-timeline">
+    {% for event in events %}
+      <article class="importance-{{ event.importance }}">
+        <span>{{ event.season_year }}{% if event.week %} · Week {{ event.week }}{% endif %} · {{ event.event_type|event_label }}</span>
+        <h3>{{ event.headline }}</h3>
+        <p>{{ event.detail }}</p>
+        {% if event.game_id %}<a href="{{ url_for('game_page', game_id=event.game_id) }}">Open game record</a>{% endif %}
+      </article>
+    {% else %}
+      <p class="empty">History begins when the first game becomes final.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

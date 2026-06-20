@@ -152,14 +152,48 @@ def execute_trade(conn, trade_id):
 
     prop_team = prop_gm["team_id"]
     recv_team = recv_gm["team_id"]
+    state = conn.execute(
+        "SELECT season_year, current_week FROM league_state WHERE id=1"
+    ).fetchone()
+    season_year = state["season_year"] if state else trade["season_year"]
+    week = state["current_week"] if state else trade["week"]
+    from league.fan_experience import record_team_change, record_trade_rivalry
+    involved_ids = (
+        json.loads(trade["offered_player_ids"])
+        + json.loads(trade["requested_player_ids"])
+    )
+    placeholders = ",".join("?" for _ in involved_ids)
+    star_involved = False
+    if involved_ids:
+        star_row = conn.execute(
+            f"SELECT MAX(skill_rating) AS max_skill FROM players WHERE id IN ({placeholders})",
+            involved_ids,
+        ).fetchone()
+        star_involved = bool(star_row and (star_row["max_skill"] or 0) >= 84)
 
     for pid in json.loads(trade["offered_player_ids"]):
+        record_team_change(
+            conn, pid, prop_team, recv_team, season_year, week, f"trade #{trade_id}"
+        )
         conn.execute("UPDATE players   SET team_id = ? WHERE id = ?", (recv_team, pid))
         conn.execute("UPDATE contracts SET team_id = ? WHERE player_id = ?", (recv_team, pid))
 
     for pid in json.loads(trade["requested_player_ids"]):
+        record_team_change(
+            conn, pid, recv_team, prop_team, season_year, week, f"trade #{trade_id}"
+        )
         conn.execute("UPDATE players   SET team_id = ? WHERE id = ?", (prop_team, pid))
         conn.execute("UPDATE contracts SET team_id = ? WHERE player_id = ?", (prop_team, pid))
+
+    record_trade_rivalry(
+        conn,
+        prop_team,
+        recv_team,
+        season_year,
+        week,
+        trade_id,
+        star_involved=star_involved,
+    )
 
     conn.execute(
         "UPDATE pending_trades SET status = 'approved' WHERE id = ?", (trade_id,)

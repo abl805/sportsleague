@@ -1,8 +1,9 @@
 # AI Basketball League
 
-An autonomous fictional basketball league. You are the commissioner, but the
-goal is for the league to mostly run itself while you check in a couple times a
-week.
+An autonomous fictional basketball universe with persistent teams, players,
+coaches, rivalries, injuries, awards, polls, and history. The commissioner
+advances time, publishes one weekly ChatGPT editorial package, and reviews only
+exceptional trades.
 
 ## League Status
 
@@ -75,6 +76,17 @@ http://127.0.0.1:5000
 Viewer pages are public-style read-only league pages. Commissioner tools live at
 `/commissioner` and are intentionally unprotected in this first local version.
 
+## Normal Commissioner Week
+
+1. Simulate the week from `/commissioner`.
+2. Copy the automatically generated `aiba.weekly_editorial.v1` prompt.
+3. Paste ChatGPT's single structured response back into the same page.
+4. Review a trade only when conservative autopilot escalates it.
+
+The editorial importer validates season, week, game, team, player, coach, and GM
+identifiers. ChatGPT can narrate recorded events, but it cannot alter simulation
+outcomes.
+
 ## Autonomy Model
 
 The game engine owns scores and stats. Agents can create pressure, propose
@@ -91,6 +103,27 @@ GM trade behavior is intentionally conservative:
 - Star trades, ambiguous deals, and edge cases stay pending for commissioner review.
 
 This keeps the league surprising without making it feel random or silly.
+
+Game outcomes now expose their logic: roster talent, star strength, coaching
+matchup, chemistry, morale, injuries, home court, clutch ability, pace, and
+bounded execution variance are stored with each completed game.
+
+## Fan Experience
+
+- `/live-league` answers what happened, why it matters, and what comes next.
+- `/teams` is a choose-your-team experience; following a club uses a signed
+  browser cookie and requires no account.
+- `/history` preserves champions, awards, career leaders, coaching changes,
+  retired jerseys, landmark games, injuries, and other permanent events.
+- One fan poll is generated automatically after each completed week. The
+  five-week rotation covers Player of the Week, Game of the Week, fan
+  confidence, rivalry names, and the permanent name of the league's weekly
+  effort award. Closed ballots become awards, labels, rivalry history, or
+  named traditions; they never change scores or roster decisions.
+- Rivalries use a persistent pairwise heat ledger. Close finishes, upsets,
+  repeated meetings, playoff games, and trades raise the temperature; blowouts
+  and inactive weeks cool it toward the rivalry's historical floor. Team and
+  game pages show current heat, meeting history, and fan-given rivalry names.
 
 ## Offseason
 
