@@ -65,27 +65,7 @@ def get_connection():
     url = os.environ.get("DATABASE_URL")
     if url:
         import psycopg2
-        try:
-            pg = psycopg2.connect(url)
-        except UnicodeDecodeError:
-            # Python 3.12+ psycopg2 decodes percent-encoded URL bytes as UTF-8.
-            # Supabase URLs sometimes contain single non-UTF8 bytes (e.g. %bb).
-            # Fix: strip the password from the URL and pass raw bytes via PGPASSWORD
-            # so libpq reads them as C bytes, bypassing Python string encoding.
-            from urllib.parse import urlparse, unquote_to_bytes
-            import re as _re
-            r = urlparse(url)
-            pw_bytes = unquote_to_bytes(r.password or b"")
-            safe_url = _re.sub(r"(://[^:@]+):[^@]+@", r"\1@", url, count=1)
-            prev = os.environb.get(b"PGPASSWORD")
-            os.environb[b"PGPASSWORD"] = pw_bytes
-            try:
-                pg = psycopg2.connect(safe_url)
-            finally:
-                if prev is None:
-                    os.environb.pop(b"PGPASSWORD", None)
-                else:
-                    os.environb[b"PGPASSWORD"] = prev
+        pg = psycopg2.connect(url)
         pg.autocommit = False
         return _PGConn(pg)
     else:
