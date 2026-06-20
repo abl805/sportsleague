@@ -65,7 +65,18 @@ def get_connection():
     url = os.environ.get("DATABASE_URL")
     if url:
         import psycopg2
-        pg = psycopg2.connect(url)
+        from urllib.parse import urlparse, unquote_to_bytes
+        # Parse manually so %bb-style Latin-1 passwords don't raise UnicodeDecodeError
+        # on systems where psycopg2 delegates URL parsing to Python rather than libpq.
+        r = urlparse(url)
+        pw = unquote_to_bytes(r.password or b"").decode("latin-1")
+        pg = psycopg2.connect(
+            dbname=r.path.lstrip("/"),
+            user=r.username,
+            password=pw,
+            host=r.hostname,
+            port=r.port or 5432,
+        )
         pg.autocommit = False
         return _PGConn(pg)
     else:
