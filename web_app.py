@@ -33,6 +33,9 @@ from run_week import run_week
 app = Flask(__name__)
 app.secret_key = os.environ.get("AIBA_SECRET_KEY", "aaibl-local-dev-console")
 
+with app.app_context():
+    create_tables()
+
 def _commissioner_password():
     return os.environ.get("COMMISSIONER_PASSWORD", "")
 
@@ -129,7 +132,6 @@ def capture_output(callback):
 
 
 def with_conn(callback):
-    create_tables()
     conn = get_connection()
     try:
         return callback(conn)
@@ -622,7 +624,6 @@ def commissioner_action():
 def approve_trade(trade_id):
     if not trade_id:
         return "No trade selected."
-    create_tables()
     conn = get_connection()
     try:
         ok, reason = validate_trade(conn, trade_id)
@@ -638,7 +639,6 @@ def approve_trade(trade_id):
 def veto_trade_action(trade_id, reason):
     if not trade_id:
         return "No trade selected."
-    create_tables()
     conn = get_connection()
     try:
         veto_trade(conn, trade_id, reason)
