@@ -65,22 +65,10 @@ def get_connection():
     url = os.environ.get("DATABASE_URL")
     if url:
         import psycopg2
-        from urllib.parse import urlparse, unquote_to_bytes
-        # Parse manually so %bb-style Latin-1 passwords don't raise UnicodeDecodeError
-        # on systems where psycopg2 delegates URL parsing to Python rather than libpq.
-        r = urlparse(url)
-        pw = unquote_to_bytes(r.password or b"").decode("latin-1")
-        pg = psycopg2.connect(
-            dbname=r.path.lstrip("/"),
-            user=r.username,
-            password=pw,
-            host=r.hostname,
-            port=r.port or 5432,
-        )
+        pg = psycopg2.connect(url)
         pg.autocommit = False
         return _PGConn(pg)
     else:
-        os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
@@ -779,13 +767,7 @@ _TABLE_SCHEMAS = [
 ]
 
 
-_tables_created = False
-
-
 def create_tables():
-    global _tables_created
-    if _tables_created:
-        return
     conn = get_connection()
     try:
         for sqlite_ddl in _TABLE_SCHEMAS:
@@ -795,7 +777,6 @@ def create_tables():
         conn.commit()
     finally:
         conn.close()
-    _tables_created = True
 
 
 def _migrate_existing_schema(conn):
