@@ -61,6 +61,8 @@ def _is_postgres(conn):
 def get_connection():
     url = os.environ.get("DATABASE_URL")
     if url:
+        # Strip whitespace and non-ASCII junk that can sneak in via copy-paste
+        url = url.strip().encode("ascii", errors="ignore").decode("ascii")
         import psycopg2
         pg = psycopg2.connect(url)
         pg.autocommit = False
