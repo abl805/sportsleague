@@ -77,8 +77,8 @@ def league_snapshot_context(conn, season_year):
     """, (season_year,)).fetchall())
 
     pending_trade_count = conn.execute(
-        "SELECT COUNT(*) FROM pending_trades WHERE status = 'pending'"
-    ).fetchone()[0]
+        "SELECT COUNT(*) AS cnt FROM pending_trades WHERE status = 'pending'"
+    ).fetchone()["cnt"]
 
     phase = state["phase"] if state and "phase" in state.keys() else "regular_season"
     playoffs = None

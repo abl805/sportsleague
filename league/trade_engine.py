@@ -232,9 +232,9 @@ def autopilot_review_pending_trades(conn, season_year=None, verbose=True):
     season_finished = False
     if season_year is not None:
         remaining = conn.execute(
-            "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
+            "SELECT COUNT(*) AS cnt FROM games WHERE season_year = ? AND played = 0",
             (season_year,),
-        ).fetchone()[0]
+        ).fetchone()["cnt"]
         season_finished = remaining == 0
 
     if season_year is None:

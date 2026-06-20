@@ -30,9 +30,9 @@ def get_site_chrome(conn):
 
 def get_games_played(conn, season_year):
     return conn.execute(
-        "SELECT COUNT(*) FROM games WHERE played = 1 AND season_year = ?",
+        "SELECT COUNT(*) AS cnt FROM games WHERE played = 1 AND season_year = ?",
         (season_year,),
-    ).fetchone()[0]
+    ).fetchone()["cnt"]
 
 
 def get_max_week(conn, season_year):

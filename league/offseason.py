@@ -540,9 +540,9 @@ def _ensure_offseason_started(conn, state):
         raise RuntimeError("The offseason can only begin after the season is complete.")
 
     remaining = conn.execute(
-        "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
+        "SELECT COUNT(*) AS cnt FROM games WHERE season_year = ? AND played = 0",
         (season_year,),
-    ).fetchone()[0]
+    ).fetchone()["cnt"]
     if remaining:
         raise RuntimeError(
             f"Season {season_year} is not complete yet; {remaining} game(s) remain."
@@ -565,9 +565,9 @@ def advance_offseason_step(conn, verbose=True):
     season_year, stage = _ensure_offseason_started(conn, state)
     next_year = season_year + 1
     existing = conn.execute(
-        "SELECT COUNT(*) FROM games WHERE season_year = ?",
+        "SELECT COUNT(*) AS cnt FROM games WHERE season_year = ?",
         (next_year,),
-    ).fetchone()[0]
+    ).fetchone()["cnt"]
     if existing:
         raise RuntimeError(f"Season {next_year} already exists.")
 
