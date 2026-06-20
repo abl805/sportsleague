@@ -1,40 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Choose Your Team{% endblock %}
+{% block title %}Teams{% endblock %}
 {% block content %}
-<section class="page-hero compact allegiance-hero">
-  <p class="eyebrow">Choose a side</p>
-  <h1>Find the team that feels like yours.</h1>
-  <p>Pick the empire, the curse, the workers, the chaos, or the team built to ruin somebody else’s story.</p>
+<section class="page-hero compact">
+  <p class="eyebrow">Franchises</p>
+  <h1>Teams</h1>
+  <p>Identity, record, chemistry, and roster entry points for every club.</p>
 </section>
-
-<section class="identity-grid">
+<section class="team-grid">
   {% for team in team_rows %}
-    <article class="identity-card {{ 'followed' if followed_team_id == team.id else '' }}">
-      <a class="identity-card-main" href="{{ url_for('team_page', abbr=team.abbreviation) }}">
-        <div class="identity-logo">
-          <img src="{{ url_for('static', filename='images/teams/' ~ team.abbreviation ~ '/primary.png') }}"
-               alt="{{ team.team_name }}" onerror="this.style.display='none'">
-        </div>
-        <div class="identity-copy">
-          <span>{{ team.team_archetype }}</span>
-          <h2>{{ team.team_name }}</h2>
-          <p>{{ team.fan_pitch }}</p>
-          <blockquote>{{ team.pressure_label }}</blockquote>
-        </div>
-        <dl class="identity-facts">
-          <div><dt>Record</dt><dd>{{ team.wins or 0 }}–{{ team.losses or 0 }}</dd></div>
-          <div><dt>Rival</dt><dd>{{ team.rivalry }}</dd></div>
-          <div><dt>Identity</dt><dd>{{ team.signature_trait }}</dd></div>
-        </dl>
-      </a>
-      <form method="post" action="{{ url_for('follow_team') }}">
-        <input type="hidden" name="team_id" value="{{ team.id }}">
-        <input type="hidden" name="next" value="{{ request.path }}">
-        <button type="submit">
-          {{ 'Your team' if followed_team_id == team.id else 'Follow ' ~ team.abbreviation }}
-        </button>
-      </form>
-    </article>
+    <a class="team-card" href="{{ url_for('team_page', abbr=team.abbreviation) }}">
+      <img src="{{ url_for('static', filename='images/teams/' ~ team.abbreviation ~ '/primary.png') }}"
+           alt="{{ team.abbreviation }}"
+           class="logo-primary"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+      <div class="team-abbr" style="display:none">{{ team.abbreviation }}</div>
+      <h2>{{ team.team_name }}</h2>
+      <p>{{ team.motto or team.play_style or "A club still writing its first chapter." }}</p>
+      <dl class="mini-stats">
+        <div><dt>Record</dt><dd>{{ team.wins or 0 }}-{{ team.losses or 0 }}</dd></div>
+        <div><dt>Diff</dt><dd>{{ team.point_diff|diff }}</dd></div>
+        <div><dt>Chem</dt><dd>{{ "%.1f"|format(team.chemistry) if team.chemistry else "-" }}</dd></div>
+      </dl>
+    </a>
   {% else %}
     <p class="empty">No teams found.</p>
   {% endfor %}

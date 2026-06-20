@@ -28,14 +28,6 @@
         &ldquo;{{ detail.team.motto }}&rdquo;
       </p>
     {% endif %}
-    <form method="post" action="{{ url_for('unfollow_team') if is_followed else url_for('follow_team') }}"
-          style="margin:18px 0 0;max-width:220px;">
-      {% if not is_followed %}<input type="hidden" name="team_id" value="{{ detail.team.id }}">{% endif %}
-      <input type="hidden" name="next" value="{{ request.path }}">
-      <button type="submit" class="{{ 'secondary' if is_followed else '' }}">
-        {{ 'Following this team' if is_followed else 'Follow this team' }}
-      </button>
-    </form>
     <dl class="hero-stats" style="grid-template-columns:repeat(3,auto);">
       <div><dt>Record</dt><dd>{{ detail.record.wins if detail.record else 0 }}&ndash;{{ detail.record.losses if detail.record else 0 }}</dd></div>
       <div><dt>Diff</dt><dd>{{ detail.record.point_diff|diff if detail.record else "&mdash;" }}</dd></div>
@@ -57,50 +49,6 @@
          onerror="this.style.display='none'">
   </div>
 </section>
-
-<section class="team-mythology">
-  {% set hottest_rivalry = detail.rivalry_dynamics[0] if detail.rivalry_dynamics else none %}
-  <article>
-    <span>League role</span>
-    <strong>{{ detail.team.team_archetype }}</strong>
-    <p>{{ detail.team.reputation }}</p>
-  </article>
-  <article>
-    <span>The pressure</span>
-    <strong>{{ detail.team.pressure_label }}</strong>
-    <p>{{ detail.team.signature_trait }}</p>
-  </article>
-  <article>
-    <span>Hottest rivalry</span>
-    <strong>{% if hottest_rivalry %}{{ hottest_rivalry.fan_name or hottest_rivalry.opponent }}{% else %}{{ detail.team.rivalry }}{% endif %}</strong>
-    <p>
-      {% if hottest_rivalry %}
-        {{ hottest_rivalry.tier }} · {{ (hottest_rivalry.current_intensity * 100)|int }}% heat
-      {% else %}
-        Founding rival: {{ detail.team.rivalry }}
-      {% endif %}
-    </p>
-  </article>
-</section>
-
-{% if detail.rivalry_dynamics %}
-<section class="panel" style="margin-top:16px;">
-  <div class="section-head"><h2>Rivalry Temperature</h2></div>
-  <div class="rivalry-board">
-    {% for rivalry in detail.rivalry_dynamics %}
-      <article>
-        <div>
-          <span>{{ rivalry.tier }} · {{ (rivalry.current_intensity * 100)|int }}%</span>
-          <strong>{{ rivalry.fan_name or (detail.team.city ~ '–' ~ rivalry.opponent ~ ' rivalry') }}</strong>
-          <p>vs {{ rivalry.opponent }} · {{ rivalry.meetings }} meetings · {{ rivalry.close_games }} close games · {{ rivalry.playoff_meetings }} playoff games · {{ rivalry.trade_count }} trades</p>
-        </div>
-        <div class="rivalry-meter"><i style="width:{{ (rivalry.current_intensity * 100)|int }}%"></i></div>
-        <small>{{ rivalry.last_event }}</small>
-      </article>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
 
 {# ── TEAM IDENTITY (LOGO SHOWCASE) ───────────────────────────────── #}
 <div class="panel" style="margin-top:16px;">
@@ -227,27 +175,8 @@
   </div>
 
   <div class="panel">
-    {% if detail.coach %}
-    <div class="section-head"><h2>Head Coach</h2></div>
-    <div class="coach-card">
-      <strong>{{ detail.coach.name }}</strong>
-      <span>{{ detail.coach.strategy|event_label }}</span>
-      <p>
-        Leadership {{ (detail.coach.leadership * 100)|int }} ·
-        Pressure {{ (detail.coach.pressure_handling * 100)|int }} ·
-        Job security {{ (detail.coach.job_security * 100)|int }}
-      </p>
-      <dl class="coach-tendencies">
-        <div><dt>Lineup</dt><dd>{{ detail.coach.lineup_preference|event_label }}</dd></div>
-        <div><dt>Rotation</dt><dd>{{ detail.coach.rotation_size }} players</dd></div>
-        <div><dt>Pace</dt><dd>{{ detail.coach.pace_label }}</dd></div>
-        <div><dt>Development</dt><dd>{{ (detail.coach.development * 100)|int }}</dd></div>
-      </dl>
-      <small>Development affects offseason growth and veteran preservation; it is not a hidden game-day bonus.</small>
-    </div>
-    {% endif %}
     {% if detail.gm %}
-    <div class="section-head" style="margin-top:22px;"><h2>General Manager</h2></div>
+    <div class="section-head"><h2>General Manager</h2></div>
     <div style="margin-bottom:16px;">
       <p style="font-size:1.1rem;font-weight:800;color:var(--text);margin:0 0 4px;">{{ detail.gm.name }}</p>
       <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin:0;">
@@ -285,38 +214,9 @@
   </div>
 </section>
 
-{% if detail.injuries %}
-<section class="panel" style="margin-top:16px;">
-  <div class="section-head"><h2>Availability Report</h2></div>
-  <div class="injury-list">
-    {% for injury in detail.injuries %}
-      <article>
-        <strong>{{ injury.player_name }}</strong>
-        <span>{{ injury.severity|title }} · through Week {{ injury.expected_return_week }}</span>
-        <p>{{ injury.description }}</p>
-      </article>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
 {# ── IN THE NEWS + STORYLINES ────────────────────────────────────── #}
-{% if detail.articles or detail.events or detail.interviews or detail.editorial_quotes %}
+{% if detail.articles or detail.events or detail.interviews %}
 <section style="margin-top:16px;">
-  {% if detail.editorial_quotes %}
-  <div class="panel" style="margin-bottom:16px;">
-    <div class="section-head"><h2>From the podium</h2></div>
-    <div class="article-list">
-      {% for quote in detail.editorial_quotes %}
-        <article class="article-item">
-          <div class="story-meta">Week {{ quote.week }} · {{ quote.speaker_type|event_label }}</div>
-          <p style="font-style:italic;">“{{ quote.quote_text }}”</p>
-          <strong>— {{ quote.speaker_name }}</strong>
-        </article>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
   {% if detail.interviews %}
   <div class="panel" style="margin-bottom:16px;">
     <div class="section-head"><h2>In Their Own Words</h2></div>

@@ -8,13 +8,6 @@ import os
 
 sys.path.insert(0, os.path.dirname(__file__))
 from league.database import LEAGUE_YEAR, get_connection, create_tables
-from league.fan_experience import backfill_fan_foundations
-from seed_backstories import (
-    ARCHETYPE_TO_LABEL,
-    _build_blurb,
-    _pick_college_state,
-    _pick_hometown,
-)
 
 # ── Team definitions ──────────────────────────────────────────────────────────
 
@@ -400,20 +393,10 @@ def seed():
 
     # Wipe existing data (order respects foreign-key constraints)
     for _tbl in [
-        "rivalry_events", "team_rivalries", "fan_labels", "rivalry_names",
-        "poll_votes", "poll_options", "polls", "editorial_quotes",
-        "article_tags", "articles", "weekly_editorial_packages",
-        "hall_of_fame", "playoff_run_summaries", "draft_profiles",
-        "franchise_events", "retired_jerseys", "awards", "season_snapshots",
-        "record_book_entries", "history_events",
-        "game_rotations", "team_game_stats", "game_broadcasts",
-        "game_explanations", "injury_consequences", "player_injuries",
-        "player_relationships", "player_arcs", "player_interviews",
-        "gm_interviews", "player_backstories", "player_memory", "player_events",
-        "player_morale", "player_personalities", "team_chemistry",
-        "agent_memory", "pending_trades", "general_managers", "head_coaches",
-        "player_game_stats", "games", "playoff_series", "contracts",
-        "standings", "players", "teams", "league_state",
+        "player_memory", "player_events", "player_morale", "player_personalities",
+        "team_chemistry", "agent_memory", "pending_trades", "general_managers",
+        "player_game_stats", "games", "playoff_series", "contracts", "standings",
+        "players", "teams", "league_state",
     ]:
         conn.execute(f"DELETE FROM {_tbl}")
 
@@ -512,25 +495,6 @@ def seed():
             (pid, LEAGUE_YEAR, morale),
         )
 
-        college_state = _pick_college_state()
-        hometown_state = _pick_hometown(college_state)
-        conn.execute(
-            """
-            INSERT INTO player_backstories
-                (player_id, college_state, hometown_state, personality_label, backstory_blurb)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (
-                pid,
-                college_state,
-                hometown_state,
-                ARCHETYPE_TO_LABEL.get(arch, "Low-Maintenance Pro"),
-                _build_blurb(arch, conn.execute(
-                    "SELECT first_name FROM players WHERE id=?", (pid,)
-                ).fetchone()["first_name"], hometown_state, college_state),
-            ),
-        )
-
     # Insert GMs
     abbr_to_id = {t["abbreviation"]: tid for t, tid in zip(TEAMS, team_ids)}
     for gm in GM_DATA:
@@ -567,7 +531,6 @@ def seed():
         (LEAGUE_YEAR, mode, official_started),
     )
 
-    backfill_fan_foundations(conn)
     conn.commit()
     conn.close()
 

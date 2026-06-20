@@ -6,7 +6,6 @@ Pass --verbose for a full narrative including player drama.
 """
 import sys
 import os
-import json
 
 sys.path.insert(0, os.path.dirname(__file__))
 from league.database import get_connection, create_tables
@@ -25,20 +24,7 @@ from league.playoffs import (
     schedule_next_playoff_game,
     record_game_result,
 )
-from league.fan_experience import (
-    adjusted_roster_for_game,
-    after_week,
-    average_team_morale,
-    cool_rivalries_for_week,
-    get_active_coach,
-    persist_game_explanation,
-    persist_pregame_broadcast,
-    prepare_week_injuries,
-    record_game_rivalry,
-)
-
-
-LEGACY_INTERVIEWS_ENABLED = False
+from league.chatgpt_bridge import build_interview_packet, build_gm_interview_packet
 
 
 def _process_playoff_results(conn, playoff_game_ids, current_week, season_year):
@@ -353,7 +339,6 @@ def run_week(verbose=None, start_official=None):
 
     games = c.execute("""
         SELECT g.id,
-               g.week, g.season_year,
                g.home_team_id, g.away_team_id,
                g.playoff_series_id,
                ht.city || ' ' || ht.name AS home_name,
@@ -388,44 +373,33 @@ def run_week(verbose=None, start_official=None):
     ).fetchone()[0] > 0
     if has_personalities:
         compute_all_team_chemistry(conn, week, season_year)
-        prepare_week_injuries(conn, week, season_year)
-    cool_rivalries_for_week(conn, week, season_year)
 
     all_player_mods = _active_player_mods(conn, season_year, week)
 
     playoff_game_ids = []
 
     for game in games:
-        persist_pregame_broadcast(conn, dict(game), generated_before_tip=True)
-        home_players, home_injuries, home_injury_effect = adjusted_roster_for_game(
-            conn, game["home_team_id"], season_year, week
-        )
-        away_players, away_injuries, away_injury_effect = adjusted_roster_for_game(
-            conn, game["away_team_id"], season_year, week
-        )
+        home_players = [dict(p) for p in c.execute(
+            "SELECT * FROM players "
+            "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+            (game["home_team_id"],),
+        ).fetchall()]
+        away_players = [dict(p) for p in c.execute(
+            "SELECT * FROM players "
+            "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
+            (game["away_team_id"],),
+        ).fetchall()]
 
         home_chem = get_team_chemistry(conn, game["home_team_id"], week, season_year)
         away_chem = get_team_chemistry(conn, game["away_team_id"], week, season_year)
-        home_morale = average_team_morale(conn, game["home_team_id"])
-        away_morale = average_team_morale(conn, game["away_team_id"])
-        home_coach = get_active_coach(conn, game["home_team_id"])
-        away_coach = get_active_coach(conn, game["away_team_id"])
         home_team_mod = _active_team_chemistry_mod(conn, game["home_team_id"], season_year, week)
         away_team_mod = _active_team_chemistry_mod(conn, game["away_team_id"], season_year, week)
-        h_score, a_score, h_box, a_box, h_q, a_q, sim_context = simulate_game(
+        h_score, a_score, h_box, a_box, h_q, a_q = simulate_game(
             home_players, away_players, home_chem, away_chem,
             home_player_mods=all_player_mods,
             away_player_mods=all_player_mods,
             home_team_mod=home_team_mod,
             away_team_mod=away_team_mod,
-            home_morale=home_morale,
-            away_morale=away_morale,
-            home_coach=home_coach,
-            away_coach=away_coach,
-            home_injury_effect=home_injury_effect,
-            away_injury_effect=away_injury_effect,
-            home_injuries=home_injuries,
-            away_injuries=away_injuries,
         )
 
         all_stats = h_box + a_box
@@ -446,53 +420,13 @@ def run_week(verbose=None, start_official=None):
         )
 
         for stat in h_box + a_box:
-            if stat["minutes"] <= 0:
-                continue
             c.execute("""
                 INSERT INTO player_game_stats
-                    (game_id, player_id, team_id, minutes, started, rotation_role,
-                     points, rebounds, assists, steals, blocks)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (game_id, player_id, team_id, points, rebounds, assists, steals, blocks)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (game["id"], stat["player_id"], stat["team_id"],
-                  stat["minutes"], stat["started"], stat["rotation_role"],
                   stat["points"], stat["rebounds"], stat["assists"],
                   stat["steals"], stat["blocks"]))
-
-        for team_id, rotation in (
-            (game["home_team_id"], sim_context["home_rotation"]),
-            (game["away_team_id"], sim_context["away_rotation"]),
-        ):
-            c.execute(
-                """
-                INSERT INTO game_rotations
-                    (game_id, team_id, coach_id, rotation_size,
-                     rotation_tightness, lineup_preference,
-                     starter_ids_json, rotation_ids_json, starter_minutes,
-                     summary)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT (game_id, team_id) DO UPDATE SET
-                    coach_id=excluded.coach_id,
-                    rotation_size=excluded.rotation_size,
-                    rotation_tightness=excluded.rotation_tightness,
-                    lineup_preference=excluded.lineup_preference,
-                    starter_ids_json=excluded.starter_ids_json,
-                    rotation_ids_json=excluded.rotation_ids_json,
-                    starter_minutes=excluded.starter_minutes,
-                    summary=excluded.summary
-                """,
-                (
-                    game["id"],
-                    team_id,
-                    rotation["coach_id"],
-                    rotation["rotation_size"],
-                    rotation["rotation_tightness"],
-                    rotation["lineup_preference"],
-                    json.dumps(rotation["starter_ids"]),
-                    json.dumps(rotation["rotation_ids"]),
-                    rotation["starter_minutes"],
-                    rotation["summary"],
-                ),
-            )
 
         home_won = h_score > a_score
 
@@ -518,13 +452,6 @@ def run_week(verbose=None, start_official=None):
             """, (0 if home_won else 1, 1 if home_won else 0,
                   a_score, h_score, game["away_team_id"], season_year))
 
-        c.execute(
-            "UPDATE games SET possessions=? WHERE id=?",
-            (sim_context["possessions"], game["id"]),
-        )
-        persist_game_explanation(conn, dict(game), sim_context, h_q, a_q)
-        record_game_rivalry(conn, dict(game), sim_context)
-
         winner = game["home_name"] if home_won else game["away_name"]
         marker = "  "
         print(f"{marker}{game['home_name']:<26} {h_score:>3}  --  {a_score:<3} {game['away_name']}")
@@ -548,7 +475,7 @@ def run_week(verbose=None, start_official=None):
     conn.commit()
 
     # ── Post-game interviews ───────────────────────────────────────────────────
-    has_backstories = LEGACY_INTERVIEWS_ENABLED and c.execute(
+    has_backstories = c.execute(
         "SELECT COUNT(*) FROM player_backstories"
     ).fetchone()[0] > 0
     interview_count = 0
@@ -581,7 +508,7 @@ def run_week(verbose=None, start_official=None):
 
     # ── Midseason GM interviews ────────────────────────────────────────────────
     gm_count = c.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
-    if LEGACY_INTERVIEWS_ENABLED and phase == "regular_season" and gm_count > 0:
+    if phase == "regular_season" and gm_count > 0:
         midseason_fired = c.execute(
             "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'midseason'",
             (season_year,)
@@ -635,7 +562,7 @@ def run_week(verbose=None, start_official=None):
                   SELECT 1 FROM gm_interviews gi
                   WHERE gi.playoff_series_id = ps.id
               )
-        """, [*playoff_game_ids, season_year]).fetchall() if LEGACY_INTERVIEWS_ENABLED else []
+        """, [*playoff_game_ids, season_year]).fetchall()
 
         po_player_count = 0
         po_gm_count = 0
@@ -697,7 +624,7 @@ def run_week(verbose=None, start_official=None):
 
     # ── Regular-season end: seed playoffs ─────────────────────────────────────
     if phase == "regular_season" and reg_games_remaining == 0:
-        if LEGACY_INTERVIEWS_ENABLED and gm_count > 0:
+        if gm_count > 0:
             season_end_fired = c.execute(
                 "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'season_end'",
                 (season_year,)
@@ -754,16 +681,10 @@ def run_week(verbose=None, start_official=None):
     fresh_phase = c.execute(
         "SELECT phase FROM league_state WHERE id = 1"
     ).fetchone()["phase"]
-    package = after_week(conn, week, season_year)
     pending_review_count = c.execute(
         "SELECT COUNT(*) FROM pending_trades WHERE status = 'pending'"
     ).fetchone()[0]
     conn.close()
-
-    if package:
-        print(
-            f"Weekly editorial packet #{package['id']} is ready in the Commissioner Console."
-        )
 
     if fresh_phase == "complete":
         print(f"Week {week} complete.  The season is over — champion has been crowned!")

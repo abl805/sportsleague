@@ -447,17 +447,6 @@ def evaluate_player_week(conn, player, week, season_year, verbose=False):
                     " VALUES (?, ?, ?, ?, 'feud', 'active', ?)",
                     (pid, target["id"], week, season_year, detail),
                 )
-                for source_id, target_id in ((pid, target["id"]), (target["id"], pid)):
-                    conn.execute(
-                        """
-                        INSERT INTO player_relationships
-                            (player_id, target_player_id, relationship_type,
-                             intensity, started_season, started_week, detail)
-                        VALUES (?, ?, 'rival', 0.68, ?, ?, ?)
-                        ON CONFLICT DO NOTHING
-                        """,
-                        (source_id, target_id, season_year, week, detail),
-                    )
                 log_player_memory(conn, pid, week, season_year, "feud_started", detail)
                 log_player_memory(conn, target["id"], week, season_year, "feud_started", detail)
                 if verbose:
@@ -612,18 +601,15 @@ def compute_team_chemistry(conn, team_id, week, season_year):
           AND  pe.event_type='public_complaint' AND pe.status='active'
     """, (team_id,)).fetchone()["n"]
 
-    leader_row = conn.execute("""
-        SELECT COUNT(*) AS n, AVG(pp.leadership) AS leadership FROM player_personalities pp
+    leaders = conn.execute("""
+        SELECT COUNT(*) AS n FROM player_personalities pp
         JOIN   players p ON pp.player_id = p.id
         WHERE  p.team_id=? AND COALESCE(p.status, 'active') = 'active'
           AND  pp.archetype='locker_room_leader'
-    """, (team_id,)).fetchone()
-    leaders = leader_row["n"]
-    leadership = leader_row["leadership"] if leader_row["leadership"] is not None else 0.5
+    """, (team_id,)).fetchone()["n"]
 
     chemistry -= feuds * 3 + demands * 4 + complaints * 1.5
     chemistry += leaders * 2.5
-    chemistry += max(0.0, leadership - 0.5) * 2.0
     chemistry  = max(25.0, min(96.0, chemistry))
 
     conn.execute(

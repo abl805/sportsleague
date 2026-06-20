@@ -2,24 +2,31 @@
 {% from "partials.html" import storyline_list %}
 {% block title %}{{ detail.player.player }}{% endblock %}
 {% block content %}
-<section class="player-hero character-hero">
+<section class="player-hero">
   <div class="player-number">{{ detail.player.position }}</div>
   <div>
-    <p class="eyebrow">
+    <p class="eyebrow" style="display:flex;align-items:center;gap:8px;">
+      <img src="{{ url_for('static', filename='images/teams/' ~ detail.player.abbreviation ~ '/secondary.png') }}"
+           alt="{{ detail.player.abbreviation }}"
+           class="logo-secondary"
+           onerror="this.style.display='none'">
       <a href="{{ url_for('team_page', abbr=detail.player.abbreviation) }}">{{ detail.player.team_name }}</a>
     </p>
     <h1>{{ detail.player.player }}</h1>
-    <p>
-      Age {{ detail.player.age }} · OVR {{ detail.player.skill_rating }} ·
-      {{ detail.player.salary|money }} ·
-      {{ detail.player.personality_label or detail.player.archetype|event_label }}
+    <p>Age {{ detail.player.age }} / OVR {{ detail.player.skill_rating }} / {{ detail.player.salary|money }}
+      {% if detail.player.personality_label %}
+        / <strong>{{ detail.player.personality_label }}</strong>
+      {% elif detail.player.archetype %}
+        / {{ detail.player.archetype|event_label }}
+      {% else %}
+        / Personality pending
+      {% endif %}
     </p>
-    {% if detail.arc %}
-      <div class="career-arc">
-        <span>Current arc</span>
-        <strong>{{ detail.arc.title }}</strong>
-        <p>{{ detail.arc.summary }}</p>
-      </div>
+    {% if detail.player.college_state or detail.player.hometown_state %}
+    <p class="player-bio-line" style="font-size:0.85em;color:#777;margin-top:2px;">
+      {% if detail.player.hometown_state %}From {{ detail.player.hometown_state }}{% endif %}
+      {% if detail.player.college_state %} · Played college ball in {{ detail.player.college_state }}{% endif %}
+    </p>
     {% endif %}
   </div>
   <dl class="hero-stats">
@@ -28,100 +35,14 @@
     <div><dt>APG</dt><dd>{{ detail.averages.apg or 0 }}</dd></div>
   </dl>
 </section>
-
-<section class="character-grid">
-  <article class="panel">
-    <div class="section-head"><h2>Character profile</h2></div>
-    <div class="trait-grid">
-      {% for label, value in [
-        ('Loyalty', detail.player.loyalty),
-        ('Ego', detail.player.ego),
-        ('Leadership', detail.player.leadership),
-        ('Clutch', detail.player.clutch),
-        ('Durability', detail.player.durability),
-        ('Media reputation', detail.player.media_reputation)
-      ] %}
-        <div>
-          <span>{{ label }}</span>
-          <div class="trait-meter"><i style="width:{{ ((value or 0.5) * 100)|int }}%"></i></div>
-          <strong>{{ ((value or 0.5) * 100)|int }}</strong>
-        </div>
-      {% endfor %}
-    </div>
-  </article>
-  <article class="panel player-biography">
-    <div class="section-head"><h2>Origin</h2></div>
-    <p>{{ detail.player.backstory_blurb or "This player's reputation is still being written on the floor." }}</p>
-    <dl>
-      <div><dt>Hometown</dt><dd>{{ detail.player.hometown_state or "Unknown" }}</dd></div>
-      <div><dt>College path</dt><dd>{{ detail.player.college_state or "Unknown" }}</dd></div>
-      <div><dt>Morale</dt><dd>{{ detail.morale.morale|round|int if detail.morale else "—" }}</dd></div>
-    </dl>
-  </article>
-</section>
-
-{% if detail.active_comeback %}
-<section class="comeback-tracker">
-  <div>
-    <span>Active rehabilitation arc</span>
-    <strong>{{ detail.active_comeback.outcome_type|event_label }}</strong>
-    <p>{{ detail.active_comeback.summary }}</p>
-  </div>
-  <dl>
-    <div><dt>Games back</dt><dd>{{ detail.active_comeback.games_since_return }}</dd></div>
-    <div><dt>Skill restored</dt><dd>{{ detail.active_comeback.skill_restored }}/{{ detail.active_comeback.recovery_ceiling }}</dd></div>
-    <div><dt>Points remaining</dt><dd>{{ detail.active_comeback.points_remaining }}</dd></div>
-  </dl>
+{% if detail.player.backstory_blurb %}
+<section class="panel" style="margin:0 auto 1.5rem;max-width:860px;padding:1rem 1.5rem;">
+  <p style="font-style:italic;color:#555;margin:0;">{{ detail.player.backstory_blurb }}</p>
 </section>
 {% endif %}
-
-{% if detail.injuries or detail.relationships %}
-<section class="character-grid">
-  <article class="panel">
-    <div class="section-head"><h2>Injury history</h2></div>
-    <div class="compact-story-list">
-      {% for injury in detail.injuries %}
-        <div>
-          <strong>{{ injury.severity|title }} · {{ injury.status|title }}</strong>
-          <span>Season {{ injury.season_year }}, Week {{ injury.week_start }}</span>
-          <p>{{ injury.description }}</p>
-          {% if injury.summary %}
-            <p class="injury-consequence"><b>{{ injury.outcome_type|event_label }}:</b> {{ injury.summary }}</p>
-            {% if injury.comeback_status %}
-              <small>
-                Rehabilitation: {{ injury.comeback_status|event_label }}
-                {% if injury.recovery_ceiling %}
-                  · {{ injury.skill_restored }}/{{ injury.recovery_ceiling }} skill restored
-                {% endif %}
-              </small>
-            {% endif %}
-          {% endif %}
-        </div>
-      {% else %}
-        <p class="empty">No recorded injuries.</p>
-      {% endfor %}
-    </div>
-  </article>
-  <article class="panel">
-    <div class="section-head"><h2>History with others</h2></div>
-    <div class="compact-story-list">
-      {% for rel in detail.relationships %}
-        <div>
-          <strong>{{ rel.relationship_type|event_label }}</strong>
-          <span>{{ rel.other_player or rel.former_team }}</span>
-          <p>{{ rel.detail }}</p>
-        </div>
-      {% else %}
-        <p class="empty">No rival or former-team history yet.</p>
-      {% endfor %}
-    </div>
-  </article>
-</section>
-{% endif %}
-
 <section class="section-grid">
   <div class="panel wide">
-    <div class="section-head"><h2>Game log</h2></div>
+    <div class="section-head"><h2>Game Log</h2></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Week</th><th>Opp</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th></tr></thead>
@@ -144,75 +65,32 @@
     </div>
   </div>
   <div class="panel">
-    <div class="section-head"><h2>Career ledger</h2></div>
-    <dl class="career-ledger">
-      <div><dt>Games</dt><dd>{{ detail.career.games or 0 }}</dd></div>
-      <div><dt>Points</dt><dd>{{ detail.career.points or 0 }}</dd></div>
-      <div><dt>Rebounds</dt><dd>{{ detail.career.rebounds or 0 }}</dd></div>
-      <div><dt>Assists</dt><dd>{{ detail.career.assists or 0 }}</dd></div>
-      <div><dt>Career high</dt><dd>{{ detail.career.career_high or 0 }}</dd></div>
-    </dl>
-    {% if detail.awards %}
-      <div class="section-head" style="margin-top:22px;"><h2>Honors</h2></div>
-      <div class="compact-story-list">
-        {% for award in detail.awards %}
-          <div><strong>{{ award.label }}</strong><span>{{ award.season_year }}{% if award.week %} · Week {{ award.week }}{% endif %}</span></div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  </div>
-</section>
-
-{% if detail.records %}
-<section class="panel player-records">
-  <div class="section-head"><h2>Record book</h2></div>
-  <div class="record-grid">
-    {% for record in detail.records %}
-      <article class="{{ 'current-record' if record.is_current else 'former-record' }}">
-        <span>{{ record.scope_label }} {{ record.stat_key|event_label }}</span>
-        <strong>{{ record.value }}</strong>
-        <small>
-          {{ 'Current record' if record.is_current else 'Former record' }}
-          {% if record.season_year %} · {{ record.season_year }}{% endif %}
-          {% if record.week %} · Week {{ record.week }}{% endif %}
-        </small>
-        {% if record.game_id %}
-          <a class="record-game-link" href="{{ url_for('game_page', game_id=record.game_id) }}">View performance</a>
-        {% endif %}
-      </article>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
-{% if detail.articles or detail.editorial_quotes or detail.interviews or detail.events %}
-<section class="character-grid">
-  <article class="panel">
-    <div class="section-head"><h2>In the news</h2></div>
-    <div class="article-list">
+    {% if detail.articles %}
+    <div class="section-head"><h2>In the News</h2></div>
+    <div class="article-list" style="margin-bottom:24px;">
       {% for art in detail.articles %}
         <article class="article-item">
           <div class="story-meta">Week {{ art.week }}</div>
-          <h3>{{ art.headline }}</h3>
-          <p>{{ art.body }}</p>
+          <h3 class="article-headline">{{ art.headline }}</h3>
+          <p class="article-body">{{ art.body }}</p>
         </article>
-      {% else %}
-        <p class="empty">No feature stories yet.</p>
       {% endfor %}
     </div>
-  </article>
-  <article class="panel">
-    {% if detail.editorial_quotes %}
-      <div class="section-head"><h2>In his own words</h2></div>
-      <div class="compact-story-list">
-        {% for quote in detail.editorial_quotes %}
-          <div><span>Week {{ quote.week }}</span><p>“{{ quote.quote_text }}”</p></div>
-        {% endfor %}
-      </div>
     {% endif %}
-    <div class="section-head" style="margin-top:20px;"><h2>Pressure log</h2></div>
+    {% if detail.interviews %}
+    <div class="section-head" style="margin-top:1.5rem;"><h2>In Their Own Words</h2></div>
+    <div class="article-list" style="margin-bottom:24px;">
+      {% for iv in detail.interviews %}
+        <article class="article-item">
+          <div class="story-meta">Week {{ iv.week }}</div>
+          <p style="font-size:0.85em;color:#777;margin-bottom:4px;">{{ iv.question }}</p>
+          <p style="font-style:italic;">"{{ iv.response }}"</p>
+        </article>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="section-head"><h2>Player Notes</h2></div>
     {{ storyline_list(detail.events) }}
-  </article>
+  </div>
 </section>
-{% endif %}
 {% endblock %}
