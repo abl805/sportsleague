@@ -61,10 +61,17 @@ def _is_postgres(conn):
 def get_connection():
     url = os.environ.get("DATABASE_URL")
     if url:
-        # Strip whitespace and non-ASCII junk that can sneak in via copy-paste
-        url = url.strip().encode("ascii", errors="ignore").decode("ascii")
         import psycopg2
-        pg = psycopg2.connect(url)
+        from urllib.parse import urlparse, unquote
+        url = url.strip()
+        p = urlparse(url)
+        pg = psycopg2.connect(
+            host=p.hostname,
+            port=p.port or 5432,
+            dbname=p.path.lstrip("/"),
+            user=p.username,
+            password=unquote(p.password, encoding="latin-1") if p.password else None,
+        )
         pg.autocommit = False
         return _PGConn(pg)
     else:
