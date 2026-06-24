@@ -15,7 +15,7 @@ TEAMS = [
     {
         "city": "Santa Maria",
         "name": "Vaqueros",
-        "abbreviation": "SMA",
+        "abbreviation": "SMV",
         "mascot": "A stern vaquero, wide-brimmed hat casting a shadow over the eyes",
         "colors": "Deep red + black + gold",
         "logo_description": "A stern vaquero face, wide-brimmed hat casting a shadow over the eyes",
@@ -259,7 +259,7 @@ def _generate_traits(base_traits):
 # ── GM definitions (one per team, matched by abbreviation) ────────────────────
 GM_DATA = [
     {
-        "team_abbr":      "SMA",
+        "team_abbr":      "SMV",
         "name":           "Rafael 'The Closer' Mendoza",
         "archetype":      "loyal_to_veterans",
         "risk_tolerance":  0.35,

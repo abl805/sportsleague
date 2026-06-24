@@ -2,7 +2,7 @@
 {% from "partials.html" import game_card, storyline_list %}
 {% block title %}{{ detail.team.city }} {{ detail.team.name }}{% endblock %}
 {% block content %}
-{% set state_map = {'APL': 'WI', 'PAY': 'UT', 'MNK': 'MN', 'SMA': 'CA', 'FLG': 'AZ', 'POC': 'ID', 'CHA': 'TN', 'LAR': 'TX'} %}
+{% set state_map = {'APL': 'WI', 'PAY': 'UT', 'MNK': 'MN', 'SMV': 'CA', 'FLG': 'AZ', 'POC': 'ID', 'CHA': 'TN', 'LAR': 'TX'} %}
 {% set team_state = state_map.get(detail.team.abbreviation, '') %}
 {% set city_state = detail.team.city ~ (', ' ~ team_state if team_state else '') %}
 
