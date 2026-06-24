@@ -567,12 +567,9 @@ def privacy():
 def sitemap():
     base_url = request.url_root.rstrip("/")
     def load(conn):
-        state = q.get_state(conn)
-        if not state:
-            return []
-        rows = q.teams_index(conn, state["season_year"])
+        rows = conn.execute("SELECT abbreviation FROM teams ORDER BY city").fetchall()
         return [r["abbreviation"] for r in rows]
-    team_abbrs = with_conn(load)
+    team_abbrs = with_conn(load) or []
     xml = render_template("sitemap.xml", base_url=base_url, team_abbrs=team_abbrs)
     return Response(xml, mimetype="application/xml")
 
