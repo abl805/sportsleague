@@ -566,7 +566,14 @@ def privacy():
 @app.route("/sitemap.xml")
 def sitemap():
     base_url = request.url_root.rstrip("/")
-    xml = render_template("sitemap.xml", base_url=base_url)
+    def load(conn):
+        state = q.get_state(conn)
+        if not state:
+            return []
+        rows = q.teams_index(conn, state["season_year"])
+        return [r["abbreviation"] for r in rows]
+    team_abbrs = with_conn(load)
+    xml = render_template("sitemap.xml", base_url=base_url, team_abbrs=team_abbrs)
     return Response(xml, mimetype="application/xml")
 
 

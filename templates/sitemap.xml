@@ -60,4 +60,11 @@
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
+  {% for abbr in team_abbrs %}
+  <url>
+    <loc>{{ base_url }}/teams/{{ abbr }}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  {% endfor %}
 </urlset>
