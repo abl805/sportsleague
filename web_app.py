@@ -424,6 +424,7 @@ def commissioner_data():
             "trade_options": q.trade_options(conn),
             "pending_interviews": get_pending_interviews(conn, season_year=season),
             "recent_interviews": get_recent_interviews(conn, season, limit=20),
+            "contact_messages": q.get_contact_messages(conn),
         }
 
     data = with_conn(load)
@@ -539,8 +540,21 @@ def about():
     return render_template("about.html", **(data or {"state": None}), active="about")
 
 
-@app.route("/contact")
+@app.route("/contact", methods=["GET", "POST"])
 def contact():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip()
+        subject = request.form.get("subject", "").strip()
+        body = request.form.get("body", "").strip()
+        if name and body:
+            def save(conn):
+                q.save_contact_message(conn, name, email, subject, body)
+            with_conn(save)
+            flash("Message sent. The Commissioner will review it shortly.", "success")
+        else:
+            flash("Please fill in your name and message.", "error")
+        return redirect(url_for("contact"))
     def load(conn):
         return {"state": q.get_state(conn)}
     data = with_conn(load)

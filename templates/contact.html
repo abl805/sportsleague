@@ -21,8 +21,8 @@
         <dd style="color:var(--text);font-size:1rem;">League Commissioner</dd>
       </div>
       <div>
-        <dt style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;">Email</dt>
-        <dd><a href="mailto:rob.heathincometax@gmail.com" style="color:var(--gold);text-decoration:none;">rob.heathincometax@gmail.com</a></dd>
+        <dt style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;">Response Time</dt>
+        <dd style="color:var(--text);font-size:0.9rem;">Typically within a few days</dd>
       </div>
       <div>
         <dt style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;">League Status</dt>
@@ -35,28 +35,47 @@
         </dd>
       </div>
     </dl>
+
+    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+      <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;">Common topics</p>
+      <ul style="color:var(--muted);font-size:0.85rem;line-height:1.7;padding-left:18px;margin:0;">
+        <li>Trade approvals, vetoes, or GM behavior</li>
+        <li>Salary cap and roster rules</li>
+        <li>Bugs or technical issues</li>
+        <li>General interest in the simulation</li>
+      </ul>
+    </div>
   </div>
 
   <div class="panel wide">
-    <div class="section-head"><h2>What to Reach Out About</h2></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
-      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
-        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">Trade Disputes</p>
-        <p style="color:var(--text);font-size:0.88rem;margin:0;">Questions about a trade approval, veto decision, or GM agent behavior.</p>
+    <div class="section-head"><h2>Send a Message</h2></div>
+    <form method="post" action="{{ url_for('contact') }}" style="display:grid;gap:14px;margin-top:4px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <label style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Your Name <span style="color:var(--accent);">*</span></label>
+          <input type="text" name="name" required maxlength="120"
+                 style="width:100%;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.9rem;">
+        </div>
+        <div>
+          <label style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Your Email <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <input type="email" name="email" maxlength="200"
+                 style="width:100%;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.9rem;">
+        </div>
       </div>
-      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
-        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">League Rules</p>
-        <p style="color:var(--text);font-size:0.88rem;margin:0;">Clarifications on salary cap rules, roster limits, or offseason procedures.</p>
+      <div>
+        <label style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Subject</label>
+        <input type="text" name="subject" maxlength="200"
+               style="width:100%;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.9rem;">
       </div>
-      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
-        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">Technical Issues</p>
-        <p style="color:var(--text);font-size:0.88rem;margin:0;">Problems with the simulation engine, database, or web interface.</p>
+      <div>
+        <label style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:5px;">Message <span style="color:var(--accent);">*</span></label>
+        <textarea name="body" required rows="6" maxlength="4000"
+                  style="width:100%;padding:8px 10px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.9rem;resize:vertical;font-family:inherit;"></textarea>
       </div>
-      <div style="padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;">
-        <p style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:0 0 6px;">General Interest</p>
-        <p style="color:var(--text);font-size:0.88rem;margin:0;">Questions about the project, the AI simulation, or how to run your own league.</p>
+      <div>
+        <button type="submit" style="padding:10px 24px;">Send Message</button>
       </div>
-    </div>
+    </form>
   </div>
 
 </section>

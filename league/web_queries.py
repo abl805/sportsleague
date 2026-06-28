@@ -667,3 +667,20 @@ def offseason_events(conn, limit=12):
         ORDER BY id DESC
         LIMIT ?
     """, (limit,)).fetchall())
+
+
+def save_contact_message(conn, name, email, subject, body):
+    conn.execute(
+        "INSERT INTO contact_messages (name, email, subject, body) VALUES (?, ?, ?, ?)",
+        (name, email, subject, body),
+    )
+    conn.commit()
+
+
+def get_contact_messages(conn, limit=50):
+    return dicts(conn.execute("""
+        SELECT id, name, email, subject, body, read, created_at
+        FROM contact_messages
+        ORDER BY id DESC
+        LIMIT ?
+    """, (limit,)).fetchall())

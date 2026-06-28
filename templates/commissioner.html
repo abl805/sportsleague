@@ -428,6 +428,33 @@
   </div>
 </section>
 
+{# ── CONTACT MESSAGES ─────────────────────────────────────────── #}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head">
+      <h2>Contact Messages</h2>
+      {% if contact_messages %}
+        <span style="color:var(--gold);font-size:0.78rem;font-weight:800;">{{ contact_messages|length }} message{{ 's' if contact_messages|length != 1 else '' }}</span>
+      {% endif %}
+    </div>
+    <div class="log-list">
+      {% for msg in contact_messages %}
+        <article>
+          <div class="story-meta">
+            {{ msg.created_at }}
+            &mdash; <strong>{{ msg.name }}</strong>
+            {% if msg.email %}&lt;{{ msg.email }}&gt;{% endif %}
+          </div>
+          {% if msg.subject %}<strong>{{ msg.subject }}</strong>{% endif %}
+          <p style="white-space:pre-wrap;">{{ msg.body }}</p>
+        </article>
+      {% else %}
+        <p class="empty">No messages yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
 {# ── INTERNAL LOGS ───────────────────────────────────────────── #}
 <section style="margin-top:16px;">
   <div class="panel">

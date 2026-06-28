@@ -405,6 +405,16 @@ _TABLE_SCHEMAS = [
         response          TEXT,
         created_at        TEXT DEFAULT (datetime('now'))
     )""",
+
+    """CREATE TABLE IF NOT EXISTS contact_messages (
+        id         INTEGER PRIMARY KEY,
+        name       TEXT NOT NULL,
+        email      TEXT,
+        subject    TEXT,
+        body       TEXT NOT NULL,
+        read       INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+    )""",
 ]
 
 
