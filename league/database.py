@@ -26,6 +26,8 @@ class _PGConn:
     def _normalise(sql):
         sql = re.sub(r'\?', '%s', sql)
         sql = re.sub(r"datetime\('now'\)", "NOW()", sql)
+        # PostgreSQL ROUND(x, n) requires numeric; AVG returns double precision
+        sql = re.sub(r'\bROUND\((AVG\([^)]*\)), (\d+)\)', r'ROUND(\1::numeric, \2)', sql)
         return sql
 
     def cursor(self):

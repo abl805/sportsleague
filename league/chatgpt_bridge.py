@@ -57,7 +57,7 @@ def league_snapshot_context(conn, season_year):
         JOIN players p ON p.id = pgs.player_id
         JOIN teams t ON t.id = p.team_id
         WHERE g.season_year = ?
-        GROUP BY p.id
+        GROUP BY p.id, t.id
         ORDER BY ppg DESC
         LIMIT 15
     """, (season_year,)).fetchall())
@@ -227,26 +227,26 @@ def trade_report_context(conn, trade_id):
 
 def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade_id=None):
     conn = get_connection()
-    state_row = conn.execute("SELECT * FROM league_state WHERE id=1").fetchone()
-    if not state_row:
+    try:
+        state_row = conn.execute("SELECT * FROM league_state WHERE id=1").fetchone()
+        if not state_row:
+            raise RuntimeError("League not found. Run seed.py first.")
+
+        packet_season = state_row["season_year"]
+        packet_week = state_row["current_week"]
+
+        if context_type == "Team report" and team_id:
+            context = team_report_context(conn, team_id, packet_season)
+        elif context_type == "Pending trade review" and trade_id:
+            context = trade_report_context(conn, trade_id)
+        elif context_type == "Commissioner note":
+            context = {
+                "note": "No league tables were attached. Use the commissioner request only."
+            }
+        else:
+            context = league_snapshot_context(conn, packet_season)
+    finally:
         conn.close()
-        raise RuntimeError("League not found. Run seed.py first.")
-
-    packet_season = state_row["season_year"]
-    packet_week = state_row["current_week"]
-
-    if context_type == "Team report" and team_id:
-        context = team_report_context(conn, team_id, packet_season)
-    elif context_type == "Pending trade review" and trade_id:
-        context = trade_report_context(conn, trade_id)
-    elif context_type == "Commissioner note":
-        context = {
-            "note": "No league tables were attached. Use the commissioner request only."
-        }
-    else:
-        context = league_snapshot_context(conn, packet_season)
-
-    conn.close()
 
     instructions = [
         "Read the packet as source-of-truth league data.",

@@ -111,7 +111,7 @@ def stat_leaders(conn, season_year, limit=10, order_by="ppg"):
         JOIN players p ON p.id = pgs.player_id
         JOIN teams t ON t.id = p.team_id
         WHERE g.season_year = ?
-        GROUP BY p.id
+        GROUP BY p.id, t.id
         HAVING COUNT(pgs.id) >= 1
         ORDER BY {order_sql}
         LIMIT ?
@@ -650,7 +650,7 @@ def commissioner_logs(conn, limit=24):
         LIMIT ?
     """, (limit,)).fetchall())
     combined = gm_logs + player_logs
-    combined.sort(key=lambda row: row.get("created_at") or "", reverse=True)
+    combined.sort(key=lambda row: str(row.get("created_at") or ""), reverse=True)
     return combined[:limit]
 
 
