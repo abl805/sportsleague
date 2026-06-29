@@ -22,7 +22,8 @@
             <td><a href="{{ url_for('player_page', player_id=p.id) }}">{{ p.player }}</a></td>
             <td>
               <a href="{{ url_for('team_page', abbr=p.abbreviation) }}" class="abbr-cell">
-                <img src="{{ url_for('static', filename='images/teams/' ~ p.abbreviation ~ '/tertiary.png') }}"
+                {% set logo_type = 'wordmark' if p.abbreviation == 'APL' else 'tertiary' %}
+                <img src="{{ url_for('static', filename='images/teams/' ~ p.abbreviation ~ '/' ~ logo_type ~ '.png') }}"
                      alt="" class="logo-tertiary" onerror="this.style.display='none'">
                 {{ p.abbreviation }}
               </a>
