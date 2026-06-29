@@ -446,7 +446,8 @@ def _create_next_season(conn, next_year):
     team_ids = [row["id"] for row in conn.execute("SELECT id FROM teams ORDER BY id").fetchall()]
     for team_id in team_ids:
         conn.execute(
-            "INSERT OR IGNORE INTO standings (team_id, season_year) VALUES (?, ?)",
+            "INSERT INTO standings (team_id, season_year) VALUES (?, ?) "
+            "ON CONFLICT (team_id, season_year) DO NOTHING",
             (team_id, next_year),
         )
 
