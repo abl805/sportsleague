@@ -11,7 +11,7 @@ LEAGUE_YEAR = 2026
 
 class _PGConn:
     """
-    Wraps a psycopg2 connection so existing code can call conn.execute(),
+    Wraps a psycopg (v3) connection so existing code can call conn.execute(),
     conn.executemany(), and conn.cursor() exactly as it does with sqlite3.
 
     The execute() method also normalises SQLite-specific SQL:
@@ -31,8 +31,8 @@ class _PGConn:
         return sql
 
     def cursor(self):
-        import psycopg2.extras
-        return self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # psycopg3: row_factory is inherited from the connection
+        return self._conn.cursor()
 
     def execute(self, sql, params=()):
         cur = self.cursor()
@@ -63,18 +63,12 @@ def _is_postgres(conn):
 def get_connection():
     url = os.environ.get("DATABASE_URL")
     if url:
-        import psycopg2
-        from urllib.parse import urlparse, unquote
+        import psycopg
+        from psycopg.rows import dict_row
         url = url.strip()
-        p = urlparse(url)
-        pg = psycopg2.connect(
-            host=p.hostname,
-            port=p.port or 5432,
-            dbname=p.path.lstrip("/"),
-            user=p.username,
-            password=unquote(p.password, encoding="latin-1") if p.password else None,
-        )
+        pg = psycopg.connect(url, row_factory=dict_row)
         pg.autocommit = False
+        pg.prepare_threshold = None   # disable prepared stmts for Supabase PgBouncer
         return _PGConn(pg)
     else:
         conn = sqlite3.connect(DB_PATH)

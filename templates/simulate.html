@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Simulate — AIBA{% endblock %}
+{% block meta %}<meta name="robots" content="noindex">{% endblock %}
+{% block content %}
+
+<section class="commissioner-hero">
+  <div>
+    <p class="eyebrow">Commissioner Mode</p>
+    <h1>Simulate</h1>
+    <p>Run the league one step at a time. After each step, a ChatGPT packet is ready to copy.</p>
+  </div>
+  <dl class="hero-stats">
+    <div><dt>Season</dt><dd>{{ state.season_year }}</dd></div>
+    <div><dt>Week</dt><dd>{{ state.current_week }}</dd></div>
+    <div>
+      <dt>Phase</dt>
+      <dd>{% if state.phase == 'regular_season' %}Regular Season
+          {% elif state.phase == 'playoffs' %}Playoffs
+          {% elif state.phase == 'complete' %}Season Complete
+          {% elif state.phase == 'offseason' %}Offseason
+          {% else %}{{ state.phase|title }}{% endif %}</dd>
+    </div>
+  </dl>
+</section>
+
+{# ── NEXT STEP ──────────────────────────────────────────────────── #}
+<section style="margin-top:16px;">
+  <div class="panel" style="text-align:center;padding:32px 24px;">
+    <p style="color:var(--muted);font-size:0.85rem;margin:0 0 18px;">Next step in the league simulation:</p>
+    <form method="post" action="{{ url_for('simulate') }}">
+      <button type="submit" class="cta-big" style="font-size:1.05rem;padding:13px 32px;">
+        {{ next_action_label }} &rarr;
+      </button>
+    </form>
+    <p style="margin-top:18px;font-size:0.78rem;color:var(--muted);">
+      <a href="{{ url_for('commissioner') }}" style="color:var(--accent);">Full Commissioner Dashboard</a>
+      &mdash; trades, team packets, logs, and influences
+    </p>
+  </div>
+</section>
+
+{# ── CHATGPT SNAPSHOT PACKET ────────────────────────────────────── #}
+{% if snapshot_packet %}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head">
+      <h2>League Snapshot &mdash; Copy to ChatGPT</h2>
+      <span style="color:var(--muted);font-size:0.78rem;">Season {{ state.season_year }}, through Week {{ state.current_week - 1 if state.current_week > 1 else 1 }}</span>
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem;margin:0 0 12px;">
+      Copy this into ChatGPT for league recaps, power rankings, storyline analysis, and player/team influences.
+      After ChatGPT responds, paste the JSON back below.
+    </p>
+    <textarea class="copy-box" readonly id="sim-snapshot"
+      style="width:100%;min-height:200px;font-family:monospace;font-size:0.75em;
+             background:var(--surface-2);border:1px solid var(--border);
+             padding:10px;resize:vertical;">{{ snapshot_packet }}</textarea>
+    <button type="button" class="btn-copy secondary" data-target="sim-snapshot" style="margin-top:8px;">
+      Copy &rarr; ChatGPT
+    </button>
+  </div>
+</section>
+{% else %}
+<section style="margin-top:16px;">
+  <div class="panel">
+    <div class="section-head"><h2>ChatGPT Packet</h2></div>
+    <p class="empty">Simulate at least one week to generate the first league snapshot packet.</p>
+  </div>
+</section>
+{% endif %}
+
+{# ── PASTE BACK CHATGPT RESPONSE ────────────────────────────────── #}
+<section style="margin-top:16px;">
+  <div class="section-grid">
+
+    <div class="panel">
+      <div class="section-head"><h2>Paste Back: Articles</h2></div>
+      <p style="color:var(--muted);font-size:0.85rem;margin:0 0 10px;">
+        Paste the full ChatGPT response — the app finds the JSON automatically.
+        Works with raw arrays, wrapped objects, or full chat replies with <code>```json```</code> blocks.
+      </p>
+      <details style="margin-bottom:10px;">
+        <summary style="cursor:pointer;font-size:0.78rem;color:var(--accent);font-weight:700;">Expected format</summary>
+        <pre style="background:var(--surface-2);padding:8px;border-radius:6px;font-size:0.7rem;overflow-x:auto;margin-top:6px;">{
+  "articles": [
+    {
+      "headline": "Rapids Stun Polar Bears in Overtime",
+      "body": "Full article text...",
+      "week": {{ state.current_week - 1 if state.current_week > 1 else 1 }},
+      "team_tags": ["ABR", "MAN"],
+      "player_tags": ["First Last"]
+    }
+  ]
+}</pre>
+      </details>
+      <form method="post" action="{{ url_for('commissioner_articles_add') }}">
+        <textarea name="articles_json" rows="7"
+          style="width:100%;font-family:monospace;font-size:0.78em;"
+          placeholder='Paste ChatGPT response here...'></textarea>
+        <button type="submit" style="margin-top:8px;">Publish Articles</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <div class="section-head"><h2>Paste Back: Influences</h2></div>
+      <p style="color:var(--muted);font-size:0.85rem;margin:0 0 10px;">
+        Paste the full ChatGPT response — player streaks, team momentum, and GM trade urgency are extracted automatically.
+      </p>
+      <details style="margin-bottom:10px;">
+        <summary style="cursor:pointer;font-size:0.78rem;color:var(--accent);font-weight:700;">Influence types</summary>
+        <pre style="background:var(--surface-2);padding:8px;border-radius:6px;font-size:0.7rem;overflow-x:auto;margin-top:6px;">{
+  "influences": [
+    { "player": "First Last", "streak": "hot", "morale": 8, "duration_weeks": 2, "reason": "..." },
+    { "team": "ABR", "momentum": "hot", "locker_room_boost": 5, "duration_weeks": 2, "reason": "..." },
+    { "gm": "ABR", "trade_urgency": "high", "duration_weeks": 2, "reason": "..." }
+  ]
+}</pre>
+      </details>
+      <form method="post" action="{{ url_for('commissioner_influences_add') }}">
+        <textarea name="influences_json" rows="7"
+          style="width:100%;font-family:monospace;font-size:0.78em;"
+          placeholder='Paste ChatGPT response here...'></textarea>
+        <button type="submit" style="margin-top:8px;">Apply Influences</button>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<script>
+document.querySelectorAll('.btn-copy').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var ta = document.getElementById(btn.dataset.target);
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    var orig = btn.textContent;
+    try {
+      navigator.clipboard.writeText(ta.value).then(function() {
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 1800);
+      }).catch(function() {
+        document.execCommand('copy');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 1800);
+      });
+    } catch(e) {
+      document.execCommand('copy');
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = orig; }, 1800);
+    }
+  });
+});
+</script>
+
+{% endblock %}

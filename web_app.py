@@ -634,9 +634,97 @@ def commissioner_action():
         else:
             flash("Unknown commissioner action.", "error")
     except Exception as exc:
-        flash(str(exc), "error")
+        import traceback
+        import sys
+        print(traceback.format_exc(), file=sys.stderr)
+        flash(f"Simulation error: {exc}", "error")
 
     return redirect(url_for("commissioner"))
+
+
+# ── Simulate page ──────────────────────────────────────────────────────────────
+
+@app.route("/simulate", methods=["GET", "POST"])
+@require_commissioner
+def simulate():
+    if request.method == "POST":
+        def load_state(conn):
+            return q.get_state(conn)
+        state = with_conn(load_state)
+        if not state:
+            flash("No league found — run seed.py first.", "error")
+            return redirect(url_for("simulate"))
+
+        phase = state.get("phase", "regular_season")
+        mode = state.get("mode", "test")
+        official_started = state.get("official_started", 0)
+
+        try:
+            if phase in ("regular_season", "playoffs"):
+                start_official = bool(mode == "official" and not official_started)
+                output = capture_output(
+                    lambda: run_week(verbose=False, start_official=start_official)
+                )
+            else:
+                output = capture_output(lambda: advance_offseason_from_default_db(verbose=True))
+            flash(output or "Step completed.", "operation")
+        except Exception as exc:
+            import traceback, sys
+            print(traceback.format_exc(), file=sys.stderr)
+            flash(f"Simulation error: {exc}", "error")
+
+        return redirect(url_for("simulate"))
+
+    # GET ── load state and build snapshot packet
+    def load(conn):
+        return q.get_state(conn)
+    state = with_conn(load)
+    if not state:
+        return render_no_league()
+
+    season = state["season_year"]
+    week = state["current_week"]
+    phase = state.get("phase", "regular_season")
+    mode = state.get("mode", "test")
+    official_started = state.get("official_started", 0)
+    offseason_stage = state.get("offseason_stage") or "retirements"
+
+    if phase == "regular_season":
+        if mode == "official" and not official_started:
+            next_action_label = f"Start Official Season {season}"
+        else:
+            next_action_label = f"Simulate Week {week}"
+    elif phase == "playoffs":
+        next_action_label = f"Simulate Playoff Week {week}"
+    elif phase == "complete":
+        next_action_label = "Begin Offseason — Retirements"
+    elif phase == "offseason":
+        stage_label = OFFSEASON_STAGE_LABELS.get(
+            offseason_stage, offseason_stage.replace("_", " ").title()
+        )
+        next_action_label = f"Run Offseason: {stage_label}"
+    else:
+        next_action_label = "Advance League"
+
+    # Build snapshot packet (best-effort — shown immediately after simulation)
+    snapshot_packet = None
+    try:
+        snapshot_packet = build_chatgpt_packet(
+            "League snapshot",
+            f"Season {season}, Week {week - 1 if week > 1 else week}: "
+            f"Summarize the league — standings story, top performers, "
+            f"biggest upsets or surprises, and which storylines are heating up right now."
+        )
+    except Exception:
+        pass
+
+    return render_template(
+        "simulate.html",
+        state=state,
+        next_action_label=next_action_label,
+        snapshot_packet=snapshot_packet,
+        active="simulate",
+    )
 
 
 def approve_trade(trade_id):
