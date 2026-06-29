@@ -70,9 +70,7 @@ def assess_team_needs(conn, team_id, season_year):
     Analyze a team's roster and return a needs profile dict.
     cap_space is NOT set here --caller sets it after loading the cap.
     """
-    c = conn.cursor()
-
-    players = [dict(p) for p in c.execute(
+    players = [dict(p) for p in conn.execute(
         "SELECT * FROM players "
         "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
         (team_id,),
@@ -103,7 +101,7 @@ def assess_team_needs(conn, team_id, season_year):
     strongest_pos  = sorted_pos[-1][0]
 
     # Recent form: last 4 games
-    recent = c.execute("""
+    recent = conn.execute("""
         SELECT home_score, away_score, home_team_id, away_team_id
         FROM   games
         WHERE  (home_team_id = ? OR away_team_id = ?)
@@ -134,7 +132,7 @@ def assess_team_needs(conn, team_id, season_year):
     else:
         trend = "even"
 
-    record = c.execute(
+    record = conn.execute(
         "SELECT wins, losses FROM standings WHERE team_id = ? AND season_year = ?",
         (team_id, season_year),
     ).fetchone()
@@ -334,14 +332,13 @@ def find_trade_candidates(conn, gm, my_team_id, my_needs, week, season_year, arc
     # [LLM-HOOK] The candidate-selection loop is a good place for LLM-guided targeting:
     # let the model rank other teams' rosters by narrative fit, not just by score.
     """
-    c = conn.cursor()
     cap       = archetypes_data["salary_cap"]
     my_arch   = archetypes_data["archetypes"][gm["archetype"]]
     policy    = trade_policy(archetypes_data)
     gm_traits = dict(gm)
 
     # Collect all player IDs already locked in a pending trade this season
-    pending_rows = c.execute("""
+    pending_rows = conn.execute("""
         SELECT offered_player_ids, requested_player_ids
         FROM   pending_trades
         WHERE  status = 'pending' AND season_year = ?
@@ -358,7 +355,7 @@ def find_trade_candidates(conn, gm, my_team_id, my_needs, week, season_year, arc
     except Exception:
         demanding_ids = set()
 
-    other_teams = c.execute(
+    other_teams = conn.execute(
         "SELECT * FROM teams WHERE id != ?", (my_team_id,)
     ).fetchall()
 
@@ -366,7 +363,7 @@ def find_trade_candidates(conn, gm, my_team_id, my_needs, week, season_year, arc
 
     for other_team in other_teams:
         other_id = other_team["id"]
-        other_gm = c.execute(
+        other_gm = conn.execute(
             "SELECT * FROM general_managers WHERE team_id = ?", (other_id,)
         ).fetchone()
         if not other_gm:
@@ -485,7 +482,6 @@ def run_gm_week(conn, gm, week, season_year, archetypes_data):
     cap       = archetypes_data["salary_cap"]
     threshold = archetypes_data["trade_threshold"]
     policy    = trade_policy(archetypes_data)
-    c         = conn.cursor()
 
     max_trades = policy.get("max_team_trades_per_season", 2)
     trade_count = _team_trade_count(conn, gm["team_id"], season_year)
@@ -571,7 +567,7 @@ def run_gm_week(conn, gm, week, season_year, archetypes_data):
     req = best["requesting_player"]
     off = best["offering_player"]
 
-    c.execute("""
+    conn.execute("""
         INSERT INTO pending_trades
             (week, season_year, proposing_gm_id, receiving_gm_id,
              offered_player_ids, requested_player_ids,
@@ -615,9 +611,8 @@ def run_all_gm_agents(conn, week, season_year, verbose=True):
     create_tables()
 
     archetypes_data = load_archetypes()
-    c               = conn.cursor()
 
-    gms = c.execute("SELECT * FROM general_managers").fetchall()
+    gms = conn.execute("SELECT * FROM general_managers").fetchall()
     if not gms:
         if verbose:
             print("  No GMs found --run  python seed.py  first.")
@@ -631,7 +626,7 @@ def run_all_gm_agents(conn, week, season_year, verbose=True):
     proposed_total = 0
     for gm in gms:
         gm_d  = dict(gm)
-        team  = c.execute(
+        team  = conn.execute(
             "SELECT city, name FROM teams WHERE id = ?", (gm_d["team_id"],)
         ).fetchone()
         label = f"{team['city']} {team['name']}"
@@ -643,7 +638,7 @@ def run_all_gm_agents(conn, week, season_year, verbose=True):
             print(f"  {gm_d['name']:<30} {label:<26} {status}")
             if proposed:
                 # Show the last memory entry (the proposal detail)
-                mem = c.execute(
+                mem = conn.execute(
                     "SELECT detail FROM agent_memory"
                     " WHERE gm_id = ? AND week = ? AND event_type = 'trade_proposed'"
                     " ORDER BY id DESC LIMIT 1",
@@ -674,9 +669,7 @@ def compute_performance_signals(conn, team_id, season_year):
     Collect end-of-season stats for a team: win rate, roster age profile, cap situation.
     Returns a flat dict of signals, or None if no data.
     """
-    c = conn.cursor()
-
-    players = c.execute(
+    players = conn.execute(
         "SELECT age, skill_rating, salary FROM players "
         "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
         (team_id,),
@@ -692,7 +685,7 @@ def compute_performance_signals(conn, team_id, season_year):
     avg_skill     = sum(p["skill_rating"] for p in players) / len(players)
     total_salary  = sum(p["salary"] for p in players)
 
-    record = c.execute(
+    record = conn.execute(
         "SELECT wins, losses FROM standings WHERE team_id = ? AND season_year = ?",
         (team_id, season_year),
     ).fetchone()
@@ -961,8 +954,7 @@ def evaluate_all_gms_season_end(conn, season_year, verbose=True):
     from league.database import create_tables
     create_tables()
 
-    c   = conn.cursor()
-    gms = c.execute("SELECT * FROM general_managers").fetchall()
+    gms = conn.execute("SELECT * FROM general_managers").fetchall()
     if not gms:
         return
 
