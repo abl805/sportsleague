@@ -420,8 +420,6 @@ def commissioner_data():
             "pending_trades": q.pending_trades(conn),
             "logs": q.commissioner_logs(conn),
             "offseason_events": q.offseason_events(conn),
-            "team_options": q.teams_index(conn, season),
-            "trade_options": q.trade_options(conn),
             "pending_interviews": get_pending_interviews(conn, season_year=season),
             "recent_interviews": get_recent_interviews(conn, season, limit=20),
             "contact_messages": q.get_contact_messages(conn),
@@ -431,104 +429,11 @@ def commissioner_data():
     if not data:
         return None
 
-    state = data["state"]
-    season = state["season_year"]
-    week = state["current_week"]
-    phase = state.get("phase", "regular_season")
-    offseason_stage = state.get("offseason_stage") or "retirements"
+    offseason_stage = data["state"].get("offseason_stage") or "retirements"
     data["offseason_stage_label"] = OFFSEASON_STAGE_LABELS.get(
         offseason_stage,
         offseason_stage.replace("_", " ").title(),
     )
-
-    def try_packet(context_type, prompt, **kwargs):
-        try:
-            return build_chatgpt_packet(context_type, prompt, **kwargs)
-        except Exception:
-            return None
-
-    data["auto_snapshot"] = try_packet(
-        "League snapshot",
-        f"Season {season}, Week {week}: Summarize the league — standings story, "
-        f"top performers, biggest upsets or surprises, and which storylines are "
-        f"heating up right now."
-    )
-    data["auto_power_rankings"] = try_packet(
-        "League snapshot",
-        f"Season {season}, Week {week}: Rank all teams from 1 (strongest) to last "
-        f"(weakest). For each team write one sentence covering their record, best "
-        f"player, and current outlook. Bold the #1 team."
-    )
-    data["auto_week_preview"] = try_packet(
-        "League snapshot",
-        f"Season {season}: Preview Week {week + 1}. Which matchups matter most for "
-        f"the standings? Which players are must-watches? What storylines could shift "
-        f"in the coming week?"
-    )
-    data["auto_playoff_packets"] = []
-    if phase in ("playoffs", "complete"):
-        playoff_requests = [
-            (
-                "Playoff Week Recap",
-                f"Season {season}, Playoff Week {week}: Write a postseason recap from the live bracket data. "
-                "Focus on series scores, clinches, pressure, standout players, and what changed in the bracket."
-            ),
-            (
-                "Series Preview",
-                f"Season {season}: Preview the next scheduled playoff games. Explain the stakes for every active "
-                "Finals, third-place, or semifinal series and identify must-watch players."
-            ),
-            (
-                "Elimination Storylines",
-                f"Season {season}: Find the biggest elimination-game or clinching-game storylines in the playoff "
-                "bracket. Create news hooks and suggested influences based only on the included data."
-            ),
-        ]
-        for label, prompt in playoff_requests:
-            pkt = try_packet("League snapshot", prompt)
-            if pkt:
-                data["auto_playoff_packets"].append({
-                    "label": label,
-                    "packet": pkt,
-                })
-
-    auto_team_packets = []
-    for team in data["team_options"]:
-        pkt = try_packet(
-            "Team report",
-            f"Write a narrative team report on the {team['team_name']}: recent game "
-            f"results, standout and struggling players, GM personality and trade "
-            f"tendencies, and what the commissioner should keep an eye on.",
-            team_id=team["id"]
-        )
-        if pkt:
-            auto_team_packets.append({
-                "id": team["id"],
-                "team_name": team["team_name"],
-                "abbreviation": team["abbreviation"],
-                "packet": pkt,
-            })
-    data["auto_team_packets"] = auto_team_packets
-
-    auto_trade_packets = []
-    for trade in data["pending_trades"]:
-        pkt = try_packet(
-            "Pending trade review",
-            f"Analyze this proposed trade between {trade['proposing_team']} and "
-            f"{trade['receiving_team']}. Is it fair? Who benefits more? What is each "
-            f"GM's likely motivation? Should the commissioner approve, push back, or "
-            f"veto it? Give a clear recommendation.",
-            trade_id=trade["id"]
-        )
-        if pkt:
-            auto_trade_packets.append({
-                "trade_id": trade["id"],
-                "proposing_team": trade["proposing_team"],
-                "receiving_team": trade["receiving_team"],
-                "packet": pkt,
-            })
-    data["auto_trade_packets"] = auto_trade_packets
-
     return data
 
 
