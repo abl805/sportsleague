@@ -1,6 +1,15 @@
+import decimal
 import hashlib
 import json
 import re
+
+
+class _Encoder(json.JSONEncoder):
+    """Handle types PostgreSQL returns that stdlib json can't serialize."""
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return super().default(obj)
 
 from league.database import get_connection
 from league.playoffs import get_playoff_snapshot
@@ -320,7 +329,7 @@ def build_chatgpt_packet(context_type, commissioner_request, team_id=None, trade
 
     return (
         f"{APP_TO_GPT_START}\n"
-        f"{json.dumps(payload, indent=2)}\n"
+        f"{json.dumps(payload, indent=2, cls=_Encoder)}\n"
         f"{APP_TO_GPT_END}"
     )
 
@@ -338,7 +347,7 @@ def response_template(context_type):
     }
     return (
         f"{GPT_TO_APP_START}\n"
-        f"{json.dumps(payload, indent=2)}\n"
+        f"{json.dumps(payload, indent=2, cls=_Encoder)}\n"
         f"{GPT_TO_APP_END}"
     )
 
