@@ -301,9 +301,8 @@ def run_week(verbose=None, start_official=None):
 
     create_tables()   # ensures new tables exist even without re-seeding
     conn = get_connection()
-    c = conn.cursor()
 
-    state = c.execute("SELECT * FROM league_state WHERE id = 1").fetchone()
+    state = conn.execute("SELECT * FROM league_state WHERE id = 1").fetchone()
     if not state:
         print("League not found. Run  python seed.py  first.")
         conn.close()
@@ -320,7 +319,7 @@ def run_week(verbose=None, start_official=None):
             print("Run  python run_week.py --start-official  when you want Week 1 to count.\n")
             conn.close()
             return
-        c.execute(
+        conn.execute(
             "UPDATE league_state SET official_started = 1, last_updated = datetime('now') WHERE id = 1"
         )
         conn.commit()
@@ -337,7 +336,7 @@ def run_week(verbose=None, start_official=None):
         print(f"  WEEK {week}  --  {season_year} SEASON  [OFFICIAL]")
     print(f"{'='*54}\n")
 
-    games = c.execute("""
+    games = conn.execute("""
         SELECT g.id,
                g.home_team_id, g.away_team_id,
                g.playoff_series_id,
@@ -352,7 +351,7 @@ def run_week(verbose=None, start_official=None):
     """, (week, season_year)).fetchall()
 
     if not games:
-        remaining = c.execute(
+        remaining = conn.execute(
             "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
             (season_year,),
         ).fetchone()[0]
@@ -368,7 +367,7 @@ def run_week(verbose=None, start_official=None):
         return
 
     # ── Team chemistry (based on prior week's morale) ─────────────────────────
-    has_personalities = c.execute(
+    has_personalities = conn.execute(
         "SELECT COUNT(*) FROM player_personalities"
     ).fetchone()[0] > 0
     if has_personalities:
@@ -379,12 +378,12 @@ def run_week(verbose=None, start_official=None):
     playoff_game_ids = []
 
     for game in games:
-        home_players = [dict(p) for p in c.execute(
+        home_players = [dict(p) for p in conn.execute(
             "SELECT * FROM players "
             "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
             (game["home_team_id"],),
         ).fetchall()]
-        away_players = [dict(p) for p in c.execute(
+        away_players = [dict(p) for p in conn.execute(
             "SELECT * FROM players "
             "WHERE team_id = ? AND COALESCE(status, 'active') = 'active'",
             (game["away_team_id"],),
@@ -408,7 +407,7 @@ def run_week(verbose=None, start_official=None):
             + s["steals"] * 1.5 + s["blocks"] * 1.0
         ))["player_id"]
 
-        c.execute(
+        conn.execute(
             "UPDATE games SET home_score=?, away_score=?, played=1, "
             "q1_home=?, q2_home=?, q3_home=?, q4_home=?, "
             "q1_away=?, q2_away=?, q3_away=?, q4_away=?, "
@@ -420,7 +419,7 @@ def run_week(verbose=None, start_official=None):
         )
 
         for stat in h_box + a_box:
-            c.execute("""
+            conn.execute("""
                 INSERT INTO player_game_stats
                     (game_id, player_id, team_id, points, rebounds, assists, steals, blocks)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -433,7 +432,7 @@ def run_week(verbose=None, start_official=None):
         if game["playoff_series_id"]:
             playoff_game_ids.append(game["id"])
         else:
-            c.execute("""
+            conn.execute("""
                 UPDATE standings
                 SET wins = wins + ?,
                     losses = losses + ?,
@@ -442,7 +441,7 @@ def run_week(verbose=None, start_official=None):
                 WHERE team_id = ? AND season_year = ?
             """, (1 if home_won else 0, 0 if home_won else 1,
                   h_score, a_score, game["home_team_id"], season_year))
-            c.execute("""
+            conn.execute("""
                 UPDATE standings
                 SET wins = wins + ?,
                     losses = losses + ?,
@@ -461,7 +460,7 @@ def run_week(verbose=None, start_official=None):
         all_stats = sorted(all_stats, key=lambda s: s["points"], reverse=True)
         print(f"      {'Top performers':}")
         for s in all_stats[:3]:
-            player = c.execute(
+            player = conn.execute(
                 "SELECT first_name, last_name, position FROM players WHERE id = ?",
                 (s["player_id"],),
             ).fetchone()
@@ -469,13 +468,13 @@ def run_week(verbose=None, start_official=None):
                   f"{s['points']:>2} pts  {s['rebounds']} reb  {s['assists']} ast")
         print()
 
-    c.execute(
+    conn.execute(
         "UPDATE league_state SET current_week = current_week + 1, last_updated = datetime('now') WHERE id = 1"
     )
     conn.commit()
 
     # ── Post-game interviews ───────────────────────────────────────────────────
-    has_backstories = c.execute(
+    has_backstories = conn.execute(
         "SELECT COUNT(*) FROM player_backstories"
     ).fetchone()[0] > 0
     interview_count = 0
@@ -483,7 +482,7 @@ def run_week(verbose=None, start_official=None):
         for game in games:
             candidates = set()
             for team_id in [game["home_team_id"], game["away_team_id"]]:
-                top2 = c.execute("""
+                top2 = conn.execute("""
                     SELECT pgs.player_id
                     FROM player_game_stats pgs
                     JOIN players p ON p.id = pgs.player_id
@@ -507,23 +506,23 @@ def run_week(verbose=None, start_official=None):
         print("  View at /interviews or run: python view_interviews.py\n")
 
     # ── Midseason GM interviews ────────────────────────────────────────────────
-    gm_count = c.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
+    gm_count = conn.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
     if phase == "regular_season" and gm_count > 0:
-        midseason_fired = c.execute(
+        midseason_fired = conn.execute(
             "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'midseason'",
             (season_year,)
         ).fetchone()[0]
         if not midseason_fired:
-            total_reg = c.execute(
+            total_reg = conn.execute(
                 "SELECT COUNT(*) FROM games WHERE season_year = ? AND playoff_series_id IS NULL",
                 (season_year,)
             ).fetchone()[0]
-            played_reg = c.execute(
+            played_reg = conn.execute(
                 "SELECT COUNT(*) FROM games WHERE season_year = ? AND playoff_series_id IS NULL AND played = 1",
                 (season_year,)
             ).fetchone()[0]
             if total_reg > 0 and played_reg * 2 >= total_reg:
-                gms = c.execute("SELECT id FROM general_managers").fetchall()
+                gms = conn.execute("SELECT id FROM general_managers").fetchall()
                 gm_iv_count = 0
                 for gm in gms:
                     try:
@@ -539,7 +538,7 @@ def run_week(verbose=None, start_official=None):
     if has_personalities:
         run_all_player_agents(conn, week, season_year, verbose=verbose)
 
-    reg_games_remaining = c.execute(
+    reg_games_remaining = conn.execute(
         "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0"
         " AND playoff_series_id IS NULL",
         (season_year,),
@@ -551,7 +550,7 @@ def run_week(verbose=None, start_official=None):
 
         # Interviews for any series that just completed this week
         placeholders = ",".join("?" * len(playoff_game_ids))
-        just_completed = c.execute(f"""
+        just_completed = conn.execute(f"""
             SELECT DISTINCT ps.id, ps.winner_id, ps.team_a_id, ps.team_b_id
             FROM playoff_series ps
             JOIN games g ON g.playoff_series_id = ps.id
@@ -574,7 +573,7 @@ def run_week(verbose=None, start_official=None):
                 else series["team_a_id"]
             )
 
-            last_game = c.execute("""
+            last_game = conn.execute("""
                 SELECT id FROM games
                 WHERE playoff_series_id = ? AND played = 1
                 ORDER BY week DESC, id DESC LIMIT 1
@@ -582,7 +581,7 @@ def run_week(verbose=None, start_official=None):
 
             if last_game and has_backstories:
                 for team_id, limit in [(winner_id, 3), (loser_id, 2)]:
-                    top_players = c.execute("""
+                    top_players = conn.execute("""
                         SELECT pgs.player_id
                         FROM player_game_stats pgs
                         JOIN players p ON p.id = pgs.player_id
@@ -599,10 +598,10 @@ def run_week(verbose=None, start_official=None):
                             pass
 
             if gm_count > 0:
-                winner_gm = c.execute(
+                winner_gm = conn.execute(
                     "SELECT id FROM general_managers WHERE team_id = ?", (winner_id,)
                 ).fetchone()
-                loser_gm = c.execute(
+                loser_gm = conn.execute(
                     "SELECT id FROM general_managers WHERE team_id = ?", (loser_id,)
                 ).fetchone()
                 for gm_row, trigger in [(winner_gm, "playoff_series_win"),
@@ -625,12 +624,12 @@ def run_week(verbose=None, start_official=None):
     # ── Regular-season end: seed playoffs ─────────────────────────────────────
     if phase == "regular_season" and reg_games_remaining == 0:
         if gm_count > 0:
-            season_end_fired = c.execute(
+            season_end_fired = conn.execute(
                 "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'season_end'",
                 (season_year,)
             ).fetchone()[0]
             if not season_end_fired:
-                gms = c.execute("SELECT id FROM general_managers").fetchall()
+                gms = conn.execute("SELECT id FROM general_managers").fetchall()
                 gm_iv_count = 0
                 for gm in gms:
                     try:
@@ -648,7 +647,7 @@ def run_week(verbose=None, start_official=None):
         phase = "playoffs"
 
     # ── GM weekly decisions (regular season only) ─────────────────────────────
-    gm_count = c.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
+    gm_count = conn.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
     if phase == "regular_season":
         if gm_count > 0 and reg_games_remaining > 0:
             run_all_gm_agents(conn, week, season_year, verbose=True)
@@ -678,10 +677,10 @@ def run_week(verbose=None, start_official=None):
 
     # ── End-of-week summary ───────────────────────────────────────────────────
     # Re-read phase: _process_playoff_results may have set it to 'complete'
-    fresh_phase = c.execute(
+    fresh_phase = conn.execute(
         "SELECT phase FROM league_state WHERE id = 1"
     ).fetchone()["phase"]
-    pending_review_count = c.execute(
+    pending_review_count = conn.execute(
         "SELECT COUNT(*) FROM pending_trades WHERE status = 'pending'"
     ).fetchone()[0]
     conn.close()
