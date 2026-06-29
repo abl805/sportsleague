@@ -352,9 +352,9 @@ def run_week(verbose=None, start_official=None):
 
     if not games:
         remaining = conn.execute(
-            "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0",
+            "SELECT COUNT(*) AS cnt FROM games WHERE season_year = ? AND played = 0",
             (season_year,),
-        ).fetchone()[0]
+        ).fetchone()["cnt"]
         if remaining == 0:
             if phase == "complete":
                 print("The season is complete! Run  python view_league.py  to see the champion.\n")
@@ -368,8 +368,8 @@ def run_week(verbose=None, start_official=None):
 
     # ── Team chemistry (based on prior week's morale) ─────────────────────────
     has_personalities = conn.execute(
-        "SELECT COUNT(*) FROM player_personalities"
-    ).fetchone()[0] > 0
+        "SELECT COUNT(*) AS cnt FROM player_personalities"
+    ).fetchone()["cnt"] > 0
     if has_personalities:
         compute_all_team_chemistry(conn, week, season_year)
 
@@ -475,8 +475,8 @@ def run_week(verbose=None, start_official=None):
 
     # ── Post-game interviews ───────────────────────────────────────────────────
     has_backstories = conn.execute(
-        "SELECT COUNT(*) FROM player_backstories"
-    ).fetchone()[0] > 0
+        "SELECT COUNT(*) AS cnt FROM player_backstories"
+    ).fetchone()["cnt"] > 0
     interview_count = 0
     if has_backstories:
         for game in games:
@@ -506,21 +506,21 @@ def run_week(verbose=None, start_official=None):
         print("  View at /interviews or run: python view_interviews.py\n")
 
     # ── Midseason GM interviews ────────────────────────────────────────────────
-    gm_count = conn.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
+    gm_count = conn.execute("SELECT COUNT(*) AS cnt FROM general_managers").fetchone()["cnt"]
     if phase == "regular_season" and gm_count > 0:
         midseason_fired = conn.execute(
-            "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'midseason'",
+            "SELECT COUNT(*) AS cnt FROM gm_interviews WHERE season_year = ? AND trigger_type = 'midseason'",
             (season_year,)
-        ).fetchone()[0]
+        ).fetchone()["cnt"]
         if not midseason_fired:
             total_reg = conn.execute(
-                "SELECT COUNT(*) FROM games WHERE season_year = ? AND playoff_series_id IS NULL",
+                "SELECT COUNT(*) AS cnt FROM games WHERE season_year = ? AND playoff_series_id IS NULL",
                 (season_year,)
-            ).fetchone()[0]
+            ).fetchone()["cnt"]
             played_reg = conn.execute(
-                "SELECT COUNT(*) FROM games WHERE season_year = ? AND playoff_series_id IS NULL AND played = 1",
+                "SELECT COUNT(*) AS cnt FROM games WHERE season_year = ? AND playoff_series_id IS NULL AND played = 1",
                 (season_year,)
-            ).fetchone()[0]
+            ).fetchone()["cnt"]
             if total_reg > 0 and played_reg * 2 >= total_reg:
                 gms = conn.execute("SELECT id FROM general_managers").fetchall()
                 gm_iv_count = 0
@@ -539,10 +539,10 @@ def run_week(verbose=None, start_official=None):
         run_all_player_agents(conn, week, season_year, verbose=verbose)
 
     reg_games_remaining = conn.execute(
-        "SELECT COUNT(*) FROM games WHERE season_year = ? AND played = 0"
+        "SELECT COUNT(*) AS cnt FROM games WHERE season_year = ? AND played = 0"
         " AND playoff_series_id IS NULL",
         (season_year,),
-    ).fetchone()[0]
+    ).fetchone()["cnt"]
 
     # ── Playoff result processing ─────────────────────────────────────────────
     if playoff_game_ids:
@@ -625,9 +625,9 @@ def run_week(verbose=None, start_official=None):
     if phase == "regular_season" and reg_games_remaining == 0:
         if gm_count > 0:
             season_end_fired = conn.execute(
-                "SELECT COUNT(*) FROM gm_interviews WHERE season_year = ? AND trigger_type = 'season_end'",
+                "SELECT COUNT(*) AS cnt FROM gm_interviews WHERE season_year = ? AND trigger_type = 'season_end'",
                 (season_year,)
-            ).fetchone()[0]
+            ).fetchone()["cnt"]
             if not season_end_fired:
                 gms = conn.execute("SELECT id FROM general_managers").fetchall()
                 gm_iv_count = 0
@@ -647,7 +647,7 @@ def run_week(verbose=None, start_official=None):
         phase = "playoffs"
 
     # ── GM weekly decisions (regular season only) ─────────────────────────────
-    gm_count = conn.execute("SELECT COUNT(*) FROM general_managers").fetchone()[0]
+    gm_count = conn.execute("SELECT COUNT(*) AS cnt FROM general_managers").fetchone()["cnt"]
     if phase == "regular_season":
         if gm_count > 0 and reg_games_remaining > 0:
             run_all_gm_agents(conn, week, season_year, verbose=True)
@@ -681,8 +681,8 @@ def run_week(verbose=None, start_official=None):
         "SELECT phase FROM league_state WHERE id = 1"
     ).fetchone()["phase"]
     pending_review_count = conn.execute(
-        "SELECT COUNT(*) FROM pending_trades WHERE status = 'pending'"
-    ).fetchone()[0]
+        "SELECT COUNT(*) AS cnt FROM pending_trades WHERE status = 'pending'"
+    ).fetchone()["cnt"]
     conn.close()
 
     if fresh_phase == "complete":
