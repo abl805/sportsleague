@@ -3,7 +3,7 @@ services:
     name: aiba
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn web_app:app
+    startCommand: gunicorn --timeout 300 --workers 1 web_app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
