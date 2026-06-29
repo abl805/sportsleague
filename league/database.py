@@ -3,6 +3,13 @@ import re
 import random
 import sqlite3
 
+# Load .env so DATABASE_URL is available whether running from web_app.py or CLI scripts
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
+except ImportError:
+    pass
+
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "db", "league.db")
 LEAGUE_YEAR = 2026
 
